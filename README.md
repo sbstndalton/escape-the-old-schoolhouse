@@ -115,6 +115,31 @@ Requires macOS 11 (Big Sur) or newer. It runs on both Apple Silicon and Intel Ma
 
 ---
 
+## 🛠️ Improving the game with Claude Code (optional)
+
+The repository is set up so **Claude Code** can open the game in a real browser, play it, and check its own changes.
+
+**One-time setup** (needs [Node.js](https://nodejs.org)):
+```bash
+npm install
+```
+```bash
+npx playwright install chromium
+```
+
+**Useful commands:**
+| Command | What it does |
+|---|---|
+| `npm run serve` | Runs the game at http://localhost:8080 |
+| `npm test` | Plays the whole game automatically and checks it works, and saves screenshots of every room to `tests/screenshots/` |
+| `npm run build:scorm` | Rebuilds `EscapeRoom_SCORM.zip` after you change `index.html` |
+
+**Browser control (MCP):** the `.mcp.json` file gives Claude Code the **Playwright** browser tools. The first time you open Claude Code in this folder, it asks whether to allow the `playwright` server. Say yes. After that you can ask things like *"Play the escape room on a phone-sized screen and tell me what's confusing,"* or *"Add a sixth room about Horace Mann and test it."* The `CLAUDE.md` file tells Claude the rules for this project.
+
+The tests also run automatically on GitHub every time `index.html` changes.
+
+---
+
 ## 🗝️ Answer key (instructors only)
 
 | Room | Puzzle | Answer |
