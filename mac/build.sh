@@ -10,8 +10,8 @@ rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 echo "→ Compiling (Apple Silicon + Intel)…"
-swiftc -O -target arm64-apple-macos11  main.swift -o build/game-arm64
-swiftc -O -target x86_64-apple-macos11 main.swift -o build/game-x86_64
+swiftc -O -parse-as-library -target arm64-apple-macos11  main.swift -o build/game-arm64
+swiftc -O -parse-as-library -target x86_64-apple-macos11 main.swift -o build/game-x86_64
 lipo -create build/game-arm64 build/game-x86_64 -output "$APP/Contents/MacOS/EscapeSchoolhouse"
 
 echo "→ Packaging…"
