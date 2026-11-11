@@ -16,6 +16,7 @@ Students solve 5 puzzle rooms about educational philosophies and philosophers, t
 |---|---|
 | [`index.html`](index.html) | The game itself. Double-click it to play. |
 | [`EscapeRoom_SCORM.zip`](EscapeRoom_SCORM.zip) | Upload this to Moodle or Canvas for automatic grading. **Don't unzip it.** |
+| **Mac app**: under **Releases**, on the right side of the repository page | An optional stand-alone Mac app. See [Mac app](#-mac-app-optional). |
 
 To download a file, click its name above, then click the **download button** (⬇) at the top right of the file view.
 To download everything at once, go to the main repository page and click the green **Code** button, then **Download ZIP**.
@@ -76,6 +77,41 @@ When students escape, the certificate shows this exit password:
 2. **Add an activity or resource** → **Quiz** → add a **Short answer** question with the correct answer `DEWEY1916`. Moodle short-answer questions ignore capitalization by default.
 
 **Check it as a student:** In either platform, use **Student View** (Canvas) or **Switch role to → Student** (Moodle) to play it the way students will.
+
+---
+
+## 🍎 Mac app (optional)
+
+The game also comes as a small native Mac app called **Escape the Old Schoolhouse.app**. It opens in its own window, works offline, and has a working **Print certificate** button. The puzzles are exactly the same as in the browser version.
+
+### Download it
+1. On this repository's main page, look on the right side for **Releases** → **Mac app (latest)**.
+2. Download **`EscapeTheOldSchoolhouse-mac.zip`** and double-click it to unzip.
+3. Drag **Escape the Old Schoolhouse** into your **Applications** folder. This step is optional.
+
+### The first time you open it
+The app isn't registered with Apple, so the first time you open it, macOS will warn you that it *"cannot verify the developer."* This is normal for small free apps. To open it:
+
+- **macOS 15 (Sequoia) or newer:** Double-click the app, then click **Done**. Open **System Settings** → **Privacy & Security**, scroll down, and click **Open Anyway** next to the message about the app. Enter your password.
+- **macOS 14 or older:** **Right-click** (or Control-click) the app → **Open** → **Open**.
+
+You only have to do this once.
+
+### Or build it yourself on your Mac
+If you build the app on your own Mac, you won't get the warning at all.
+
+1. Download this repository: click the green **Code** button → **Download ZIP**, then unzip it.
+2. Open **Terminal** (press ⌘-Space and type *Terminal*).
+3. If you've never installed Apple's free developer tools, run this once:
+   ```bash
+   xcode-select --install
+   ```
+4. Type `bash ` (with a space after it), then drag the **`mac/build.sh`** file into the Terminal window and press **Return**.
+5. The finished app appears in the **`mac/build`** folder.
+
+Requires macOS 11 (Big Sur) or newer. It runs on both Apple Silicon and Intel Macs.
+
+> **For classes, the browser version or SCORM version is still the best choice.** The Mac app can't report grades to Moodle or Canvas. Students who play it can type the exit password into your course quiz.
 
 ---
 
