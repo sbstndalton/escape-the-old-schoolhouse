@@ -2,3 +2,4 @@ mac/build/
 .DS_Store
 node_modules/
 tests/screenshots/
+.playwright-mcp/
