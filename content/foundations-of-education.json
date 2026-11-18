@@ -25,6 +25,7 @@
     {
       "type": "matching",
       "title": "The Library",
+      "look": "books",
       "codeStyle": "letters",
       "codeWord": "LEARN",
       "story": "Five dusty books glow on the shelf, each with one letter painted on its spine. A librarian's card catalog lists five descriptions, but the titles have been torn off. The lock on the library door takes a **5-letter word**.",
@@ -89,6 +90,7 @@
     {
       "type": "matching",
       "title": "The Portrait Gallery",
+      "look": "portraits",
       "codeStyle": "numbers",
       "codeWord": "",
       "story": "Eight portraits line the hallway. Each has a numbered brass plate. A keypad by the far door asks for a **4-digit code**, and someone has scratched four clues into the wall.",

@@ -390,6 +390,43 @@ async function makeQuizRoom(page) {
     await page.close();
   });
 
+  await test("the look of a matching room can be changed, and the preview follows", async () => {
+    const page = await openEditor(browser, base);
+    await page.click("#nav .item:has-text('1.')");
+    assert.equal(await page.inputValue("#look-row select"), "books", "the sample library uses books");
+    assert.match(await page.textContent("#look-help"), /book spine/);
+    await page.click("#preview-room");
+    let f = page.frameLocator(".preview iframe");
+    await f.locator("#stage h2:has-text('Room 1')").waitFor();
+    assert.equal(await f.locator(".shelf .vol").count(), 5);
+    await page.click("#preview-exit");
+    await page.selectOption("#look-row select", "portraits");
+    assert.match(await page.textContent("#look-help"), /framed portrait/);
+    assert.equal(await page.evaluate(() => cfg.rooms[0].look), "portraits");
+    assert.equal(await page.evaluate(() => ER.reviewStatus(cfg).verified), 0, "changing the look never marks anything as checked");
+    await page.click("#preview-room");
+    f = page.frameLocator(".preview iframe");
+    await f.locator(".gallery .portrait").first().waitFor();
+    assert.equal(await f.locator(".gallery .portrait").count(), 5);
+    assert.equal(await f.locator(".shelf").count(), 0);
+    assert.deepEqual((await f.locator(".plate b").allTextContents()).sort(), ["A", "E", "L", "N", "R"]);
+    await page.screenshot({ path: path.join(SHOTS, "editor-preview-look.png") });
+    await page.click("#preview-exit");
+    await page.selectOption("#look-row select", "cards");
+    await page.click("#preview-room");
+    f = page.frameLocator(".preview iframe");
+    await f.locator(".mcard").first().waitFor();
+    assert.equal(await f.locator(".mcard").count(), 5);
+    await page.click("#preview-exit");
+    // A new matching room starts with plain cards, and the choice survives export and reopening.
+    await page.selectOption("#look-row select", "books");
+    await page.click("#btn-export");
+    const file = await download(page, "#export-html");
+    assert.equal(ER.configFromHtml(fs.readFileSync(file, "utf8")).rooms[0].look, "books");
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
   await browser.close();
   server.close();
   fs.rmSync(TMP, { recursive: true, force: true });
