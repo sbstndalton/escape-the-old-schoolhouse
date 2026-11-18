@@ -86,8 +86,8 @@ svg{display:block}
 [data-screen=title] #light{--lx:27%;--ly:46%}
 [data-screen=title] .lantern{right:auto;left:calc(3rem + 19% - 2.2rem);width:3.6rem}
 [data-screen=end] #light{--lx:22%;--ly:52%}
-[data-type=reflection] #light{--lx:34%;--ly:52%}
-[data-type=reflection] .lantern{right:auto;left:31%}
+[data-type=reflection] #light{--lx:56%;--ly:34%}
+[data-type=reflection] .lantern{right:auto;left:52.5%}
 [data-screen=end] .win,[data-screen=end] .beam,[data-screen=end] .lantern{display:none}
 [data-screen=end] .glow{background:radial-gradient(ellipse 50rem 46rem at 20% 55%,rgba(255,214,170,.42),rgba(255,160,120,.16) 40%,rgba(240,130,120,.05) 66%,transparent 82%)}
 
@@ -382,13 +382,13 @@ fieldset{margin:0;border:0;min-width:0}
 
 /* ---------- Reflection: the mirror ---------- */
 [data-type=reflection] #stage{grid-template-columns:minmax(0,1fr) minmax(20rem,42%)}
-.mirrorwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:.3rem 0 .5rem}
+.mirrorwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:1.9rem 0 .5rem}
 .mirror{position:relative;height:100%;max-height:30rem;min-height:15rem;aspect-ratio:3/4;max-width:100%;border-radius:50%;padding:1.15rem;
   background:conic-gradient(from 210deg,#6d5220,#f1d38a 12%,#8f6d2b 24%,#c9a556 38%,#5a4317 52%,#d2ae5e 66%,#6d5220 78%,#f4dc9c 90%,#6d5220);
   box-shadow:inset 0 0 0 2px #3d2c0c,inset 0 0 0 .5rem rgba(60,40,8,.35),inset 0 0 0 .62rem rgba(255,240,190,.35),0 1.2rem 2rem rgba(0,0,0,.8)}
 .mirror::before{content:"";position:absolute;left:50%;top:-1.5rem;width:3.4rem;height:2.4rem;margin-left:-1.7rem;border-radius:50% 50% 30% 30%;background:var(--brassy);box-shadow:inset 0 0 0 1px #3d2c0c,inset 0 0 0 .3rem rgba(60,40,8,.3)}
 .glass{position:relative;height:100%;border-radius:50%;overflow:hidden;display:grid;place-items:center;padding:14% 13%;text-align:center;
-  background:linear-gradient(118deg,transparent 30%,rgba(214,232,244,.13) 38%,rgba(214,232,244,.03) 46%,transparent 47%,transparent 58%,rgba(214,232,244,.07) 62%,transparent 70%),radial-gradient(ellipse at 70% 30%,#3a4a55,#1a242c 55%,#0b1014);
+  background:linear-gradient(118deg,transparent 30%,rgba(214,232,244,.13) 38%,rgba(214,232,244,.03) 46%,transparent 47%,transparent 58%,rgba(214,232,244,.07) 62%,transparent 70%),radial-gradient(ellipse at 72% 26%,#2c3c48,#121b22 52%,#05080b);
   box-shadow:inset 0 0 0 2px #000,inset 0 0 2.5rem #000}
 .glass .fog{position:absolute;inset:0;border-radius:50%;opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 55%,rgba(226,236,240,.9),rgba(200,214,220,.6) 55%,rgba(200,214,220,.2))}
 .glass p{position:relative;margin:0;font-size:1.02rem;line-height:1.42;color:#dfe9ee;text-shadow:0 0 .7rem rgba(190,220,235,.55)}
@@ -400,6 +400,8 @@ fieldset{margin:0;border:0;min-width:0}
 .qcard legend{font-size:.9rem;color:var(--parch2)}
 .qcard .lever{margin-top:.5rem;padding:.6rem .7rem .5rem;color:var(--ink);font-size:.85rem;transition:transform .15s}
 .qcard .lever:hover{transform:translateX(.25rem)}
+.qcard .lever:nth-of-type(odd){transform:rotate(-.5deg)}.qcard .lever:nth-of-type(3n){transform:rotate(.6deg) translateX(.5rem)}
+.qcard .lever:nth-of-type(n):hover{transform:translateX(.3rem)}
 .qnav{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
 .qnav .n{width:1.8rem;height:1.8rem;display:grid;place-items:center;padding-top:.12em;font:400 .86rem/1 var(--f-t);color:var(--parch2);border:1px solid rgba(232,217,181,.4);border-radius:50%}
 .qnav .n.done{color:#2b1c08;background:var(--plate);border-color:#4a360f}
@@ -442,7 +444,7 @@ h2.said{margin:0;font:400 1.25rem/1.2 var(--f-d);letter-spacing:.12em;color:#f0d
 .ink{flex:none;width:3.6rem;margin:0 0 -.1rem auto}
 .ledger{position:relative;flex:1 1 17rem;max-width:25rem;padding:1.1rem 1.3rem 1.2rem 2.1rem;transform:rotate(-1.2deg);transform-origin:50% 100%;
   background:linear-gradient(90deg,rgba(60,30,10,.35) 0,transparent .9rem),linear-gradient(90deg,transparent 1.5rem,rgba(155,34,24,.5) 1.5rem 1.56rem,transparent 1.56rem),repeating-linear-gradient(180deg,transparent 0 1.6rem,rgba(39,64,107,.22) 1.6rem 1.66rem),var(--stain),var(--grain),linear-gradient(175deg,#efe3c8,#e3d4b2);
-  border-left:.7rem solid #5a1d16;color:var(--ink);box-shadow:.3rem .9rem 1.3rem rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.15)}
+  color:var(--ink);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15),0 0 0 .1rem #2a0c08,0 0 0 .5rem #5a1d16,0 0 0 .56rem #2a0c08,.5rem 1.1rem 1.4rem .4rem rgba(0,0,0,.6)}
 .ledger label{display:block;font:400 .82rem/1.2 var(--f-d);letter-spacing:.16em;color:#5b4a35}
 .ledger .row{display:flex;align-items:flex-end;gap:.5rem;margin-top:.55rem}
 .ledger .row span{font-size:.8rem;padding-bottom:.25rem}
@@ -486,7 +488,7 @@ h2.said{margin:0;font:400 1.25rem/1.2 var(--f-d);letter-spacing:.12em;color:#f0d
 .result .h{display:block;margin:0 0 .4rem;font:400 .92rem/1.15 var(--f-d);letter-spacing:.1em;color:#7a2018}
 .result .clip{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6;overflow:hidden}
 .result .p{display:block;margin:0 0 .4em}
-.note{margin:0;font-size:.76rem;line-height:1.4;color:var(--parch2);max-width:22rem}
+.note{margin:0;padding:.55rem .7rem .45rem;font-size:.74rem;line-height:1.4;color:var(--ink);max-width:22rem;transform:rotate(-.8deg);background:var(--stain),var(--grain),#e4d6b6;box-shadow:.1rem .25rem .4rem rgba(0,0,0,.6);clip-path:polygon(0 0,100% 0,100% 100%,.6rem 100%,0 calc(100% - .5rem))}
 
 /* ---------- Examine view: a paper object brought up to the lamp ---------- */
 #examine,#pause{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:1.2rem;background:radial-gradient(ellipse 60% 55% at 50% 45%,rgba(120,78,30,.5),rgba(30,18,8,.82) 55%,rgba(4,3,2,.95))}
@@ -524,7 +526,7 @@ h2.said{margin:0;font:400 1.25rem/1.2 var(--f-d);letter-spacing:.12em;color:#f0d
 
 /* ---------- Teacher key (editor preview only) ---------- */
 #teacher-key{position:absolute;z-index:33;left:1rem;bottom:.9rem;width:min(23rem,calc(100% - 2rem));max-height:42%;overflow:auto;padding:.7rem .9rem .6rem;font-size:.76rem;line-height:1.35;color:var(--ink);
-  background:var(--stain),var(--grain),#e9dcc0;border-top:.4rem solid #8e1b1b;box-shadow:.3rem .8rem 1.2rem rgba(0,0,0,.7)}
+  background:var(--stain),var(--grain),#e9dcc0;box-shadow:.3rem .8rem 1.2rem rgba(0,0,0,.7)}
 #teacher-key h3{margin:0 0 .35rem;font:400 .8rem/1.2 var(--f-d);letter-spacing:.12em;color:#7a2018}
 #teacher-key ul,#teacher-key ol{margin:0;padding-left:1.1rem}
 #teacher-key p{margin:.5rem 0 .2rem}
@@ -627,7 +629,7 @@ h2.said{margin:0;font:400 1.25rem/1.2 var(--f-d);letter-spacing:.12em;color:#f0d
   .cert{max-width:none;max-height:none;overflow:visible;box-shadow:inset 0 0 0 1px #2a1d14,inset 0 0 0 .4rem #fff,inset 0 0 0 .46rem #2a1d14;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .result{transform:none;box-shadow:none;background:#fff;margin-top:1rem;display:block;width:100%}
   .result .clip{display:block;overflow:visible}
-  .note{color:#000}
+  .note{color:#000;background:none;box-shadow:none;transform:none;clip-path:none;padding:0;margin-top:1rem;max-width:none}
 }
 </style>
 </head>
@@ -1085,7 +1087,7 @@ function bust(seed){
 /* ===================== Text helpers ===================== */
 /* Icons are drawn in the game's own style, so a picture character at the start of a teacher's label or
    message (a padlock, a sparkle) is dropped rather than shown beside the drawn one. */
-let PICT; try { PICT = new RegExp("^\\s*(?:[\\p{Extended_Pictographic}\\u{1F1E6}-\\u{1F1FF}][\\uFE0F\\u200D]*)+\\s*", "u"); } catch(e){ PICT = /^\s*(?:[☀-➿\uD83C-\uD83E][\uDC00-\uDFFF]?️?)+\s*/; }
+let PICT; try { PICT = new RegExp("^\\s*(?:[\\p{Extended_Pictographic}\\u{1F1E6}-\\u{1F1FF}][\\uFE0F\\u200D]*)+\\s*", "u"); } catch(e){ PICT = /^\s*(?:[\u2600-\u27BF\uD83C-\uD83E][\uDC00-\uDFFF]?\uFE0F?)+\s*/; }
 const deco = s => String(s ?? "").replace(PICT, "");
 const plain = s => String(s ?? "").replace(/\*+/g, "").trim();
 const lockText = s => fmt(deco(s));
