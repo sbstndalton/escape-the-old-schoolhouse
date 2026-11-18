@@ -31,8 +31,10 @@ To download everything at once, go to the main repository page and click the gre
 
 Download **`editor.html`** and double-click it. Everything happens in the browser, with no account and no internet needed.
 
-- **Change anything students see.** Story text, clues, questions, answers, hints, the exit password, and grading are all text boxes.
-- **Add, remove, or reorder rooms.** There are five kinds of rooms:
+The editor looks like a curator's workbench at night. The **cabinet** on the left has one drawer for each room, plus Settings, Story & intro, and Finish & grading. On a phone, tap the brass **Rooms** handle at the top to slide the cabinet out. The drawer you pick is laid out on paper in the middle, with index tabs along the top (for example *Cards & clues*, *Lock*, *Room text*, *Hints*). A small **ⓘ** next to a label opens a short explanation (point at it, tap it, or reach it with the Tab key).
+
+- **Change anything students see.** Story text, clues, questions, answers, hints, the exit password, and grading are all lines you type on.
+- **Add, remove, or reorder rooms.** **Add a room** in the cabinet lists the five kinds of rooms:
   - **Question lock**: short-answer or multiple-choice questions. All must be right to open the lock. *This one works like a chapter quiz.*
   - **Matching code**: match clues to cards and enter the codes on the cards.
     - Choose a **Look of the cards** for each matching room: *Plain cards*, *Books on a shelf* (the code is the gilt letter on each spine), or *Framed portraits* (the code is on a brass plate; the frame shows the card's icon, or initials if it has none). The look changes the picture only, never the puzzle or the answer. Books suit short names. A name over 48 characters makes that room fall back to plain cards.
@@ -52,9 +54,9 @@ Download **`editor.html`** and double-click it. Everything happens in the browse
   ```
   `A:` lists accepted answers (separate alternatives with `|`; capitals and punctuation are ignored). For multiple choice, mark the right answer with `*`.
 - **One escape room per chapter.** Use **New…** to start a blank room or copy the sample. Each escape room is its own file.
-- **See the answers.** Every room shows an **answer key** at the top (only in the editor), and it updates as you type. **Answer sheet** shows every room's answers on one page, ready to print.
+- **See the answers.** Every room has an **Answer key** envelope beside the page (only in the editor). Click it to open the key; it updates as you type. **Answer sheet** shows every room's answers on one page, ready to print.
 - **Hints (optional).** Hints are **off** until you switch them on for a room. Each room can have **two hints** that you write. Students can't open a hint straight away: hint 1 unlocks after 1 wrong try and hint 2 after 3 wrong tries in that room (you can change these numbers in **Settings**). The editor warns you if a hint gives away the answer.
-- **▶ Preview as student** opens the game exactly as students see it, full screen. The bar at the top is just for you: jump to any room, switch **Show answers** on or off, **Restart**, or **✕ Exit preview** (or press **Esc**). Each room also has a **▶ Preview this room** button. Nothing in the preview is saved or graded.
+- **Preview as student** opens the game exactly as students see it, full screen. The brass rail at the top is just for you: jump to any room, switch **Show answers** on or off, **Restart**, or **Exit preview** (or press **Esc**). Each room also has a **Preview this room** button. Nothing in the preview is saved or graded.
 - **Export for students** downloads the game as an `.html` file or a **SCORM `.zip`** for Moodle/Canvas, ready to upload.
 - **Save project** downloads your work so you can reopen it later with **Open…**. You can also reopen an exported game `.html` file. The editor also remembers your work in the browser between visits.
 
@@ -62,13 +64,13 @@ Download **`editor.html`** and double-click it. Everything happens in the browse
 
 ## ✅ Checking the content
 
-Every gradable item (each card, question, timeline event, sorting item, and reflection result) has a **Source** box and a **✔ I checked this is correct** checkbox.
+Every gradable item (each card, question, timeline event, sorting item, and reflection result) has a **Source** line and a wax seal labelled **I checked this is correct**.
 
 1. Click **Answer sheet** to see or print every room with all the answers.
 2. Compare each item with your textbook or other sources. Fix anything that's wrong.
-3. Type where you checked it in **Source** (for example, *Ch. 3, p. 45*) and tick **✔ I checked this is correct**.
+3. Type where you checked it in **Source** (for example, *Ch. 3, p. 45*) and press the seal, **I checked this is correct**.
 
-The counter at the top shows how many items are checked, and the room list shows how many are left in each room. If you edit an item after checking it, it un-checks itself so you look at it again. Until every item is checked, the student game shows a **Draft** notice at the top.
+The brass plate at the top shows how many items are checked (for example *31 / 40 checked*), and each drawer label shows that room's count (for example *3/8*, or a tick when the room is done). A pinned note on the page says how many items are still unchecked; click it for the full explanation. If you edit an item after checking it, it un-checks itself so you look at it again. Until every item is checked, the student game shows a **Draft** notice at the top.
 
 ---
 
