@@ -116,13 +116,13 @@ async function playThrough(page, shotPrefix) {
     await page.close();
   });
 
-  await test("hints are counted and run out", async () => {
+  await test("no hints appear unless the teacher turns them on", async () => {
     const page = await newPage(browser, base);
     await page.click("#begin");
-    for (let i = 0; i < 3; i++) await page.click("#hint-btn");
-    assert.equal(await page.textContent("#hintCount"), "3");
-    assert.equal(await page.isDisabled("#hint-btn"), true);
-    assert.equal(await page.locator("#hints .hint").count(), 3);
+    assert.equal(await page.locator("#hint-btn").count(), 0);
+    await page.fill("#answer", "wrong"); await page.click("#try");
+    assert.equal(await page.locator("#hint-btn").count(), 0);
+    assert.doesNotMatch(await page.textContent("#stage"), /hint/i);
     await page.close();
   });
 

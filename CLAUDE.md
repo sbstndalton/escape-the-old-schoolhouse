@@ -25,6 +25,11 @@ Room 1 `LEARN` · Room 2 `9154` · Room 3 oldest→newest: Plato, Rousseau, Mann
 ## Room types
 `matching` (cards with codes + clues; code = codes of clue cards in clue order; `codeWord` or per-card `code` override auto letters/numbers), `quiz` (short answer with `|`-separated accepted answers, or multiple choice with `correct` index), `ordering` (items listed in correct order, shown scrambled), `sorting` (items with a `category` index), `reflection` (questions whose options point at `profiles[].key`). Every gradable item has `source` and `verified`. To add a type, update `ER.validate`, `ER.reviewItems`, the renderer in `src/game.html`, the form in `src/editor.html`, the review sheet, and the tests.
 
+## Hints, answers and preview
+- Hints are per room: `hintsEnabled` (default **false**) and at most 2 entries in `hints`. They unlock after `hintRules.first` / `hintRules.second` wrong tries in that room (defaults 1 and 3). Reflection rooms never show hints. `ER.hintWarnings()` flags hints that give the answer away; keep sample hints as leading nudges, never the answer.
+- `ER.answerKey(room)` is the single source for the editor's answer key, the preview's "Show answers" panel, and tests.
+- The editor's preview builds the game with `__preview: true`. Only then does the game accept `postMessage` commands (`{er:"goto", room}`, `{er:"key", on}`) and send `{er:"room"}` / `{er:"escape"}` back. Exported games must never contain `__preview` or show answers.
+
 ## Content accuracy
 - **Never mark content as verified (`"verified": true`).** Only the instructor does that, in the editor, after checking it against their sources. AI-written or AI-edited content always stays unverified.
 - If you change an item's meaning, set its `verified` back to `false`.
@@ -36,6 +41,6 @@ Room 1 `LEARN` · Room 2 `9154` · Room 3 oldest→newest: Plato, Rousseau, Mann
 - **Accuracy matters**: this is course content. Double-check names, dates, quotes, and how each philosophy is described before changing them, and still leave them unverified for the instructor.
 - Content is lightly obfuscated (base64) inside the game file. That only deters casual peeking; don't describe it as secure.
 - Teachers edit content in the editor, so every content field must stay editable there. Don't hard-code course content in `src/game.html`.
-- If you change the sample's answers, the exit password, room count, or element IDs (`#begin`, `#answer`, `#try`, `#msg`, `#hint-btn`, `#order`, `#exit-password`, `#draft`, …), update the tests, the README answer key, and this file.
+- If you change the sample's answers, the exit password, room count, or element IDs (game: `#begin`, `#answer`, `#try`, `#msg`, `#hint-btn`, `#hint-note`, `#hints`, `#order`, `#exit-password`, `#draft`, `#teacher-key`; editor: `#answer-key`, `#hints-toggle`, `#preview-room`, `#preview-exit`, `#btn-*`, `#export-*`, `#new-*`), update the tests, the README answer key, and this file.
 - No personal information (names, emails, school details) in any file or commit.
 - The SCORM code must keep working when no LMS is present (the plain-browser case).

@@ -44,6 +44,57 @@ const ER = (() => {
     return { cards, display, answerCards, numbers, code, answer: answerCards.map(c => code[c.k]).join("") };
   }
 
+  // ---------- answer key (teacher-only views: editor, preview, review sheet) ----------
+  // Returns plain-text lines that may use **bold** (render with fmt).
+  function answerKey(room) {
+    const t = room.type;
+    if (t === "matching") {
+      const m = matching(room);
+      const label = i => m.numbers ? String.fromCharCode(65 + i) : String(i + 1);
+      return [`Lock combination: **${m.answer}**`, ...m.answerCards.map((c, i) => `Clue ${label(i)} → ${c.term} (code ${m.code[c.k]})`)];
+    }
+    if (t === "quiz") return (room.questions || []).map((q, i) => `${i + 1}. ${q.prompt}  →  **${q.kind === "choice"
+      ? String((q.choices || [])[q.correct] ?? "?") : String(q.answers || "").split("|").map(a => a.trim()).filter(Boolean).join(" / ")}**`);
+    if (t === "ordering") return (room.items || []).map((it, i) => `${i + 1}. ${it.text}${it.label ? ` (**${it.label}**)` : ""}`);
+    if (t === "sorting") return (room.items || []).map(it => `${it.text}  →  **${(room.categories || [])[it.category] ?? "?"}**`);
+    if (t === "reflection") return ["No wrong answers: any choices open the door. The most-chosen result is shown on the certificate."];
+    return [];
+  }
+
+  // ---------- hints ----------
+  const HINT_ROOMS = ["matching", "quiz", "ordering", "sorting"];        // rooms where a student can get it wrong
+  const hintRules = cfg => ({ first: Math.max(0, +(cfg.hintRules?.first ?? 1)), second: Math.max(0, +(cfg.hintRules?.second ?? 3)) });
+  // Hints that would hand over the answer instead of leading toward it.
+  function hintWarnings(room) {
+    const out = [];
+    const hints = (room.hints || []).slice(0, 2);
+    const has = (h, s) => { const a = norm(s); return a.length >= 3 && (" " + norm(h) + " ").includes(" " + a + " "); };
+    hints.forEach((h, i) => {
+      if (!String(h || "").trim()) return;
+      const why = [];
+      if (room.type === "matching") {
+        const m = matching(room);
+        if (m.answer.length >= 3 && has(h, m.answer)) why.push("it contains the lock combination");
+        const named = m.answerCards.filter(c => has(h, c.term)).length;
+        if (named >= 2) why.push(`it names ${named} of the answer cards`);
+      }
+      if (room.type === "quiz") {
+        const given = (room.questions || []).filter(q => q.kind === "choice" ? has(h, (q.choices || [])[q.correct]) : accepted(q.answers).some(a => a.length >= 4 && has(h, a))).length;
+        if (given) why.push(`it contains the answer to ${given} question${given > 1 ? "s" : ""}`);
+      }
+      if (room.type === "sorting") {
+        const listed = (room.items || []).filter(it => norm(it.text).length > 12 && norm(h).includes(norm(it.text).slice(0, 25))).length;
+        if (listed >= 2) why.push(`it quotes ${listed} of the items`);
+      }
+      if (room.type === "ordering") {
+        const labels = (room.items || []).map(it => norm(it.label)).filter(l => l.length >= 2);
+        if (labels.length >= 3 && labels.filter(l => (" " + norm(h) + " ").includes(" " + l + " ")).length >= 3) why.push("it lists most of the dates or labels");
+      }
+      if (why.length) out.push({ hint: i, message: `Hint ${i + 1} may give away the answer: ${why.join(" and ")}.` });
+    });
+    return out;
+  }
+
   // ---------- review status ----------
   // Every fact a student is graded on, so the teacher can check each one.
   function reviewItems(cfg) {
@@ -86,6 +137,8 @@ const ER = (() => {
           } else if (!accepted(q.answers).length) errs.push(`${where}, question ${i + 1}: needs at least one accepted answer.`);
         });
       }
+      if (room.hintsEnabled && HINT_ROOMS.includes(room.type) && !(room.hints || []).slice(0, 2).some(x => String(x || "").trim()))
+        errs.push(`${where}: hints are turned on, but no hint has been written.`);
       if (room.type === "ordering" && (room.items || []).length < 2) errs.push(`${where}: needs at least 2 items to put in order.`);
       if (room.type === "sorting") {
         const cats = (room.categories || []).filter(c => String(c).trim());
@@ -173,7 +226,7 @@ const ER = (() => {
   const scorm = (gameHtml, title, date) => zip([{ name: "imsmanifest.xml", data: manifest(title) }, { name: "index.html", data: gameHtml }], date);
   const fileSlug = s => String(s || "escape-room").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") || "escape-room";
 
-  return { esc, fmt, paras, norm, accepted, hash, scramble, matching, reviewItems, reviewStatus, validate,
+  return { esc, fmt, paras, norm, accepted, hash, scramble, matching, answerKey, HINT_ROOMS, hintRules, hintWarnings, reviewItems, reviewStatus, validate,
     encodeConfig, decodeConfig, buildGame, configFromHtml, zip, crc32, manifest, scorm, fileSlug };
 })();
 if (typeof module !== "undefined") module.exports = ER;

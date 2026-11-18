@@ -50,7 +50,9 @@ Download **`editor.html`** and double-click it. Everything happens in the browse
   ```
   `A:` lists accepted answers (separate alternatives with `|`; capitals and punctuation are ignored). For multiple choice, mark the right answer with `*`.
 - **One escape room per chapter.** Use **New…** to start a blank room or copy the sample. Each escape room is its own file.
-- **Preview** plays the game exactly as students see it.
+- **See the answers.** Every room shows an **answer key** at the top (only in the editor), and it updates as you type. **Answer sheet** shows every room's answers on one page, ready to print.
+- **Hints (optional).** Hints are **off** until you switch them on for a room. Each room can have **two hints** that you write. Students can't open a hint straight away: hint 1 unlocks after 1 wrong try and hint 2 after 3 wrong tries in that room (you can change these numbers in **Settings**). The editor warns you if a hint gives away the answer.
+- **▶ Preview as student** opens the game exactly as students see it, full screen. The bar at the top is just for you: jump to any room, switch **Show answers** on or off, **Restart**, or **✕ Exit preview** (or press **Esc**). Each room also has a **▶ Preview this room** button. Nothing in the preview is saved or graded.
 - **Export for students** downloads the game as an `.html` file or a **SCORM `.zip`** for Moodle/Canvas, ready to upload.
 - **Save project** downloads your work so you can reopen it later with **Open…**. You can also reopen an exported game `.html` file. The editor also remembers your work in the browser between visits.
 
@@ -60,7 +62,7 @@ Download **`editor.html`** and double-click it. Everything happens in the browse
 
 Every gradable item (each card, question, timeline event, sorting item, and reflection result) has a **Source** box and a **✔ I checked this is correct** checkbox.
 
-1. Click **Review sheet** to see or print every room with all the answers.
+1. Click **Answer sheet** to see or print every room with all the answers.
 2. Compare each item with your textbook or other sources. Fix anything that's wrong.
 3. Type where you checked it in **Source** (for example, *Ch. 3, p. 45*) and tick **✔ I checked this is correct**.
 
@@ -197,7 +199,7 @@ The tests also run automatically on GitHub every time the game or editor changes
 | 4 · Observation Room | Label 8 classroom scenes | T, P, T, P, T, P, T, P (top to bottom) |
 | 5 · Mirror | Self-reflection survey | Any answers are accepted. Gives a personal philosophy profile. |
 
-Students get 2–3 hints per room. By default, wrong guesses and hints don't lower the grade; you can change that under **Finish & grading** in the editor. The editor's **Review sheet** always shows the current answers, including for escape rooms you've changed.
+Hints are **off** in the sample. Each room has two ready-made hints that point students in the right direction without giving the answer; turn them on per room in the editor. By default, wrong guesses and hints don't lower the grade; you can change that under **Finish & grading**. The editor's answer key and **Answer sheet** always show the current answers, including for escape rooms you've changed.
 
 ---
 
