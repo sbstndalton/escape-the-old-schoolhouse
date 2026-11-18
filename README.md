@@ -35,9 +35,11 @@ Download **`editor.html`** and double-click it. Everything happens in the browse
 - **Add, remove, or reorder rooms.** There are five kinds of rooms:
   - **Question lock**: short-answer or multiple-choice questions. All must be right to open the lock. *This one works like a chapter quiz.*
   - **Matching code**: match clues to cards and enter the codes on the cards.
+    - Choose a **Look of the cards** for each matching room: *Plain cards*, *Books on a shelf* (the code is the gilt letter on each spine), or *Framed portraits* (the code is on a brass plate; the frame shows the card's icon, or initials if it has none). The look changes the picture only, never the puzzle or the answer. Books suit short names. A name over 48 characters makes that room fall back to plain cards.
   - **Put in order**: timelines or steps in a process.
   - **Sort into groups**: for example traditional vs. progressive.
   - **Reflection survey**: no wrong answers; shows a result profile on the certificate.
+- **Animation is optional for students.** Locks spring open, rooms change with a door swing, and the certificate gets a stamped seal and a short burst of confetti. Students can switch all of it off with the **Motion** button at the top of the game. It is off automatically on devices set to "reduce motion", and the game works the same either way.
 - **Type a whole quiz as text.** In a Question lock room, click **Edit all questions as text** and write:
   ```text
   Q: Who wrote Democracy and Education (1916)?

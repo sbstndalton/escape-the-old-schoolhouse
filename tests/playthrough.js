@@ -19,8 +19,9 @@ async function test(name, fn) {
   catch (e) { failed++; console.log(`  ✘ ${name}\n      ${e.message.split("\n").join("\n      ")}`); }
 }
 
-async function newPage(browser, base, { scorm = false, viewport = { width: 1000, height: 900 } } = {}) {
-  const page = await browser.newPage({ viewport });
+async function newPage(browser, base, { scorm = false, viewport = { width: 1000, height: 900 }, reducedMotion = "no-preference", init = null } = {}) {
+  const page = await browser.newPage({ viewport, reducedMotion });
+  if (init) await page.addInitScript(init);
   page.errors = [];
   page.externalRequests = [];
   page.on("pageerror", e => page.errors.push(e.message));
@@ -139,6 +140,110 @@ async function playThrough(page, shotPrefix) {
     await playThrough(page);
     assert.deepEqual(page.externalRequests, []);
     await page.close();
+  });
+
+  await test("books and portraits show every code as text, and the rooms still solve", async () => {
+    const page = await newPage(browser, base);
+    await page.click("#begin");
+    const clean = t => t.replace(/\s+/g, " ").trim();
+    // Room 1 is drawn as books on a shelf
+    await page.locator(".shelf").waitFor();
+    assert.equal(await page.locator(".shelf .vol").count(), 5);
+    assert.deepEqual((await page.locator(".vol .letter b").allTextContents()).sort(), ["A", "E", "L", "N", "R"]);
+    const books = (await page.locator(".shelf > li").allTextContents()).map(clean);
+    assert.ok(books.includes("Code L: Essentialism"), `screen-reader text for a book, got: ${books.join(" | ")}`);
+    assert.equal(await page.locator("ol.clues .icard").count(), 5, "clues are index cards");
+    assert.match(clean(await page.locator(".icard").first().textContent()), /^Clue 1 ?All students should master/);
+    assert.equal(await page.locator(".vol .band:not([aria-hidden=true])").count(), 0, "decoration is hidden from screen readers");
+    await page.fill("#answer", "learn"); await page.click("#try");
+    assert.equal(await page.locator(".lock.unlocked").count(), 1, "the padlock opens");
+    await page.locator("#stage h2:has-text('Room 2')").waitFor();
+    // Room 2 is drawn as framed portraits with brass plates
+    assert.equal(await page.locator(".gallery .portrait").count(), 8);
+    assert.deepEqual((await page.locator(".plate b").allTextContents()).sort(), ["1", "2", "3", "4", "5", "7", "8", "9"]);
+    const dewey = clean(await page.locator(".portrait", { hasText: "John Dewey" }).textContent());
+    assert.match(dewey, /John Dewey.*Code (No\. ?)?9$/);
+    assert.equal(await page.locator(".portrait .gilt[aria-hidden=true]").count(), 8);
+    await page.fill("#answer", "9154"); await page.click("#try");
+    await page.locator("#stage h2:has-text('Room 3')").waitFor();
+    // A portrait with no icon shows initials; an unknown look, or a very long name on a book, falls back to plain cards
+    await page.evaluate(() => { ROOMS[1].cards[0].icon = ""; go(2); });
+    await page.locator(".sitter", { hasText: /^JD$/ }).waitFor();
+    await page.evaluate(() => { ROOMS[0].look = "something-else"; go(1); });
+    await page.locator(".mcard").first().waitFor();
+    assert.equal(await page.locator(".mcard").count(), 5);
+    assert.equal(await page.locator("ol.clues li").count(), 5);
+    await page.evaluate(() => { ROOMS[0].look = "books"; ROOMS[0].cards[0].term = "A very long name that could never fit on the spine of a book"; go(1); });
+    await page.locator(".mcard").first().waitFor();
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
+  await test("a wrong answer moves only the lock, and the certificate gets a seal and one burst of confetti", async () => {
+    const page = await newPage(browser, base);
+    assert.equal(await page.getAttribute("html", "data-motion"), "on");
+    await page.click("#begin");
+    await page.fill("#answer", "wrong"); await page.click("#try");
+    assert.equal(await page.locator(".lock.nope").count(), 1);
+    assert.equal(await page.locator("#stage.shake").count(), 0, "the board itself doesn't shake");
+    assert.equal(await page.evaluate(() => document.activeElement.id), "try", "focus stays where the student was");
+    await page.evaluate(() => { S.player = "Test Student"; go(ROOMS.length + 1); });
+    await page.locator(".cert .seal").waitFor();
+    assert.equal(await page.getAttribute(".cert .seal", "aria-hidden"), "true");
+    await page.locator("#confetti").waitFor({ state: "attached", timeout: 3000 });
+    await page.locator("#confetti").waitFor({ state: "detached", timeout: 5000 });   // it cleans up after itself
+    assert.equal(await page.evaluate(() => document.activeElement.id), "stage", "focus moves to the new screen");
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
+  await test("reduced motion: the whole game plays with no animation at all", async () => {
+    const page = await newPage(browser, base, { reducedMotion: "reduce" });
+    assert.equal(await page.getAttribute("html", "data-motion"), "off");
+    assert.equal(await page.isDisabled("#motion-toggle"), true);
+    assert.match(await page.textContent("#motion-toggle"), /Motion: off/);
+    await page.click("#begin");
+    assert.equal(await page.evaluate(() => document.getAnimations().length), 0, "nothing animates when a room opens");
+    await page.fill("#answer", "wrong"); await page.click("#try");
+    assert.match(await page.textContent("#msg"), /won't budge/);
+    assert.equal(await page.evaluate(() => document.getAnimations().length), 0, "nothing animates on a wrong try");
+    await page.fill("#answer", "learn"); await page.click("#try");
+    assert.equal(await page.locator(".lock.unlocked").count(), 1, "the lock still shows as open");
+    assert.equal(await page.locator(".sparks").count(), 0);
+    assert.equal(await page.evaluate(() => document.getAnimations().length), 0, "nothing animates when a lock opens");
+    await page.evaluate(() => go(0));
+    await playThrough(page, "reduced");
+    assert.match(await page.textContent("#stage"), /DEWEY1916/);
+    assert.equal(await page.locator("#confetti").count(), 0);
+    assert.equal(await page.evaluate(() => document.getAnimations().length), 0, "nothing animates on the certificate");
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
+  await test("the Motion button switches animation off, remembers it, and works without browser storage", async () => {
+    const page = await newPage(browser, base);
+    await page.click("#motion-toggle");
+    assert.match(await page.textContent("#motion-toggle"), /Motion: off/);
+    assert.equal(await page.getAttribute("html", "data-motion"), "off");
+    await page.click("#begin");
+    assert.equal(await page.evaluate(() => document.getAnimations().length), 0);
+    await page.reload();
+    assert.equal(await page.getAttribute("html", "data-motion"), "off", "the choice is remembered");
+    await page.click("#motion-toggle");
+    assert.equal(await page.getAttribute("html", "data-motion"), "on");
+    await page.close();
+    // Some LMS frames block storage: the game and the button must still work.
+    const blocked = await newPage(browser, base, { init: () => {
+      Object.defineProperty(window, "localStorage", { get(){ throw new Error("storage is blocked"); } });
+    } });
+    assert.equal(await blocked.getAttribute("html", "data-motion"), "on");
+    await blocked.click("#motion-toggle");
+    assert.equal(await blocked.getAttribute("html", "data-motion"), "off");
+    await blocked.click("#begin");
+    await blocked.fill("#answer", "learn"); await blocked.click("#try");
+    await blocked.locator("#stage h2:has-text('Room 2')").waitFor();
+    assert.deepEqual(blocked.errors, []);
+    await blocked.close();
   });
 
   await browser.close();

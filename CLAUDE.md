@@ -15,7 +15,7 @@ A browser-based educational escape room for an introductory Foundations of Educa
 
 ## Testing the web version
 - `npm install` once (installs Playwright), then `npx playwright install chromium`.
-- `npm test` builds, then runs `tests/playthrough.js` (plays the sample game: full run, SCORM reporting, wrong answers, hints, phone layout, no outside requests) and `tests/editor.js` (drives the editor: review tracking, text-mode quiz, validation, preview, .html and SCORM export, reopening an export, accuracy grading). Screenshots go to `tests/screenshots/`. Look at them after visual changes.
+- `npm test` builds, then runs `tests/playthrough.js` (plays the sample game: full run, SCORM reporting, wrong answers, hints, phone layout, no outside requests, the books/portraits looks, lock and certificate effects, reduced motion, the Motion button) and `tests/editor.js` (drives the editor: review tracking, text-mode quiz, validation, preview, .html and SCORM export, reopening an export, accuracy grading, the matching-room look select). Screenshots go to `tests/screenshots/`. Look at them after visual changes.
 - `npm run serve` serves the game at http://localhost:8080.
 - **Playwright MCP** (`.mcp.json`): start `npm run serve`, then use the `playwright` MCP tools to open http://localhost:8080 (game) or http://localhost:8080/editor.html (editor), try it, resize to a phone width (390×844), and take screenshots. Use this to check layout and feel, not only the automated tests.
 
@@ -23,12 +23,20 @@ A browser-based educational escape room for an introductory Foundations of Educa
 Room 1 `LEARN` · Room 2 `9154` · Room 3 oldest→newest: Plato, Rousseau, Mann, Montessori, Dewey, Freire, Adler · Room 4 top→bottom T,P,T,P,T,P,T,P · Room 5 any answers.
 
 ## Room types
-`matching` (cards with codes + clues; code = codes of clue cards in clue order; `codeWord` or per-card `code` override auto letters/numbers), `quiz` (short answer with `|`-separated accepted answers, or multiple choice with `correct` index), `ordering` (items listed in correct order, shown scrambled), `sorting` (items with a `category` index), `reflection` (questions whose options point at `profiles[].key`). Every gradable item has `source` and `verified`. To add a type, update `ER.validate`, `ER.reviewItems`, the renderer in `src/game.html`, the form in `src/editor.html`, the review sheet, and the tests.
+`matching` (cards with codes + clues; code = codes of clue cards in clue order; `codeWord` or per-card `code` override auto letters/numbers; optional `look`: `"cards"` (default) | `"books"` | `"portraits"`, presentation only, resolved by `ER.look(room)`, which falls back to cards for unknown values or book names over 48 characters), `quiz` (short answer with `|`-separated accepted answers, or multiple choice with `correct` index), `ordering` (items listed in correct order, shown scrambled), `sorting` (items with a `category` index), `reflection` (questions whose options point at `profiles[].key`). Every gradable item has `source` and `verified`. To add a type, update `ER.validate`, `ER.reviewItems`, the renderer in `src/game.html`, the form in `src/editor.html`, the review sheet, and the tests.
 
 ## Hints, answers and preview
 - Hints are per room: `hintsEnabled` (default **false**) and at most 2 entries in `hints`. They unlock after `hintRules.first` / `hintRules.second` wrong tries in that room (defaults 1 and 3). Reflection rooms never show hints. `ER.hintWarnings()` flags hints that give the answer away; keep sample hints as leading nudges, never the answer.
 - `ER.answerKey(room)` is the single source for the editor's answer key, the preview's "Show answers" panel, and tests.
 - The editor's preview builds the game with `__preview: true`. Only then does the game accept `postMessage` commands (`{er:"goto", room}`, `{er:"key", on}`) and send `{er:"room"}` / `{er:"escape"}` back. Exported games must never contain `__preview` or show answers.
+
+## Look and motion
+- Fonts: Schoolbell (chalk titles, Apache-2.0) and IM Fell English SC (small-caps labels, OFL) are embedded as base64 woff2 in the `<style>` block at the end of `src/game.html`, with their licence notice. They add about 100 KB to every game file. IM Fell's digits are excluded with `unicode-range` because its 1 reads as a capital I; keep it that way, since codes are digits.
+- Motion is no-motion-first. The still version is the base CSS. Every animation rule sits inside `@media (prefers-reduced-motion: no-preference)` and under `[data-motion=on]`, and every scripted effect (sparks, lock rattle, confetti, room transition) checks `calm()` first. `<html data-motion>` is set by the script from the OS setting and the header **Motion** button (`#motion-toggle`, remembered in `localStorage` inside try/catch).
+- New effects need a no-motion path, should animate only transform/opacity, and must clean up after themselves. Don't put a CSS `animation` on `.lock` or other direct children of `#stage`: changing it replays their entrance animation (use `element.animate()` as `lockMove()` does).
+- Room changes go through `go(n)`: View Transitions API where available (the board swings like a door), else a short fade, else instant. `show()` inside it does all the work, so focus, hints, SCORM and the preview's `goto` behave the same on every path. The next screen can appear up to about 150 ms after `go()` is called, so tests should wait for it rather than read the page at once.
+- Decorative pieces (book bands, portrait frames, padlock, seal, sparks, confetti) are `aria-hidden`. The term and code of every card stay real text ("Code L: Essentialism").
+- A padlock emoji at the start of a lock label is not shown, because every lock row already draws a padlock.
 
 ## Content accuracy
 - **Never mark content as verified (`"verified": true`).** Only the instructor does that, in the editor, after checking it against their sources. AI-written or AI-edited content always stays unverified.
@@ -41,6 +49,6 @@ Room 1 `LEARN` · Room 2 `9154` · Room 3 oldest→newest: Plato, Rousseau, Mann
 - **Accuracy matters**: this is course content. Double-check names, dates, quotes, and how each philosophy is described before changing them, and still leave them unverified for the instructor.
 - Content is lightly obfuscated (base64) inside the game file. That only deters casual peeking; don't describe it as secure.
 - Teachers edit content in the editor, so every content field must stay editable there. Don't hard-code course content in `src/game.html`.
-- If you change the sample's answers, the exit password, room count, or element IDs (game: `#begin`, `#answer`, `#try`, `#msg`, `#hint-btn`, `#hint-note`, `#hints`, `#order`, `#exit-password`, `#draft`, `#teacher-key`; editor: `#answer-key`, `#hints-toggle`, `#preview-room`, `#preview-exit`, `#btn-*`, `#export-*`, `#new-*`), update the tests, the README answer key, and this file.
+- If you change the sample's answers, the exit password, room count, or element IDs (game: `#begin`, `#answer`, `#try`, `#msg`, `#hint-btn`, `#hint-note`, `#hints`, `#order`, `#exit-password`, `#draft`, `#teacher-key`, `#motion-toggle`, `#confetti`; editor: `#answer-key`, `#hints-toggle`, `#look-row`, `#look-help`, `#preview-room`, `#preview-exit`, `#btn-*`, `#export-*`, `#new-*`) or the classes the tests read (`.shelf .vol .letter b`, `.gallery .portrait .plate b`, `.icard`, `.mcard`, `.lock.unlocked`, `.lock.nope`, `.seal`), update the tests, the README answer key, and this file.
 - No personal information (names, emails, school details) in any file or commit.
 - The SCORM code must keep working when no LMS is present (the plain-browser case).

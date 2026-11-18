@@ -275,7 +275,8 @@ function select(label, obj, key, options, opts = {}){
     if (opts.item && opts.item.verified) { opts.item.verified = false; }
     changed(); opts.rerender ? render() : null; } },
     options.map(([v, t]) => h("option", { value: v }, t)));
-  s.value = obj[key] ?? "";
+  s.value = obj[key] ?? opts.fallback ?? "";
+  if (s.selectedIndex < 0 && opts.fallback != null) s.value = opts.fallback;     // missing or unknown value: show the default
   return h("label", { class: "field", for: id }, h("span", {}, label, opts.help ? h("small", {}, " — " + opts.help) : null), s);
 }
 /* Mark an item unchecked and update its checkbox without re-rendering (keeps typing focus). */
@@ -334,7 +335,7 @@ const TYPES = {
   quiz:       { icon: "❓", name: "Question lock", desc: "Short-answer or multiple-choice questions. All must be right to open the lock. Works like a chapter quiz.",
                 blank: () => ({ type: "quiz", title: "New question room", story: "", reference: "", lockLabel: "🔒 Question lock", successMessage: "🔓 Every answer is right. The lock opens!", hints: [], questions: [blankQuestion()] }) },
   matching:   { icon: "🔤", name: "Matching code", desc: "Cards with codes and clues. Students match each clue to a card and enter the codes as the lock combination.",
-                blank: () => ({ type: "matching", title: "New matching room", story: "", reference: "", codeStyle: "letters", codeWord: "", cluesHeading: "Clues", lockLabel: "🔒 Lock", successMessage: "🔓 The lock opens!", failMessage: "The lock won't budge. Check each clue again.", hints: [], cards: [blankCard(), blankCard()] }) },
+                blank: () => ({ type: "matching", title: "New matching room", story: "", reference: "", look: "cards", codeStyle: "letters", codeWord: "", cluesHeading: "Clues", lockLabel: "🔒 Lock", successMessage: "🔓 The lock opens!", failMessage: "The lock won't budge. Check each clue again.", hints: [], cards: [blankCard(), blankCard()] }) },
   ordering:   { icon: "🕰️", name: "Put in order", desc: "Students arrange items in the correct order (timelines, steps in a process).",
                 blank: () => ({ type: "ordering", title: "New timeline room", story: "", reference: "", lockLabel: "🔒 Order lock", successMessage: "🔓 Everything is in order. The lock opens!", hints: [], items: [blankOrder(), blankOrder()] }) },
   sorting:    { icon: "🗂️", name: "Sort into groups", desc: "Students put each item into the right category.",
@@ -358,6 +359,11 @@ function commonRoomFields(room){
       field("Message when solved", room, "successMessage")));
 }
 
+const LOOK_HELP = {
+  cards: "Each card is a plain tile with its code on a brass badge.",
+  books: "Each card is a book spine with its code in gilt, and clues are index cards. Best for short names (up to about 25 letters).",
+  portraits: "Each card is a framed portrait above a brass plate with its code, and clues are index cards. The frame shows the card's icon, or initials if it has none."
+};
 function editMatching(room){
   return [
     commonRoomFields(room),
@@ -366,6 +372,11 @@ function editMatching(room){
         select("Code on each card", room, "codeStyle", [["letters", "Letters (A–Z)"], ["numbers", "Numbers (1–9)"]], { rerender: true }),
         room.codeStyle !== "numbers" ? field("Code word (optional)", room, "codeWord", { help: "one letter per clue, e.g. LEARN" }) : null,
         field("Clues heading", room, "cluesHeading")),
+      h("div", { class: "row", id: "look-row" },
+        select("Look of the cards", room, "look", [["cards", "Plain cards"], ["books", "Books on a shelf"], ["portraits", "Framed portraits"]],
+          { rerender: true, fallback: "cards", help: "changes the picture only, not the puzzle" })),
+      h("p", { class: "help", id: "look-help", style: "margin:-.1rem 0 .5rem" }, LOOK_HELP[ER.LOOKS.includes(room.look) ? room.look : "cards"],
+        room.look === "books" && ER.look(room) !== "books" ? " One of your names is longer than 48 characters, so students see plain cards for now." : ""),
       field("Message for a wrong code", room, "failMessage"),
       h("p", { class: "help", style: "margin:.2rem 0 0" }, "The lock combination (in the answer key above) is calculated from the cards below. Students see cards in A–Z order and clues in the order you list them.")),
     h("div", { class: "box" }, h("h3", {}, "Cards and clues"),
@@ -735,7 +746,7 @@ document.getElementById("btn-review").onclick = () => {
   const rooms = cfg.rooms.map((r, i) => {
     let body = "";
     if (r.type === "matching") { const m = ER.matching(r);
-      body = `<p><strong>Lock combination:</strong> <code>${E(m.answer)}</code></p><ol>${r.cards.map(c => `<li>${chk(c)} <strong>${F(c.term)}</strong>${c.detail ? ` (${F(c.detail)})` : ""} — code <code>${E(m.code[r.cards.indexOf(c)])}</code><br>${c.clue ? "Clue: " + F(c.clue) : "<em>Decoy card (no clue)</em>"}${src(c)}</li>`).join("")}</ol>`; }
+      body = `<p><strong>Lock combination:</strong> <code>${E(m.answer)}</code> · Cards shown as: ${({ books: "books on a shelf", portraits: "framed portraits" })[ER.look(r)] || "plain cards"}</p><ol>${r.cards.map(c => `<li>${chk(c)} <strong>${F(c.term)}</strong>${c.detail ? ` (${F(c.detail)})` : ""} — code <code>${E(m.code[r.cards.indexOf(c)])}</code><br>${c.clue ? "Clue: " + F(c.clue) : "<em>Decoy card (no clue)</em>"}${src(c)}</li>`).join("")}</ol>`; }
     if (r.type === "quiz") body = `<ol>${r.questions.map(q => `<li>${chk(q)} ${F(q.prompt)}<br><strong>Answer:</strong> ${q.kind === "choice" ? (q.choices || []).filter(c=>String(c).trim()).map((c, j) => j === q.correct ? `<u><strong>${F(c)}</strong></u>` : F(c)).join(" · ") : E(q.answers)}${src(q)}</li>`).join("")}</ol>`;
     if (r.type === "ordering") body = `<p>Correct order:</p><ol>${r.items.map(it => `<li>${chk(it)} ${F(it.text)}${it.label ? ` <strong>(${F(it.label)})</strong>` : ""}${src(it)}</li>`).join("")}</ol>`;
     if (r.type === "sorting") body = `<ol>${r.items.map(it => `<li>${chk(it)} ${F(it.text)} → <strong>${E(r.categories[it.category] || "?")}</strong>${src(it)}</li>`).join("")}</ol>`;

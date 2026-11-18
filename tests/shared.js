@@ -24,4 +24,16 @@ t("validate catches a sorting item with no category and a blank correct choice",
   assert.ok(ER.validate({ ...base, rooms: [{ type: "sorting", title: "s", categories: ["A", "B"], items: [{ text: "i", category: -1 }] }] }).some(e => /pick its correct category/.test(e)));
   assert.ok(ER.validate({ ...base, rooms: [{ type: "quiz", title: "q", questions: [{ prompt: "p", kind: "choice", choices: ["a", "b"], correct: -1 }] }] }).some(e => /mark which choice is correct/.test(e)));
 });
+t("a matching room's look falls back to plain cards; portrait initials skip small words", () => {
+  assert.equal(ER.look({}), "cards");
+  assert.equal(ER.look({ look: "nonsense" }), "cards");
+  assert.equal(ER.look({ look: "portraits", cards: [{ term: "x".repeat(80) }] }), "portraits");
+  assert.equal(ER.look({ look: "books", cards: [{ term: "Essentialism" }] }), "books");
+  assert.equal(ER.look({ look: "books", cards: [{ term: "x".repeat(49) }] }), "cards");
+  assert.equal(ER.initials("Jean-Jacques Rousseau"), "JJR");
+  assert.equal(ER.initials("George S. Counts"), "GSC");
+  assert.equal(ER.initials("**Maria** de la Cruz"), "MC");
+  assert.equal(ER.initials("Élise von Stein"), "ÉS");
+  assert.equal(ER.initials(""), "?");
+});
 console.log(`\n${n} passed, 0 failed.`);

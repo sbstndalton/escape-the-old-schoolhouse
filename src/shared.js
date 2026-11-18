@@ -47,6 +47,24 @@ const ER = (() => {
     return { cards, display, answerCards, numbers, code, answer: answerCards.map(c => code[c.k]).join("") };
   }
 
+  // ---------- matching rooms: how the cards are drawn (presentation only, never graded) ----------
+  // "cards" is the default and the fallback for anything unknown. Books need short names to fit on a
+  // spine, so a room with a very long name falls back to plain cards instead of clipping text.
+  const LOOKS = ["cards", "books", "portraits"];
+  const plain = s => String(s == null ? "" : s).replace(/\*+/g, "").trim();
+  function look(room) {
+    const v = LOOKS.includes(room && room.look) ? room.look : "cards";
+    if (v === "books" && (room.cards || []).some(c => plain(c.term).length > 48)) return "cards";
+    return v;
+  }
+  // Initials for a portrait with no icon: "Jean-Jacques Rousseau" -> "JJR", "Maria de la Cruz" -> "MC".
+  const PARTICLES = new Set(["de", "del", "della", "der", "di", "du", "la", "le", "of", "the", "van", "von", "and", "y"]);
+  function initials(term) {
+    const words = plain(term).split(/[\s\-\u2010-\u2015]+/).map(w => w.replace(/^[^\p{L}\p{N}]+/u, "")).filter(Boolean);
+    const main = words.filter(w => !PARTICLES.has(w.toLowerCase()));
+    return (main.length ? main : words).slice(0, 3).map(w => Array.from(w)[0].toUpperCase()).join("") || "?";
+  }
+
   // ---------- answer key (teacher-only views: editor, preview, review sheet) ----------
   // Returns plain-text lines that may use **bold** (render with fmt).
   function answerKey(room) {
@@ -229,7 +247,7 @@ const ER = (() => {
   const scorm = (gameHtml, title, date) => zip([{ name: "imsmanifest.xml", data: manifest(title) }, { name: "index.html", data: gameHtml }], date);
   const fileSlug = s => String(s || "escape-room").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") || "escape-room";
 
-  return { esc, fmt, paras, norm, accepted, hash, scramble, matching, answerKey, HINT_ROOMS, hintRules, hintWarnings, reviewItems, reviewStatus, validate,
+  return { esc, fmt, paras, norm, accepted, hash, scramble, matching, LOOKS, look, initials, answerKey, HINT_ROOMS, hintRules, hintWarnings, reviewItems, reviewStatus, validate,
     encodeConfig, decodeConfig, buildGame, configFromHtml, zip, crc32, manifest, scorm, fileSlug };
 })();
 if (typeof module !== "undefined") module.exports = ER;
