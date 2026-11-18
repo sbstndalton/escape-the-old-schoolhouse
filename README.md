@@ -7,6 +7,9 @@ Students solve 5 puzzle rooms about educational philosophies and philosophers, t
 - 💻 Runs in any web browser: Chrome, Edge, Safari, or Firefox
 - 🔌 Needs no internet, accounts, or installs
 - 🎓 Works in **Moodle** and **Canvas**
+- ✏️ Teachers can change every question and answer in a simple editor, and build new escape rooms for other chapters
+
+> ⚠️ **The sample content has not been fact-checked yet.** It was written with AI help and may contain mistakes. Until the instructor checks every item in the editor, students see a "Draft" notice at the top of the game. See [Checking the content](#-checking-the-content).
 
 ---
 
@@ -15,11 +18,53 @@ Students solve 5 puzzle rooms about educational philosophies and philosophers, t
 | File | What it's for |
 |---|---|
 | [`index.html`](index.html) | The game itself. Double-click it to play. |
+| [`editor.html`](editor.html) | **For teachers:** change questions and answers, check content, and export new games. **Don't give this to students**, because it shows the answers. |
 | [`EscapeRoom_SCORM.zip`](EscapeRoom_SCORM.zip) | Upload this to Moodle or Canvas for automatic grading. **Don't unzip it.** |
 | **Mac app**: under **Releases**, on the right side of the repository page | An optional stand-alone Mac app. See [Mac app](#-mac-app-optional). |
 
 To download a file, click its name above, then click the **download button** (⬇) at the top right of the file view.
 To download everything at once, go to the main repository page and click the green **Code** button, then **Download ZIP**.
+
+---
+
+## ✏️ Editing questions and answers (for teachers)
+
+Download **`editor.html`** and double-click it. Everything happens in the browser, with no account and no internet needed.
+
+- **Change anything students see.** Story text, clues, questions, answers, hints, the exit password, and grading are all text boxes.
+- **Add, remove, or reorder rooms.** There are five kinds of rooms:
+  - **Question lock**: short-answer or multiple-choice questions. All must be right to open the lock. *This one works like a chapter quiz.*
+  - **Matching code**: match clues to cards and enter the codes on the cards.
+  - **Put in order**: timelines or steps in a process.
+  - **Sort into groups**: for example traditional vs. progressive.
+  - **Reflection survey**: no wrong answers; shows a result profile on the certificate.
+- **Type a whole quiz as text.** In a Question lock room, click **Edit all questions as text** and write:
+  ```text
+  Q: Who wrote Democracy and Education (1916)?
+  A: John Dewey | Dewey
+
+  Q: Which philosophy is built around the "Great Books"?
+  - Essentialism
+  * Perennialism
+  - Existentialism
+  ```
+  `A:` lists accepted answers (separate alternatives with `|`; capitals and punctuation are ignored). For multiple choice, mark the right answer with `*`.
+- **One escape room per chapter.** Use **New…** to start a blank room or copy the sample. Each escape room is its own file.
+- **Preview** plays the game exactly as students see it.
+- **Export for students** downloads the game as an `.html` file or a **SCORM `.zip`** for Moodle/Canvas, ready to upload.
+- **Save project** downloads your work so you can reopen it later with **Open…**. You can also reopen an exported game `.html` file. The editor also remembers your work in the browser between visits.
+
+---
+
+## ✅ Checking the content
+
+Every gradable item (each card, question, timeline event, sorting item, and reflection result) has a **Source** box and a **✔ I checked this is correct** checkbox.
+
+1. Click **Review sheet** to see or print every room with all the answers.
+2. Compare each item with your textbook or other sources. Fix anything that's wrong.
+3. Type where you checked it in **Source** (for example, *Ch. 3, p. 45*) and tick **✔ I checked this is correct**.
+
+The counter at the top shows how many items are checked, and the room list shows how many are left in each room. If you edit an item after checking it, it un-checks itself so you look at it again. Until every item is checked, the student game shows a **Draft** notice at the top.
 
 ---
 
@@ -131,12 +176,14 @@ npx playwright install chromium
 | Command | What it does |
 |---|---|
 | `npm run serve` | Runs the game at http://localhost:8080 |
-| `npm test` | Plays the whole game automatically and checks it works, and saves screenshots of every room to `tests/screenshots/` |
-| `npm run build:scorm` | Rebuilds `EscapeRoom_SCORM.zip` after you change `index.html` |
+| `npm run build` | Rebuilds `index.html`, `editor.html`, and `EscapeRoom_SCORM.zip` from `src/` and `content/` |
+| `npm test` | Builds, then plays the whole game and drives the editor automatically, and saves screenshots to `tests/screenshots/` |
 
 **Browser control (MCP):** the `.mcp.json` file gives Claude Code the **Playwright** browser tools. The first time you open Claude Code in this folder, it asks whether to allow the `playwright` server. Say yes. After that you can ask things like *"Play the escape room on a phone-sized screen and tell me what's confusing,"* or *"Add a sixth room about Horace Mann and test it."* The `CLAUDE.md` file tells Claude the rules for this project.
 
-The tests also run automatically on GitHub every time `index.html` changes.
+The tests also run automatically on GitHub every time the game or editor changes.
+
+**How the files fit together:** the game's code is in `src/game.html`, the editor's is in `src/editor.html`, shared logic is in `src/shared.js`, and the sample escape room's content is in `content/foundations-of-education.json`. `npm run build` combines them into the files at the top of the repository. Don't edit `index.html` or `editor.html` directly.
 
 ---
 
@@ -150,12 +197,12 @@ The tests also run automatically on GitHub every time `index.html` changes.
 | 4 · Observation Room | Label 8 classroom scenes | T, P, T, P, T, P, T, P (top to bottom) |
 | 5 · Mirror | Self-reflection survey | Any answers are accepted. Gives a personal philosophy profile. |
 
-Students get 2–3 hints per room, and wrong guesses are unlimited.
+Students get 2–3 hints per room. By default, wrong guesses and hints don't lower the grade; you can change that under **Finish & grading** in the editor. The editor's **Review sheet** always shows the current answers, including for escape rooms you've changed.
 
 ---
 
 ## ℹ️ Good to know
 
 - **Privacy:** The game runs entirely in the student's browser. It doesn't send data anywhere, except that SCORM reports completion, score, and time to *your own* Moodle or Canvas gradebook.
-- **Answers are only lightly hidden** in the code, so a tech-savvy student could find them. That's fine for a low-stakes activity.
-- **Editing:** Open `index.html` in any text editor. The clues, hints, timeline events, and classroom scenes are written in plain English inside the `<script>` section. If you change the game, rebuild the SCORM zip with `index.html` and `imsmanifest.xml` together.
+- **Answers are only lightly hidden.** Everything runs in the student's browser, so a tech-savvy student could dig the answers out of the game file. That's fine for practice and low-stakes quizzes, but don't rely on it for high-stakes tests.
+- **Editing:** use `editor.html` (see [Editing questions and answers](#️-editing-questions-and-answers-for-teachers)). Don't edit `index.html` by hand; it's generated.

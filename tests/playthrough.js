@@ -10,7 +10,7 @@ const SHOTS = path.join(__dirname, "screenshots");
 fs.mkdirSync(SHOTS, { recursive: true });
 
 const TIMELINE_ORDER = ["Plato", "Rousseau", "Horace", "Montessori", "Dewey", "Freire", "Adler"];
-const OBSERVATIONS = "TPTPTPTP";
+const OBSERVATIONS = [0, 1, 0, 1, 0, 1, 0, 1]; // 0 = Traditional, 1 = Progressive
 const WAIT = 1500; // rooms advance ~1.3s after a correct answer
 
 let passed = 0, failed = 0;
@@ -48,8 +48,8 @@ async function solveTimeline(page) {
   const rank = s => TIMELINE_ORDER.findIndex(k => s.includes(k));
   for (let pass = 0; pass < 8; pass++) {
     for (let i = 0; i < 6; i++) {
-      const t = await page.$$eval("#tl li span:nth-child(2)", els => els.map(e => e.textContent));
-      if (rank(t[i]) > rank(t[i + 1])) await page.locator("#tl li").nth(i).getByRole("button", { name: "Move down" }).click();
+      const t = await page.$$eval("#order li span:nth-child(2)", els => els.map(e => e.textContent));
+      if (rank(t[i]) > rank(t[i + 1])) await page.locator("#order li").nth(i).getByRole("button", { name: "Move down" }).click();
     }
   }
 }
@@ -60,16 +60,16 @@ async function playThrough(page, shotPrefix) {
   await page.fill("#pname", (await page.inputValue("#pname")) || "Test Student");
   await page.click("#begin");
   await shot("1-library");
-  await page.fill("#a1", "learn"); await page.click("#t1"); await page.waitForTimeout(WAIT);
+  await page.fill("#answer", "learn"); await page.click("#try"); await page.waitForTimeout(WAIT);
   await shot("2-gallery");
-  await page.fill("#a2", "9154"); await page.click("#t2"); await page.waitForTimeout(WAIT);
+  await page.fill("#answer", "9154"); await page.click("#try"); await page.waitForTimeout(WAIT);
   await shot("3-timeline");
-  await solveTimeline(page); await page.click("#t3");
-  assert.match(await page.textContent("#m3"), /lock drops open/);
+  await solveTimeline(page); await page.click("#try");
+  assert.match(await page.textContent("#msg"), /lock drops open/);
   await page.waitForTimeout(WAIT);
   await shot("4-observation");
   for (let i = 0; i < 8; i++) await page.click(`.seg button[data-i="${i}"][data-v="${OBSERVATIONS[i]}"]`);
-  await page.click("#t4"); await page.waitForTimeout(WAIT);
+  await page.click("#try"); await page.waitForTimeout(WAIT);
   await shot("5-mirror");
   for (let i = 0; i < 6; i++) await page.locator(`input[name=q${i}]`).nth(2).check();
   await page.click("#mf button[type=submit]"); await page.waitForTimeout(WAIT);
@@ -89,6 +89,7 @@ async function playThrough(page, shotPrefix) {
     assert.match(text, /You Escaped!/);
     assert.match(text, /DEWEY1916/);
     assert.match(text, /Your reflection: Progressivism/);
+    assert.match(await page.textContent("#draft"), /40 of 40 items haven't been checked/);
     assert.deepEqual(page.errors, [], "page had JavaScript errors");
     await page.close();
   });
@@ -107,21 +108,21 @@ async function playThrough(page, shotPrefix) {
   await test("wrong answers are rejected with feedback", async () => {
     const page = await newPage(browser, base);
     await page.click("#begin");
-    await page.fill("#a1", "wrong"); await page.click("#t1");
-    assert.match(await page.textContent("#m1"), /won't budge/);
-    await page.fill("#a1", "learn"); await page.click("#t1"); await page.waitForTimeout(WAIT);
-    await page.fill("#a2", "1234"); await page.click("#t2");
-    assert.match(await page.textContent("#m2"), /ERROR/);
+    await page.fill("#answer", "wrong"); await page.click("#try");
+    assert.match(await page.textContent("#msg"), /won't budge/);
+    await page.fill("#answer", "learn"); await page.click("#try"); await page.waitForTimeout(WAIT);
+    await page.fill("#answer", "1234"); await page.click("#try");
+    assert.match(await page.textContent("#msg"), /ERROR/);
     await page.close();
   });
 
   await test("hints are counted and run out", async () => {
     const page = await newPage(browser, base);
     await page.click("#begin");
-    for (let i = 0; i < 3; i++) await page.click("#hb-r1");
+    for (let i = 0; i < 3; i++) await page.click("#hint-btn");
     assert.equal(await page.textContent("#hintCount"), "3");
-    assert.equal(await page.isDisabled("#hb-r1"), true);
-    assert.equal(await page.locator("#h-r1 .hint").count(), 3);
+    assert.equal(await page.isDisabled("#hint-btn"), true);
+    assert.equal(await page.locator("#hints .hint").count(), 3);
     await page.close();
   });
 
