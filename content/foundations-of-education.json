@@ -81,10 +81,10 @@
         }
       ],
       "hints": [
-        "Each numbered description matches one philosophy book. Write down the letter on that book's spine for descriptions 1 through 5, in order.",
-        "Description 1 (basics, core skills, discipline) is **Essentialism**, and description 5 (learning by doing) is **Progressivism**.",
-        "The answer is a five-letter word for what every student does in school."
-      ]
+        "Look for one key idea in each description, such as \"great books,\" \"basic skills,\" \"social change,\" or \"free choice,\" and ask which philosophy is known for it.",
+        "Start with the descriptions you're surest about and write down each book's letter as you go. When you have all five letters in order, they spell a word."
+      ],
+      "hintsEnabled": false
     },
     {
       "type": "matching",
@@ -172,10 +172,10 @@
         }
       ],
       "hints": [
-        "Each clue describes one philosopher. Find their portrait, then read the number on its brass plate. Enter the four numbers in the order of the clues (A, B, C, D).",
-        "Clue A is John Dewey, and Clue C is Paulo Freire.",
-        "Clue B is Maria Montessori, and Clue D is Horace Mann."
-      ]
+        "Only four of the eight portraits match a clue. Each clue has a giveaway detail: a book title, a country, a famous phrase, or a movement.",
+        "Type the plate numbers in the order of the clues (A, B, C, D), not in the order the portraits hang on the wall."
+      ],
+      "hintsEnabled": false
     },
     {
       "type": "ordering",
@@ -229,10 +229,10 @@
         }
       ],
       "hints": [
-        "Use the ▲ and ▼ buttons to sort the events from oldest (top) to newest (bottom). When you check, the lock tells you how many are in the right spot.",
-        "Plato is the oldest by more than 2,000 years. Next comes the Enlightenment (Rousseau, 1700s), then the 1800s common school movement.",
-        "Twentieth-century order: Montessori (1907), then Dewey (1916), then Freire (1968), then Adler (1982)."
-      ]
+        "Sort the events by century first. These ideas about education span more than 2,000 years.",
+        "Three of the events happened in the 1900s. Of those, the earliest one is about young children, and the latest one is a call for one curriculum for all students."
+      ],
+      "hintsEnabled": false
     },
     {
       "type": "sorting",
@@ -296,10 +296,10 @@
         }
       ],
       "hints": [
-        "**Traditional/classical**: teacher-centered, a set body of content, mastery through instruction and practice. **Progressive**: student-centered, inquiry, real-world problems, collaboration.",
-        "Exactly half of the observations are traditional and half are progressive.",
-        "The four progressive ones: the paper towel experiment, the class garden, the community project, and the class meeting."
-      ]
+        "For each scene, ask who is doing most of the thinking and choosing: the teacher or the students?",
+        "Traditional scenes pass a set body of content from teacher to students. Progressive scenes start from a real problem or the students' own questions."
+      ],
+      "hintsEnabled": false
     },
     {
       "type": "reflection",
@@ -530,9 +530,12 @@
           "verified": false
         }
       ],
-      "hints": [
-        "There are no wrong answers here. Answer honestly, and the mirror will reflect your own philosophy."
-      ]
+      "hints": [],
+      "hintsEnabled": false
     }
-  ]
+  ],
+  "hintRules": {
+    "first": 1,
+    "second": 3
+  }
 }

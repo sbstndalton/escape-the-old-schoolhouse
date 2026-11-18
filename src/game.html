@@ -50,6 +50,10 @@
   button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}
   .msg{min-height:1.5rem;font-weight:bold}
   .msg.bad{color:var(--red)} .msg.good{color:var(--ok)}
+  .hint-btn-wrap .lockednote{font-size:.85rem;color:var(--muted)}
+  .teacher-key{margin-top:1.2rem;border:2px dashed #7ccf8a;border-radius:.45rem;background:rgba(124,207,138,.08);padding:.7rem .9rem}
+  .teacher-key h3{margin:.1rem 0 .4rem;font-size:1rem;color:#7ccf8a;font-family:system-ui,sans-serif}
+  .teacher-key ol,.teacher-key ul{margin:.2rem 0 .2rem 1.2rem;padding:0}
   .hint{margin-top:.8rem;padding:.6rem .8rem;border-left:4px solid var(--gold);background:rgba(232,184,74,.1)}
   .list{list-style:none;padding:0;margin:0}
   .list>li{display:flex;align-items:center;gap:.5rem;margin:.4rem 0;background:var(--card);
@@ -59,6 +63,7 @@
   .mv{padding:.2rem .55rem;font-size:.9rem}
   .scene>li{flex-wrap:wrap;justify-content:space-between}
   .seg{display:flex;flex-wrap:wrap;gap:.3rem}
+  .list>li>span.seg{flex:0 0 auto}
   .seg button{padding:.3rem .65rem;font-size:.85rem;background:#1b3124;color:var(--chalk);border:1px solid rgba(255,255,255,.3);font-weight:normal}
   .seg button.on{background:var(--gold);color:#3d2716;font-weight:bold}
   fieldset{border:1px solid rgba(255,255,255,.2);border-radius:.45rem;margin:0 0 .8rem;padding:.6rem .9rem}
@@ -126,7 +131,8 @@ const ROOMS = CFG.rooms || [];
 const { esc, fmt, paras } = ER;
 
 /* ===================== State ===================== */
-const S = { room:0, start:null, hints:0, wrong:0, hintsShown:{}, reflection:null };
+const S = { room:0, start:null, hints:0, wrong:0, hintsShown:{}, wrongIn:{}, reflection:null, showKey:false };
+const PREVIEW = CFG.__preview === true;   // set only by the editor's preview, never in exported games
 let tick = null;
 const $ = s => document.querySelector(s);
 const stage = $("#stage");
@@ -143,24 +149,34 @@ function renderDoors(){
   }).join("");
 }
 
+const roomHints = room => (room.hintsEnabled && ER.HINT_ROOMS.includes(room.type)) ? (room.hints||[]).slice(0,2).filter(h => String(h||"").trim()) : [];
 function hintBlock(room){
-  if (!(room.hints||[]).length) return "";
-  return `<div class="row"><button class="ghost" id="hint-btn">💡 Get a hint</button></div><div id="hints"></div>`;
+  if (!roomHints(room).length) return "";
+  return `<div class="row hint-btn-wrap"><button class="ghost" id="hint-btn">💡 Get a hint</button><span class="lockednote" id="hint-note"></span></div><div id="hints"></div>`;
 }
-function wireHints(room, r){
+/* Hints unlock only after wrong tries in this room (teacher sets how many), so a student can't
+   open the room and read the hint straight away. */
+function updateHints(){
+  const r = ROOMS[S.room-1]; const btn = $("#hint-btn"); if (!r || !btn) return;
+  const list = roomHints(r), rules = ER.hintRules(CFG);
+  const shown = S.hintsShown[S.room] || 0, wrong = S.wrongIn[S.room] || 0;
+  $("#hints").innerHTML = list.slice(0,shown).map((h,i)=>`<div class="hint"><strong>Hint ${i+1}:</strong> ${fmt(h)}</div>`).join("");
+  const note = $("#hint-note");
+  if (shown >= list.length) { btn.disabled = true; btn.textContent = "No more hints"; note.textContent = ""; return; }
+  const need = shown === 0 ? rules.first : Math.max(rules.second, rules.first);
+  const left = need - wrong;
+  btn.disabled = left > 0;
+  btn.textContent = `💡 Get hint ${shown+1}`;
+  note.textContent = left > 0 ? `Unlocks after ${left} more wrong ${left===1?"try":"tries"}.` : "";
+}
+function wireHints(room){
   const btn = $("#hint-btn"); if (!btn) return;
-  const list = room.hints;
-  const show = () => {
-    const n = S.hintsShown[r] || 0;
-    $("#hints").innerHTML = list.slice(0,n).map((h,i)=>`<div class="hint"><strong>Hint ${i+1}:</strong> ${fmt(h)}</div>`).join("");
-    if (n >= list.length) { btn.disabled = true; btn.textContent = "No more hints"; }
-  };
-  btn.onclick = () => { const n = S.hintsShown[r] || 0; if (n >= list.length) return; S.hintsShown[r] = n+1; S.hints++; $("#hintCount").textContent = S.hints; show(); };
-  show();
+  btn.onclick = () => { const n = S.hintsShown[S.room] || 0; if (n >= roomHints(room).length || btn.disabled) return; S.hintsShown[S.room] = n+1; S.hints++; $("#hintCount").textContent = S.hints; updateHints(); };
+  updateHints();
 }
 
 function fail(text){
-  S.wrong++; const m=$("#msg"); m.className="msg bad"; m.textContent=text; say(text);
+  S.wrong++; S.wrongIn[S.room] = (S.wrongIn[S.room]||0) + 1; updateHints(); const m=$("#msg"); m.className="msg bad"; m.textContent=text; say(text);
   stage.classList.remove("shake"); void stage.offsetWidth; stage.classList.add("shake");
 }
 function pass(text){
@@ -168,7 +184,11 @@ function pass(text){
   stage.querySelectorAll(".lock button, #answer").forEach(el => el.disabled = true);
   setTimeout(() => go(S.room+1), 1300);
 }
-function go(n){ S.room=n; renderDoors(); (n===0 ? intro : n>ROOMS.length ? finish : () => room(n))(); stage.focus(); window.scrollTo(0,0); }
+function go(n){
+  S.room=n; renderDoors(); (n===0 ? intro : n>ROOMS.length ? finish : () => room(n))();
+  if (PREVIEW) { teacherKey(); parent.postMessage({ er: "room", room: n }, "*"); }
+  stage.focus(); window.scrollTo(0,0);
+}
 
 function roomHead(r, n){
   return `<h2>Room ${n} · ${esc(r.title||"")}</h2>${paras(r.story,"story")}${r.reference?`<p class="ref">📖 ${fmt(r.reference)}</p>`:""}`;
@@ -186,7 +206,7 @@ function intro(){
     <ul>
       <li>Solve the puzzle in each room to open its lock. There ${n===1?"is 1 room":`are ${n} rooms`}.</li>
       <li>Wrong answers ${CFG.scoring?.mode==="deductions" && CFG.scoring.wrongPenalty ? `cost ${CFG.scoring.wrongPenalty} points each, so think before you try` : "cost nothing, so keep trying"}.</li>
-      <li>Stuck? Most rooms have hints. ${CFG.scoring?.mode==="deductions" && CFG.scoring.hintPenalty ? `Each hint costs ${CFG.scoring.hintPenalty} points.` : "They're counted, but they don't affect your grade."}</li>
+      ${ROOMS.some(r => roomHints(r).length) ? `<li>Stuck? Some rooms have hints that unlock after a wrong try. ${CFG.scoring?.mode==="deductions" && CFG.scoring.hintPenalty ? `Each hint costs ${CFG.scoring.hintPenalty} points.` : "They're counted, but they don't affect your grade."}</li>` : ""}
       <li>At the end you'll get a <strong>certificate</strong>${CFG.finish?.exitPassword ? " with the exit password" : ""}.</li>
     </ul>
     ${CFG.meta?.learningOutcome ? `<p class="small">Learning Outcome: <em>${fmt(CFG.meta.learningOutcome)}</em></p>` : ""}
@@ -200,7 +220,7 @@ function intro(){
 function room(n){
   const r = ROOMS[n-1];
   ({ matching, quiz, ordering, sorting, reflection }[r.type] || unknown)(r, n);
-  wireHints(r, n);
+  wireHints(r);
 }
 function unknown(r, n){ stage.innerHTML = roomHead(r,n) + `<p>This room type isn't supported.</p><button onclick="go(${n+1})">Skip</button>`; }
 
@@ -344,6 +364,25 @@ function finish(){
     <button class="ghost" onclick="location.reload()">Play again</button></div>
   ${f.instructions ? `<p class="small">${fmt(f.instructions)}</p>` : ""}`;
 }
+
+/* ===================== Teacher preview (editor only) ===================== */
+function teacherKey(){
+  document.getElementById("teacher-key")?.remove();
+  const r = ROOMS[S.room-1];
+  if (!PREVIEW || !S.showKey || !r) return;
+  const hints = roomHints(r);
+  const box = document.createElement("div"); box.id = "teacher-key"; box.className = "teacher-key";
+  box.innerHTML = `<h3>👩‍🏫 Answer (only you can see this in preview)</h3><ul>${ER.answerKey(r).map(l=>`<li>${fmt(l)}</li>`).join("")}</ul>`
+    + (hints.length ? `<p class="small" style="margin:.5rem 0 .2rem">Hints (students unlock them after wrong tries):</p><ol>${hints.map(h=>`<li>${fmt(h)}</li>`).join("")}</ol>` : "");
+  stage.append(box);
+}
+// Esc inside the preview frame should still close the editor's preview.
+if (PREVIEW) document.addEventListener("keydown", e => { if (e.key === "Escape") parent.postMessage({ er: "escape" }, "*"); });
+if (PREVIEW) window.addEventListener("message", e => {
+  const d = e.data || {};
+  if (d.er === "goto") { if (!S.player) S.player = "Preview Student"; startTimer(); go(Math.max(0, Math.min(ROOMS.length+1, d.room|0))); }
+  if (d.er === "key") { S.showKey = !!d.on; teacherKey(); }
+});
 
 /* ===================== Start ===================== */
 document.title = CFG.meta?.title || document.title;

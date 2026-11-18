@@ -51,7 +51,7 @@ async function download(page, clickSelector) {
 async function makeQuizRoom(page) {
   await page.click("#btn-new"); await page.click("#new-blank");
   await page.fill("text=Escape room title >> xpath=.. >> input", "Chapter 3 Review");
-  await page.click("text=🏁 Finish & grading");
+  await page.click("#nav .item:has-text('Finish & grading')");
   await page.fill("text=Exit password >> xpath=.. >> input", "MANN1837");
   await page.click("#nav .item:has-text('1.')");
   await page.click("text=Edit all questions as text");
@@ -67,10 +67,10 @@ async function makeQuizRoom(page) {
 
   await test("opens with the sample content, all 40 items unchecked", async () => {
     const page = await openEditor(browser, base);
-    assert.match(await page.textContent("#meter"), /0 of 40 items checked/);
+    assert.match(await page.textContent("#meter"), /0 of 40 checked/);
     assert.equal(await page.locator("#nav .item:has-text('to check')").count(), 5);
     await page.click("#nav .item:has-text('1.')");
-    assert.match(await page.textContent(".answer"), /LEARN/);
+    assert.match(await page.textContent("#answer-key"), /Lock combination: LEARN/);
     await page.screenshot({ path: path.join(SHOTS, "editor-room.png") });
     assert.deepEqual(page.errors, []);
     await page.close();
@@ -92,7 +92,7 @@ async function makeQuizRoom(page) {
     const page = await openEditor(browser, base);
     await page.click("#nav .item:has-text('1.')");
     await page.fill("text=Code word (optional) >> xpath=.. >> input", "STUDY");
-    assert.match(await page.textContent(".answer"), /STUDY/);
+    assert.match(await page.textContent("#answer-key"), /Lock combination: STUDY/);
     await page.close();
   });
 
@@ -100,7 +100,7 @@ async function makeQuizRoom(page) {
     const page = await openEditor(browser, base);
     await makeQuizRoom(page);
     assert.equal(await page.locator(".entry").count(), 2);
-    assert.match(await page.textContent("#meter"), /2 of 2 items checked/);
+    assert.match(await page.textContent("#meter"), /2 of 2 checked/);
     await page.screenshot({ path: path.join(SHOTS, "editor-quiz.png"), fullPage: true });
     await page.close();
   });
@@ -158,7 +158,7 @@ async function makeQuizRoom(page) {
   await test("accuracy grading sends a lower score to the LMS after a wrong try", async () => {
     const page = await openEditor(browser, base);
     await makeQuizRoom(page);
-    await page.click("text=🏁 Finish & grading");
+    await page.click("#nav .item:has-text('Finish & grading')");
     await page.selectOption("text=Grading >> xpath=.. >> select", "deductions");
     await page.click("#btn-export");
     const file = await download(page, "#export-html");
@@ -200,13 +200,104 @@ async function makeQuizRoom(page) {
     await page.close();
   });
 
-  await test("preview shows the game inside the editor", async () => {
+  await test("student preview: jump between rooms, show answers, exit", async () => {
     const page = await openEditor(browser, base);
     await page.click("#btn-preview");
-    const frame = page.frameLocator(".overlay iframe");
+    const frame = page.frameLocator(".preview iframe");
     assert.equal(await frame.locator("#doors .door").count(), 5);
-    await frame.locator("#begin").click();
-    assert.match(await frame.locator("#stage h2").textContent(), /Room 1/);
+    assert.match(await frame.locator("#stage h2").textContent(), /Door Clicks Shut/);   // starts at the intro
+    await page.click(".pbar button[data-room='2']");
+    await frame.locator("#stage h2:has-text('Room 2')").waitFor();
+    assert.equal(await page.getAttribute(".pbar button[data-room='2']", "aria-current"), "step");
+    assert.equal(await frame.locator("#teacher-key").count(), 0, "answers hidden by default");
+    await page.click("text=Show answers");
+    assert.match(await frame.locator("#teacher-key").textContent(), /Lock combination: 9154/);
+    await page.click(".pbar button[aria-label='Next room']");
+    await frame.locator("#stage h2:has-text('Room 3')").waitFor();
+    assert.match(await frame.locator("#teacher-key").textContent(), /1837/, "answers stay on when moving rooms");
+    await page.screenshot({ path: path.join(SHOTS, "editor-preview.png") });
+    await frame.locator("#stage").focus();                              // focus inside the student view
+    await page.keyboard.press("Escape");
+    await page.locator(".preview").waitFor({ state: "detached", timeout: 3000 });   // Esc exits the preview
+    await page.click("#nav .item:has-text('4.')");
+    await page.click("#preview-room");                                   // 'Preview this room' opens at that room
+    await page.frameLocator(".preview iframe").locator("#stage h2:has-text('Room 4')").waitFor();
+    await page.click("#preview-exit");
+    assert.equal(await page.locator(".preview").count(), 0);
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
+  await test("answers never appear in exported games", async () => {
+    const page = await openEditor(browser, base);
+    await page.click("#btn-export");
+    const file = await download(page, "#export-html");
+    const cfg = ER.configFromHtml(fs.readFileSync(file, "utf8"));
+    assert.equal(cfg.__preview, undefined);
+    const game = await browser.newPage();
+    await game.goto("file://" + file);
+    await game.evaluate(() => window.postMessage({ er: "key", on: true }, "*"));    // a student can't switch the key on
+    await game.click("#begin"); await game.waitForTimeout(200);
+    assert.equal(await game.locator("#teacher-key").count(), 0);
+    await game.close(); await page.close();
+  });
+
+  await test("hints: off by default, max two, warn on give-aways, unlock only after wrong tries", async () => {
+    const page = await openEditor(browser, base);
+    await page.click("#nav .item:has-text('1.')");
+    assert.equal(await page.isChecked("#hints-toggle"), false);
+    await page.click("label.switch:has(#hints-toggle)");
+    assert.equal(await page.locator("text=Hint 1: a gentle nudge").count(), 1);
+    assert.equal(await page.locator("text=Hint 2: a stronger nudge").count(), 1);
+    assert.equal(await page.locator("text=Hint 3").count(), 0);
+    const hint2 = page.locator("text=Hint 2: a stronger nudge >> xpath=.. >> textarea");
+    await hint2.fill("The answer is LEARN.");
+    assert.match(await page.textContent("#hint-warnings"), /Hint 2 may give away the answer: it contains the lock combination/);
+    await hint2.fill("Start with the descriptions you're surest about.");
+    assert.equal((await page.textContent("#hint-warnings")).trim(), "");
+
+    await page.click("#btn-export");
+    const file = await download(page, "#export-html");
+    const game = await browser.newPage();
+    await game.goto("file://" + file);
+    await game.click("#begin");
+    assert.equal(await game.isDisabled("#hint-btn"), true, "hint 1 is locked on arrival");
+    assert.match(await game.textContent("#hint-note"), /after 1 more wrong try/);
+    await game.fill("#answer", "xxxxx"); await game.click("#try");
+    assert.equal(await game.isDisabled("#hint-btn"), false, "hint 1 unlocks after 1 wrong try");
+    await game.click("#hint-btn");
+    assert.equal(await game.locator("#hints .hint").count(), 1);
+    assert.equal(await game.isDisabled("#hint-btn"), true, "hint 2 still locked");
+    assert.match(await game.textContent("#hint-note"), /after 2 more wrong tries/);
+    for (let i = 0; i < 2; i++) { await game.fill("#answer", "yyyyy"); await game.click("#try"); }
+    await game.click("#hint-btn");
+    assert.equal(await game.locator("#hints .hint").count(), 2);
+    assert.match(await game.textContent("#hints"), /surest about/);
+    assert.equal(await game.isDisabled("#hint-btn"), true);
+    assert.equal(await game.textContent("#hintCount"), "2");
+    await game.close(); await page.close();
+  });
+
+  await test("turning hints on without writing any is caught", async () => {
+    const page = await openEditor(browser, base);
+    await page.click("#btn-new"); await page.click("#new-blank");
+    await page.click("#nav .item:has-text('1.')");
+    await page.click("text=Edit all questions as text");
+    await page.fill("textarea[aria-label='Questions as text']", "Q: 2+2?\nA: 4");
+    await page.click("text=Use this text");
+    await page.click("label.switch:has(#hints-toggle)");
+    await page.click("#btn-preview");
+    assert.match(await page.textContent(".overlay"), /hints are turned on, but no hint has been written/);
+    await page.close();
+  });
+
+  await test("answer key shows quiz answers and updates while typing", async () => {
+    const page = await openEditor(browser, base);
+    await makeQuizRoom(page);
+    const key = await page.textContent("#answer-key");
+    assert.match(key, /John Dewey \/ Dewey/); assert.match(key, /Perennialism/);
+    await page.locator("text=Accepted answers >> xpath=.. >> input").first().fill("J. Dewey");
+    assert.match(await page.textContent("#answer-key"), /J\. Dewey/);
     await page.close();
   });
 

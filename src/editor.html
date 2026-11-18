@@ -5,76 +5,142 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Escape Room Editor</title>
 <style>
-  :root{--bg:#f6f4ee;--panel:#fff;--ink:#1f2a24;--muted:#5d6b63;--line:#d9d5ca;--accent:#24402f;--gold:#c9952b;--warn:#fff4d6;--warnline:#e3b64a;--ok:#e7f4ea;--okline:#7bb58a;--bad:#b3261e}
+  :root{
+    --bg:#f4f5f2; --panel:#fff; --ink:#1c2420; --muted:#66706a; --line:#e3e5df; --line2:#cfd3cb;
+    --accent:#24402f; --accent2:#2f5a40; --accent-soft:#e8f0eb; --gold:#e8b84a; --gold-soft:#fdf5e1;
+    --warn:#fff6dd; --warnline:#e9b949; --ok:#e9f6ee; --okline:#5fae79; --bad:#c0362c; --bad-soft:#fdeceb;
+    --radius:14px; --shadow:0 1px 2px rgba(20,30,25,.06),0 4px 16px rgba(20,30,25,.06);
+  }
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.45}
-  header{position:sticky;top:0;z-index:5;background:var(--accent);color:#fff;padding:.55rem 1rem;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
-  header h1{font-size:1.05rem;margin:0 1rem 0 0}
+  body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  /* ---- top bar ---- */
+  header{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.92);backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line);padding:.6rem 1.1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+  header h1{font-size:1.02rem;margin:0 .6rem 0 0;display:flex;align-items:center;gap:.45rem;letter-spacing:-.01em}
+  header h1 .logo{width:30px;height:30px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:1rem}
   header .spacer{flex:1}
-  .meter{display:flex;align-items:center;gap:.5rem;font-size:.85rem}
-  .meter .bar{width:120px;height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden}
-  .meter .bar i{display:block;height:100%;background:#7ccf8a}
-  button,.btn{font:inherit;font-size:.9rem;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:.38rem .75rem}
-  header button{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.35)}
-  header button.primary{background:#e8b84a;color:#2b1d0b;border-color:#e8b84a;font-weight:600}
-  button:hover{filter:brightness(.97)}
-  button.small{font-size:.8rem;padding:.2rem .5rem}
+  header .group{display:flex;gap:.35rem;flex-wrap:wrap}
+  .meter{display:flex;align-items:center;gap:.55rem;font-size:.82rem;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:.25rem .7rem .25rem .35rem}
+  .meter .bar{width:80px;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+  .meter .bar i{display:block;height:100%;background:var(--okline);border-radius:99px;transition:width .3s}
+  /* ---- buttons ---- */
+  button,.btn{font:inherit;font-size:.88rem;cursor:pointer;border-radius:10px;border:1px solid var(--line2);background:#fff;color:var(--ink);padding:.42rem .8rem;transition:background .15s,border-color .15s,box-shadow .15s}
+  button:hover:not(:disabled){background:#f6f7f4;border-color:#b9beb4}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  button.primary:hover:not(:disabled){background:var(--accent2)}
+  button.accent{background:var(--gold);border-color:var(--gold);color:#2b1d0b;font-weight:600}
+  button.accent:hover:not(:disabled){background:#f0c35f}
+  button.ghost{background:transparent;border-color:transparent}
+  button.small{font-size:.78rem;padding:.2rem .5rem;border-radius:8px}
   button.danger{color:var(--bad)}
-  button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #4a90e2;outline-offset:1px}
-  .layout{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 48px)}
-  nav{border-right:1px solid var(--line);background:#efece3;padding:.75rem;display:flex;flex-direction:column;gap:.3rem}
-  nav .item{display:flex;align-items:center;gap:.35rem;padding:.45rem .55rem;border-radius:6px;cursor:pointer;border:1px solid transparent}
-  nav .item.sel{background:#fff;border-color:var(--line);font-weight:600}
-  nav .item .t{flex:1;overflow-wrap:anywhere}
-  nav .pill{font-size:.72rem;border-radius:10px;padding:0 .45rem;background:var(--warn);border:1px solid var(--warnline);white-space:nowrap}
-  nav .pill.ok{background:var(--ok);border-color:var(--okline)}
-  nav h3{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:.8rem 0 .2rem}
-  main{padding:1.2rem 1.5rem 4rem;max-width:980px}
-  h2{margin:.2rem 0 .3rem;font-size:1.35rem}
-  .help{color:var(--muted);font-size:.88rem;margin:.1rem 0 .6rem}
-  .field{display:flex;flex-direction:column;gap:.2rem;margin:.55rem 0}
-  .field>span{font-weight:600;font-size:.88rem}
+  button.danger:hover:not(:disabled){background:var(--bad-soft);border-color:#f0b7b2}
+  button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid #6aa7ff;outline-offset:2px}
+  /* ---- layout ---- */
+  .layout{display:grid;grid-template-columns:290px 1fr;min-height:calc(100vh - 54px)}
+  nav{border-right:1px solid var(--line);background:#fafbf8;padding:.9rem .7rem;display:flex;flex-direction:column;gap:.25rem;position:sticky;top:54px;align-self:start;max-height:calc(100vh - 54px);overflow:auto}
+  nav .item{display:flex;align-items:center;gap:.5rem;padding:.5rem .6rem;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:background .12s}
+  nav .item:hover{background:#f0f2ed}
+  nav .item.sel{background:#fff;border-color:var(--line);box-shadow:var(--shadow);font-weight:600}
+  nav .item .ic{width:26px;height:26px;border-radius:8px;background:var(--accent-soft);display:grid;place-items:center;font-size:.85rem;flex:none}
+  nav .item .t{flex:1;min-width:0;display:flex;flex-direction:column;gap:.15rem;font-size:.9rem;overflow-wrap:break-word}
+  nav .item .t .pill{align-self:flex-start}
+  nav .item .acts{display:flex;gap:.15rem;opacity:0;transition:opacity .12s}
+  nav .item:hover .acts,nav .item.sel .acts,nav .item:focus-within .acts{opacity:1}
+  nav .pill{font-size:.7rem;border-radius:99px;padding:.05rem .5rem;background:var(--warn);color:#7a5a0c;white-space:nowrap;font-weight:600}
+  nav .pill.ok{background:var(--ok);color:#2c6b40}
+  nav h3{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:1rem .6rem .3rem;font-weight:700}
+  nav select{margin-top:.3rem}
+  main{padding:1.4rem 2rem 5rem;max-width:1000px;width:100%}
+  h2{margin:.1rem 0 .25rem;font-size:1.45rem;letter-spacing:-.015em}
+  .pagehead{display:flex;gap:.8rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:.4rem}
+  .pagehead>div{flex:1;min-width:240px}
+  .chip{display:inline-flex;align-items:center;gap:.3rem;font-size:.76rem;font-weight:600;border-radius:99px;padding:.15rem .6rem;background:var(--accent-soft);color:var(--accent)}
+  .help{color:var(--muted);font-size:.87rem;margin:.15rem 0 .6rem}
+  /* ---- forms ---- */
+  .field{display:flex;flex-direction:column;gap:.25rem;margin:.6rem 0}
+  .field>span{font-weight:600;font-size:.84rem}
   .field small{color:var(--muted);font-weight:normal}
-  input[type=text],input[type=number],textarea,select{font:inherit;font-size:.92rem;padding:.4rem .5rem;border:1px solid #c8c3b6;border-radius:6px;background:#fff;color:var(--ink);width:100%}
+  input[type=text],input[type=number],textarea,select{font:inherit;font-size:.92rem;padding:.5rem .65rem;border:1px solid var(--line2);border-radius:10px;background:#fff;color:var(--ink);width:100%;transition:border-color .15s,box-shadow .15s}
+  input[type=text]:focus,input[type=number]:focus,textarea:focus,select:focus{border-color:#6aa7ff;box-shadow:0 0 0 3px rgba(106,167,255,.18);outline:none}
   textarea{min-height:3.2rem;resize:vertical}
-  .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end}
+  .row{display:flex;gap:.7rem;flex-wrap:wrap;align-items:flex-end}
   .row>.field{flex:1;min-width:160px}
-  .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem;margin:.8rem 0}
-  .box h3{margin:.1rem 0 .4rem;font-size:1rem}
-  .entry{border:1px solid var(--line);border-left:5px solid var(--warnline);background:#fffdf6;border-radius:8px;padding:.6rem .8rem;margin:.6rem 0}
-  .entry.verified{border-left-color:var(--okline);background:#fbfefb}
-  .entry .head{display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem}
-  .entry .head strong{flex:1;font-size:.85rem;color:var(--muted)}
-  .verify{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:.4rem;padding-top:.45rem;border-top:1px dashed var(--line)}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:1rem 1.15rem;margin:1rem 0;box-shadow:var(--shadow)}
+  .box h3{margin:0 0 .35rem;font-size:1rem;letter-spacing:-.01em}
+  .entry{border:1px solid var(--line);border-left:4px solid var(--warnline);background:#fff;border-radius:12px;padding:.7rem .9rem;margin:.7rem 0}
+  .entry.verified{border-left-color:var(--okline)}
+  .entry .head{display:flex;align-items:center;gap:.35rem;margin-bottom:.15rem}
+  .entry .head strong{flex:1;font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .verify{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;margin-top:.5rem;padding-top:.55rem;border-top:1px dashed var(--line)}
   .verify .field{margin:0;flex:1;min-width:200px}
-  .verify label.chk{display:flex;gap:.35rem;align-items:center;font-weight:600;font-size:.88rem;white-space:nowrap}
-  .answer{background:#eef5f0;border:1px solid var(--okline);border-radius:8px;padding:.5rem .8rem;font-size:.92rem}
-  .answer code{font-size:1.05rem;font-weight:700;letter-spacing:.08em}
-  .choices .choice{display:flex;gap:.4rem;align-items:center;margin:.25rem 0}
+  .verify label.chk{display:flex;gap:.45rem;align-items:center;font-weight:600;font-size:.86rem;white-space:nowrap;padding:.35rem .7rem;border-radius:99px;background:var(--warn);cursor:pointer}
+  .entry.verified .verify label.chk{background:var(--ok)}
+  .choices .choice{display:flex;gap:.45rem;align-items:center;margin:.3rem 0}
   .choices .choice input[type=text]{flex:1}
-  .notice{background:var(--warn);border:1px solid var(--warnline);border-radius:8px;padding:.6rem .8rem;margin:.6rem 0}
-  .errors{background:#fdecea;border:1px solid #f1b0aa;border-radius:8px;padding:.6rem .8rem;margin:.6rem 0}
+  /* switch */
+  .switch{display:inline-flex;align-items:center;gap:.6rem;cursor:pointer;font-weight:600;font-size:.92rem;user-select:none}
+  .switch input{position:absolute;opacity:0;width:1px;height:1px}
+  .switch .track{width:42px;height:24px;border-radius:99px;background:#c9cec6;position:relative;transition:background .15s;flex:none}
+  .switch .track::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .switch input:checked+.track{background:var(--okline)}
+  .switch input:checked+.track::after{transform:translateX(18px)}
+  .switch input:focus-visible+.track{outline:3px solid #6aa7ff;outline-offset:2px}
+  /* answer key */
+  .answerkey{background:linear-gradient(180deg,#f2faf5,#fff);border:1px solid #bfe0cb;border-radius:var(--radius);padding:.85rem 1.1rem;margin:1rem 0;box-shadow:var(--shadow)}
+  .answerkey summary{cursor:pointer;font-weight:700;color:#2c6b40;list-style:none;display:flex;align-items:center;gap:.4rem}
+  .answerkey summary::-webkit-details-marker{display:none}
+  .answerkey summary::after{content:"Hide";margin-left:auto;font-weight:500;font-size:.8rem;color:var(--muted)}
+  .answerkey:not([open]) summary::after{content:"Show"}
+  .answerkey ul{margin:.5rem 0 .1rem;padding-left:1.2rem}
+  .answerkey li{margin:.2rem 0}
+  .notice{background:var(--warn);border:1px solid #f1d48a;border-radius:12px;padding:.7rem .9rem;margin:.7rem 0}
+  .warnline{background:var(--gold-soft);border:1px solid #f1d48a;border-radius:10px;padding:.45rem .7rem;margin:.3rem 0;font-size:.86rem}
+  .errors{background:var(--bad-soft);border:1px solid #f0b7b2;border-radius:12px;padding:.7rem .9rem;margin:.7rem 0}
   .errors li{margin:.15rem 0}
-  .overlay{position:fixed;inset:0;background:rgba(10,20,15,.6);z-index:20;display:flex;flex-direction:column}
-  .overlay .bar{background:var(--accent);color:#fff;display:flex;gap:.5rem;align-items:center;padding:.5rem 1rem}
+  /* dialogs */
+  .overlay{position:fixed;inset:0;background:rgba(15,22,18,.55);backdrop-filter:blur(2px);z-index:20;display:flex;flex-direction:column}
+  .overlay .bar{background:var(--accent);color:#fff;display:flex;gap:.5rem;align-items:center;padding:.6rem 1rem}
   .overlay .bar span{flex:1;font-weight:600}
+  .overlay .bar button{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.3)}
   .overlay iframe{flex:1;border:0;background:#fff;width:100%}
-  .toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:#1f2a24;color:#fff;padding:.55rem 1rem;border-radius:8px;z-index:30;font-size:.9rem}
-  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88rem}
-  @media (max-width:760px){.layout{grid-template-columns:1fr}nav{border-right:0;border-bottom:1px solid var(--line)}}
+  .sheet{padding:1.4rem 1.8rem;background:#fff;overflow:auto;flex:1}
+  /* student preview */
+  .preview{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;background:#111a15}
+  .pbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;padding:.55rem .9rem;background:#0f1713;color:#e9efe9;border-bottom:1px solid #2a3a30}
+  .pbar .badge{display:flex;align-items:center;gap:.45rem;font-weight:700;font-size:.9rem}
+  .pbar .badge i{font-style:normal;background:#e8b84a;color:#2b1d0b;border-radius:99px;padding:.1rem .55rem;font-size:.72rem;letter-spacing:.06em}
+  .pbar .rooms{display:flex;gap:.25rem;flex-wrap:wrap;flex:1;justify-content:center}
+  .pbar .rooms button{min-width:2.2rem;background:#1d2b23;color:#cfe0d4;border-color:#2f4337;border-radius:9px;padding:.3rem .55rem;font-size:.82rem}
+  .pbar .rooms button[aria-current="step"]{background:#e8b84a;color:#2b1d0b;border-color:#e8b84a;font-weight:700}
+  .pbar .ctrl{display:flex;gap:.4rem;align-items:center}
+  .pbar button{background:#1d2b23;color:#e9efe9;border-color:#2f4337}
+  .pbar button:hover:not(:disabled){background:#26382d;border-color:#3d5546}
+  .pbar .exit{background:#fff;color:#14201a;border-color:#fff;font-weight:700}
+  .pbar .exit:hover:not(:disabled){background:#e9efe9}
+  .pbar .switch{color:#e9efe9;font-size:.85rem}
+  .preview iframe{flex:1;border:0;width:100%;background:#16281d}
+  .toast{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);background:#1c2420;color:#fff;padding:.6rem 1.1rem;border-radius:12px;z-index:40;font-size:.9rem;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.86rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+  @media (max-width:1100px){nav{position:static;max-height:none}}
+  @media (max-width:820px){.layout{grid-template-columns:1fr}nav{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--line)}main{padding:1rem}nav .item .acts{opacity:1}}
 </style>
 </head>
 <body>
 <header>
-  <h1>🛠️ Escape Room Editor</h1>
+  <h1><span class="logo" aria-hidden="true">🗝️</span> Escape Room Editor</h1>
   <div class="meter" id="meter" title="Items checked against your sources"></div>
   <span class="spacer"></span>
-  <button id="btn-new">New…</button>
-  <button id="btn-open">Open…</button>
-  <button id="btn-save">Save project</button>
-  <button id="btn-review">Review sheet</button>
-  <button id="btn-preview">▶ Preview</button>
-  <button id="btn-export" class="primary">Export for students ▾</button>
+  <div class="group">
+    <button id="btn-new">New…</button>
+    <button id="btn-open">Open…</button>
+    <button id="btn-save">Save project</button>
+    <button id="btn-review" title="Every room with its answers, for checking against your sources">Answer sheet</button>
+  </div>
+  <div class="group">
+    <button id="btn-preview" class="primary">▶ Preview as student</button>
+    <button id="btn-export" class="accent">Export</button>
+  </div>
   <input type="file" id="file" accept=".json,.html,.htm" hidden>
 </header>
 <div class="layout">
@@ -98,7 +164,7 @@ let quizText = {};         // room index -> true when editing a quiz as plain te
 
 function load(){ try { const s = localStorage.getItem(STORE); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
 let saveTimer = null;
-function changed(){ clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(cfg)); } catch(e){} }, 300); refreshStatus(); }
+function changed(){ clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(cfg)); } catch(e){} }, 300); refreshStatus(); refreshAnswerKey(); }
 
 /* ===================== Tiny DOM helper ===================== */
 function h(tag, props = {}, ...kids){
@@ -163,26 +229,38 @@ function listEditor(list, renderItem, opts){
   return wrap;
 }
 function hintsEditor(room){
-  room.hints = room.hints || [];
-  return h("div", { class: "box" }, h("h3", {}, "Hints"),
-    h("p", { class: "help" }, "Students reveal these one at a time. Leave empty for no hints."),
-    room.hints.map((hint, i) => h("div", { class: "row" },
-      field(`Hint ${i+1}`, room.hints, i, { type: "textarea", rows: 2 }),
-      h("button", { class: "small danger", onclick: () => { room.hints.splice(i, 1); changed(); render(); } }, "Remove"))),
-    h("button", { onclick: () => { room.hints.push(""); changed(); render(); } }, "+ Add hint"));
+  if (!ER.HINT_ROOMS.includes(room.type)) return null;      // reflection rooms have no wrong answers
+  room.hints = (room.hints || []).slice(0, 2); while (room.hints.length < 2) room.hints.push("");
+  const rules = ER.hintRules(cfg);
+  const warn = h("div", { id: "hint-warnings" });
+  const showWarnings = () => warn.replaceChildren(...ER.hintWarnings(room).map(w => h("div", { class: "warnline", role: "status" }, "⚠️ " + w.message + " Try pointing students toward how to find it instead.")));
+  const box = h("div", { class: "box" },
+    h("div", { class: "row", style: "align-items:center;justify-content:space-between" }, h("h3", { style: "margin:0" }, "💡 Hints"),
+      h("label", { class: "switch" }, h("input", { type: "checkbox", id: "hints-toggle", checked: !!room.hintsEnabled,
+        onchange: e => { room.hintsEnabled = e.target.checked; changed(); render(); } }), h("span", { class: "track", "aria-hidden": "true" }),
+        room.hintsEnabled ? "Hints on" : "Hints off")),
+    room.hintsEnabled ? [
+      h("p", { class: "help" }, `Up to two hints. Hint 1 unlocks after ${rules.first} wrong ${rules.first === 1 ? "try" : "tries"} in this room, and hint 2 after ${Math.max(rules.first, rules.second)} (change this in Settings). Write hints that point students toward how to find the answer, not the answer itself.`),
+      field("Hint 1: a gentle nudge", room.hints, 0, { type: "textarea", rows: 2, placeholder: "e.g. Look for one key idea in each description…", onChange: showWarnings }),
+      field("Hint 2: a stronger nudge", room.hints, 1, { type: "textarea", rows: 2, placeholder: "e.g. Start with the ones you're surest about…", onChange: showWarnings }),
+      warn
+    ] : h("p", { class: "help", style: "margin:.4rem 0 0" }, "Students get no hints in this room. Turn hints on to write up to two.",
+        (room.hints || []).some(x => String(x).trim()) ? " Your saved hints are kept." : ""));
+  showWarnings();
+  return box;
 }
 
 /* ===================== Room types ===================== */
 const TYPES = {
-  quiz:       { name: "Question lock", desc: "Short-answer or multiple-choice questions. All must be right to open the lock. Works like a chapter quiz.",
+  quiz:       { icon: "❓", name: "Question lock", desc: "Short-answer or multiple-choice questions. All must be right to open the lock. Works like a chapter quiz.",
                 blank: () => ({ type: "quiz", title: "New question room", story: "", reference: "", lockLabel: "🔒 Question lock", successMessage: "🔓 Every answer is right. The lock opens!", hints: [], questions: [blankQuestion()] }) },
-  matching:   { name: "Matching code", desc: "Cards with codes and clues. Students match each clue to a card and enter the codes as the lock combination.",
+  matching:   { icon: "🔤", name: "Matching code", desc: "Cards with codes and clues. Students match each clue to a card and enter the codes as the lock combination.",
                 blank: () => ({ type: "matching", title: "New matching room", story: "", reference: "", codeStyle: "letters", codeWord: "", cluesHeading: "Clues", lockLabel: "🔒 Lock", successMessage: "🔓 The lock opens!", failMessage: "The lock won't budge. Check each clue again.", hints: [], cards: [blankCard(), blankCard()] }) },
-  ordering:   { name: "Put in order", desc: "Students arrange items in the correct order (timelines, steps in a process).",
+  ordering:   { icon: "🕰️", name: "Put in order", desc: "Students arrange items in the correct order (timelines, steps in a process).",
                 blank: () => ({ type: "ordering", title: "New timeline room", story: "", reference: "", lockLabel: "🔒 Order lock", successMessage: "🔓 Everything is in order. The lock opens!", hints: [], items: [blankOrder(), blankOrder()] }) },
-  sorting:    { name: "Sort into groups", desc: "Students put each item into the right category.",
+  sorting:    { icon: "🗂️", name: "Sort into groups", desc: "Students put each item into the right category.",
                 blank: () => ({ type: "sorting", title: "New sorting room", story: "", reference: "", categories: ["Group A", "Group B"], lockLabel: "📋 Sorting lock", successMessage: "🔓 All sorted. The lock opens!", hints: [], items: [blankSort()] }) },
-  reflection: { name: "Reflection survey", desc: "No wrong answers. Each choice counts toward a result profile, shown on the certificate.",
+  reflection: { icon: "🪞", name: "Reflection survey", desc: "No wrong answers. Each choice counts toward a result profile, shown on the certificate.",
                 blank: () => ({ type: "reflection", title: "New reflection room", story: "", reference: "", buttonLabel: "Continue", successMessage: "✨ Done!", resultHeading: "Your result", resultNote: "", hints: [], profiles: [blankProfile("A"), blankProfile("B")], questions: [] }) }
 };
 function blankQuestion(kind = "short"){ return { prompt: "", kind, answers: "", choices: ["", "", "", ""], correct: 0, source: "", verified: false }; }
@@ -202,28 +280,24 @@ function commonRoomFields(room){
 }
 
 function editMatching(room){
-  const m = ER.matching(room);
-  const answer = h("div", { class: "answer" }, "Lock combination students must enter: ", h("code", {}, m.answer || "—"),
-    h("div", { class: "help", style: "margin:.3rem 0 0" }, "Calculated from the cards below. Cards are shown to students in A–Z order; clues are shown in the order you list them."));
   return [
     commonRoomFields(room),
     h("div", { class: "box" }, h("h3", {}, "Lock"),
       h("div", { class: "row" },
         select("Code on each card", room, "codeStyle", [["letters", "Letters (A–Z)"], ["numbers", "Numbers (1–9)"]], { rerender: true }),
-        room.codeStyle !== "numbers" ? field("Code word (optional)", room, "codeWord", { help: "one letter per clue, e.g. LEARN", onChange: () => render() }) : null,
+        room.codeStyle !== "numbers" ? field("Code word (optional)", room, "codeWord", { help: "one letter per clue, e.g. LEARN" }) : null,
         field("Clues heading", room, "cluesHeading")),
       field("Message for a wrong code", room, "failMessage"),
-      answer),
+      h("p", { class: "help", style: "margin:.2rem 0 0" }, "The lock combination (in the answer key above) is calculated from the cards below. Students see cards in A–Z order and clues in the order you list them.")),
     h("div", { class: "box" }, h("h3", {}, "Cards and clues"),
       h("p", { class: "help" }, "Each card is a term or person. Give it a clue to make it part of the answer. A card with no clue is a decoy."),
       listEditor(room.cards, c => [
-        h("div", { class: "row" }, field("Name on card", c, "term", { item: c, onChange: refreshAnswer }), field("Small detail", c, "detail", { help: "e.g. dates", item: c }),
-          field("Icon", c, "icon", { help: "emoji, optional" }), field("Fixed code", c, "code", { help: "optional", onChange: refreshAnswer })),
-        field("Clue (blank = decoy card)", c, "clue", { type: "textarea", rows: 2, item: c, onChange: refreshAnswer })
+        h("div", { class: "row" }, field("Name on card", c, "term", { item: c, onChange: refreshAnswerKey }), field("Small detail", c, "detail", { help: "e.g. dates", item: c }),
+          field("Icon", c, "icon", { help: "emoji, optional" }), field("Fixed code", c, "code", { help: "optional", onChange: refreshAnswerKey })),
+        field("Clue (blank = decoy card)", c, "clue", { type: "textarea", rows: 2, item: c, onChange: refreshAnswerKey })
       ], { noun: "Card", blank: blankCard })),
     hintsEditor(room)
   ];
-  function refreshAnswer(){ answer.querySelector("code").textContent = ER.matching(room).answer || "—"; }
 }
 
 function editQuiz(room, r){
@@ -364,9 +438,14 @@ function editSettings(){
       h("div", { class: "row" }, field("Course", cfg.meta, "course", { placeholder: "e.g. EDU 216" }),
         field("Completion code prefix", cfg.meta, "codePrefix", { help: "letters/numbers, starts each student's code" })),
       field("Learning outcome shown to students", cfg.meta, "learningOutcome", { type: "textarea", rows: 2 })),
+    h("div", { class: "box" }, h("h3", {}, "💡 When hints unlock"),
+      h("p", { class: "help" }, "Hints are off unless you turn them on in a room. When they're on, students must try first: a hint stays locked until they've made this many wrong tries in that room."),
+      (cfg.hintRules = cfg.hintRules || { first: 1, second: 3 }, h("div", { class: "row" },
+        field("Hint 1 unlocks after … wrong tries", cfg.hintRules, "first", { type: "number", min: 0, max: 20 }),
+        field("Hint 2 unlocks after … wrong tries", cfg.hintRules, "second", { type: "number", min: 0, max: 20, help: "counted from entering the room" })))),
     h("div", { class: "box" }, h("h3", {}, "Rooms"),
       h("p", { class: "help" }, "Add, remove and reorder rooms in the list on the left. Room types:"),
-      h("ul", {}, Object.values(TYPES).map(t => h("li", {}, h("strong", {}, t.name + ": "), t.desc)))) ];
+      h("ul", {}, Object.values(TYPES).map(t => h("li", {}, t.icon + " ", h("strong", {}, t.name + ": "), t.desc)))) ];
 }
 function editIntro(){
   cfg.intro = cfg.intro || {};
@@ -393,38 +472,52 @@ function editFinish(){
 function editRoom(r){
   const room = cfg.rooms[r]; const t = TYPES[room.type];
   const body = { matching: editMatching, quiz: editQuiz, ordering: editOrdering, sorting: editSorting, reflection: editReflection }[room.type];
-  return [ h("h2", {}, `Room ${r+1}: ${room.title || "Untitled"}`), h("p", { class: "help" }, `${t ? t.name : room.type}. ${t ? t.desc : ""}`),
+  return [ h("div", { class: "pagehead" },
+      h("div", {}, h("span", { class: "chip" }, `${t ? t.icon + " " + t.name : room.type}`), h("h2", {}, `Room ${r+1}: ${room.title || "Untitled"}`), h("p", { class: "help" }, t ? t.desc : "")),
+      h("button", { class: "primary", id: "preview-room", onclick: () => openPreview(r + 1) }, "▶ Preview this room")),
+    answerKeyBox(room),
     body ? body(room, r) : h("p", {}, "This room type can't be edited here.") ];
 }
+
+/* Teacher-only answer key for the room being edited; refreshed as you type. */
+let keyOpen = true;
+function answerKeyBox(room){
+  const d = h("details", { class: "answerkey", id: "answer-key", open: keyOpen, ontoggle: e => { keyOpen = e.target.open; } },
+    h("summary", {}, "👁 Answer key ", h("span", { class: "help", style: "margin:0;font-weight:400" }, "(only you see this)")), h("ul", {}));
+  fillKey(d, room); return d;
+}
+function fillKey(d, room){ d.querySelector("ul").innerHTML = ER.answerKey(room).map(l => `<li>${ER.fmt(l)}</li>`).join("") || "<li>Nothing to answer yet.</li>"; }
+function refreshAnswerKey(){ const d = document.getElementById("answer-key"); if (d && typeof sel === "number" && cfg.rooms[sel]) fillKey(d, cfg.rooms[sel]); }
 
 /* ===================== Navigation & status ===================== */
 function roomStatus(r){ const items = ER.reviewItems({ rooms: [cfg.rooms[r]] }); const left = items.filter(x => x.item.verified !== true).length; return { left, total: items.length }; }
 function renderNav(){
   const nav = document.getElementById("nav");
-  const item = (key, label, pill) => h("div", { class: "item" + (sel === key ? " sel" : ""), tabindex: 0, role: "button",
-      onclick: () => { sel = key; render(); }, onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sel = key; render(); } } },
-    h("span", { class: "t" }, label), pill || null);
+  const item = (key, icon, label, pill) => h("div", { class: "item" + (sel === key ? " sel" : ""), tabindex: 0, role: "button", "aria-current": sel === key ? "page" : null,
+      onclick: () => { sel = key; render(); main.scrollIntoView?.({ block: "start" }); }, onkeydown: e => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); sel = key; render(); } } },
+    h("span", { class: "ic", "aria-hidden": "true" }, icon), h("span", { class: "t" }, h("span", {}, label), pill || null));
+  const main = document.getElementById("main");
   const addSel = h("select", { "aria-label": "Add a room", onchange: e => { if (!e.target.value) return; cfg.rooms.push(TYPES[e.target.value].blank()); sel = cfg.rooms.length - 1; changed(); render(); } },
     h("option", { value: "" }, "+ Add a room…"), Object.entries(TYPES).map(([k, t]) => h("option", { value: k }, t.name)));
   nav.replaceChildren(
-    item("settings", "⚙️ Settings"), item("intro", "📜 Story & intro"),
+    item("settings", "⚙️", "Settings"), item("intro", "📜", "Story & intro"),
     h("h3", {}, "Rooms"),
     ...cfg.rooms.map((room, r) => {
       const st = roomStatus(r);
       const pill = st.total ? h("span", { class: "pill" + (st.left ? "" : " ok"), title: `${st.total - st.left} of ${st.total} checked` }, st.left ? `${st.left} to check` : "✔ checked") : null;
-      const el = item(r, `${r+1}. ${room.title || "Untitled"}`, pill);
-      el.append(
+      const el = item(r, TYPES[room.type]?.icon || "🚪", `${r+1}. ${room.title || "Untitled"}`, pill);
+      el.append(h("span", { class: "acts" },
         h("button", { class: "small", title: "Move up", "aria-label": `Move room ${r+1} up`, disabled: r === 0, onclick: e => { e.stopPropagation(); [cfg.rooms[r-1], cfg.rooms[r]] = [cfg.rooms[r], cfg.rooms[r-1]]; if (sel === r) sel = r - 1; changed(); render(); } }, "▲"),
-        h("button", { class: "small danger", title: "Delete room", "aria-label": `Delete room ${r+1}`, onclick: e => { e.stopPropagation(); if (confirm(`Delete room ${r+1} "${room.title}"? This can't be undone.`)) { cfg.rooms.splice(r, 1); sel = "settings"; changed(); render(); } } }, "✕"));
+        h("button", { class: "small danger", title: "Delete room", "aria-label": `Delete room ${r+1}`, onclick: e => { e.stopPropagation(); if (confirm(`Delete room ${r+1} "${room.title}"? This can't be undone.`)) { cfg.rooms.splice(r, 1); sel = "settings"; changed(); render(); } } }, "✕")));
       return el;
     }),
     addSel,
-    h("h3", {}, "End"), item("finish", "🏁 Finish & grading"),
+    h("h3", {}, "End"), item("finish", "🏁", "Finish & grading"),
     h("p", { class: "help", style: "margin-top:1rem" }, "Changes save automatically in this browser. Use ", h("strong", {}, "Save project"), " or ", h("strong", {}, "Export"), " to keep a file you can share or reopen."));
 }
 function refreshStatus(){
   const st = ER.reviewStatus(cfg); const pct = st.total ? Math.round(100 * st.verified / st.total) : 100;
-  document.getElementById("meter").replaceChildren(h("div", { class: "bar" }, h("i", { style: `width:${pct}%` })), `${st.verified} of ${st.total} items checked`);
+  document.getElementById("meter").replaceChildren(h("div", { class: "bar" }, h("i", { style: `width:${pct}%` })), `${st.verified} of ${st.total} checked`);
   clearTimeout(refreshStatus.t); refreshStatus.t = setTimeout(renderNav, 400);
 }
 function render(){
@@ -434,7 +527,7 @@ function render(){
   const st = ER.reviewStatus(cfg);
   const banner = st.unverified ? h("div", { class: "notice" }, "⚠️ ", h("strong", {}, `${st.unverified} of ${st.total} items haven't been checked yet.`),
     " Everything in the sample was written with AI help and may contain mistakes. Check each item against your textbook or sources, then tick ", h("em", {}, "✔ I checked this is correct"),
-    ". Students see a “Draft” notice until every item is checked. Tip: ", h("strong", {}, "Review sheet"), " prints everything with the answers.") : null;
+    ". Students see a “Draft” notice until every item is checked. Tip: ", h("strong", {}, "Answer sheet"), " lists everything with the answers, ready to print.") : null;
   const view = sel === "settings" ? editSettings() : sel === "intro" ? editIntro() : sel === "finish" ? editFinish() : editRoom(sel);
   main.replaceChildren(banner || "", ...view.flat(Infinity));
 }
@@ -454,7 +547,7 @@ function checkReady(action){
   return true;
 }
 function showErrors(errs){
-  overlay("Fix these before previewing or exporting", h("div", { style: "padding:1rem 1.5rem;background:#fff;overflow:auto;flex:1" },
+  overlay("Fix these before previewing or exporting", h("div", { class: "sheet" },
     h("div", { class: "errors" }, h("ul", {}, errs.map(e => h("li", {}, e))))));
 }
 function overlay(title, content, extraButtons = []){
@@ -469,14 +562,51 @@ function overlay(title, content, extraButtons = []){
 const gameHtml = () => ER.buildGame(GAME_TEMPLATE, cfg);
 const slug = () => ER.fileSlug(cfg.meta?.title);
 
-document.getElementById("btn-preview").onclick = () => {
+/* ===================== Student preview ===================== */
+/* Full-screen "student view" of the game. The bar on top is the teacher's: jump to any room,
+   show the answers, restart, or exit (button or Esc). Nothing is saved or graded. */
+function openPreview(startRoom = 0){
   if (!checkReady("preview")) return;
-  const frame = h("iframe", { title: "Preview of the student game" });
-  frame.srcdoc = gameHtml();
-  overlay("Preview: this is what students see (nothing is saved or graded)", frame, [h("button", { onclick: () => { frame.srcdoc = gameHtml(); } }, "↻ Restart")]);
-};
+  document.querySelector(".preview")?.remove();
+  const n = cfg.rooms.length;
+  let current = 0, showKey = false;
+  const frame = h("iframe", { title: "Student view of the escape room" });
+  const send = msg => frame.contentWindow && frame.contentWindow.postMessage(msg, "*");
+  const steps = [["Intro", 0], ...cfg.rooms.map((r, i) => [String(i + 1), i + 1, r.title]), ["🏁", n + 1, "Certificate"]];
+  const roomBtns = steps.map(([label, k, title]) => h("button", { "data-room": k, title: title || (k === 0 ? "Intro" : ""), "aria-label": k === 0 ? "Go to intro" : k > n ? "Go to certificate" : `Go to room ${k}: ${title}`,
+    onclick: () => send({ er: "goto", room: k }) }, label));
+  const mark = () => roomBtns.forEach(b => b.setAttribute("aria-current", +b.dataset.room === current ? "step" : "false"));
+  const prev = h("button", { "aria-label": "Previous room", onclick: () => send({ er: "goto", room: Math.max(0, current - 1) }) }, "◀");
+  const next = h("button", { "aria-label": "Next room", onclick: () => send({ er: "goto", room: Math.min(n + 1, current + 1) }) }, "▶");
+  const keyToggle = h("label", { class: "switch" }, h("input", { type: "checkbox", id: "preview-answers", onchange: e => { showKey = e.target.checked; send({ er: "key", on: showKey }); } }),
+    h("span", { class: "track", "aria-hidden": "true" }), "Show answers");
+  const exit = () => { layer.remove(); window.removeEventListener("message", onMsg); document.removeEventListener("keydown", onKey); document.getElementById("btn-preview").focus(); };
+  const onKey = e => { if (e.key === "Escape") exit(); };
+  const onMsg = e => {
+    if (e.source !== frame.contentWindow) return;
+    if (e.data?.er === "escape") return exit();
+    if (e.data?.er === "room") { current = e.data.room; mark(); prev.disabled = current === 0; next.disabled = current === n + 1; }
+  };
+  const load = (room) => {
+    frame.onload = () => { if (showKey) send({ er: "key", on: true }); if (room) send({ er: "goto", room }); };
+    frame.srcdoc = ER.buildGame(GAME_TEMPLATE, { ...cfg, __preview: true });
+  };
+  const layer = h("div", { class: "preview", role: "dialog", "aria-label": "Student preview" },
+    h("div", { class: "pbar" },
+      h("div", { class: "badge" }, h("i", {}, "PREVIEW"), "Student view"),
+      h("div", { class: "rooms", role: "group", "aria-label": "Jump to a room" }, prev, ...roomBtns, next),
+      h("div", { class: "ctrl" }, keyToggle,
+        h("button", { onclick: () => load(0), title: "Start over from the intro" }, "↻ Restart"),
+        h("button", { class: "exit", id: "preview-exit", onclick: exit }, "✕ Exit preview"))),
+    frame);
+  document.body.append(layer);
+  window.addEventListener("message", onMsg); document.addEventListener("keydown", onKey);
+  load(startRoom);
+  layer.querySelector("#preview-exit").focus();
+}
+document.getElementById("btn-preview").onclick = () => openPreview(typeof sel === "number" ? sel + 1 : 0);
 document.getElementById("btn-export").onclick = () => {
-  const box = h("div", { style: "padding:1.2rem 1.5rem;background:#fff;overflow:auto;flex:1" },
+  const box = h("div", { class: "sheet" },
     h("h2", {}, "Export for students"),
     h("div", { class: "box" }, h("h3", {}, "SCORM package (.zip) for Moodle or Canvas"),
       h("p", { class: "help" }, "Grades go to the gradebook automatically. Moodle: Add an activity → SCORM package. Canvas: SCORM tool. Upload the zip without unzipping it."),
@@ -499,7 +629,7 @@ document.getElementById("file").onchange = async e => {
   } catch (err) { alert("Couldn't open that file: " + err.message); }
 };
 document.getElementById("btn-new").onclick = () => {
-  const box = h("div", { style: "padding:1.2rem 1.5rem;background:#fff;overflow:auto;flex:1" },
+  const box = h("div", { class: "sheet" },
     h("h2", {}, "Start a new escape room"),
     h("p", { class: "notice" }, "This replaces what's in the editor now. Save project first if you want to keep it."),
     h("div", { class: "row" },
