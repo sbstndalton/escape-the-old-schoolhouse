@@ -179,6 +179,8 @@ function fail(text){
   S.wrong++; S.wrongIn[S.room] = (S.wrongIn[S.room]||0) + 1; updateHints(); const m=$("#msg"); m.className="msg bad"; m.textContent=text; say(text);
   stage.classList.remove("shake"); void stage.offsetWidth; stage.classList.add("shake");
 }
+// Incomplete answer: tell the student, but don't count a wrong try (no penalty, no hint unlock).
+function notYet(text){ const m=$("#msg"); m.className="msg bad"; m.textContent=text; say(text); }
 function pass(text){
   const m=$("#msg"); m.className="msg good"; m.textContent=text; say(text);
   stage.querySelectorAll(".lock button, #answer").forEach(el => el.disabled = true);
@@ -238,7 +240,9 @@ function matching(r, n){
       <button id="try">Try it</button>`)}
     ${hintBlock(r)}`;
   const check = () => {
-    if ($("#answer").value.replace(/\s+/g,"").toUpperCase() === m.answer) pass(r.successMessage || "🔓 The lock opens!");
+    const typed = $("#answer").value.replace(/\s+/g,"").toUpperCase();
+    if (!typed) return notYet("Type the code first.");
+    if (typed === m.answer) pass(r.successMessage || "🔓 The lock opens!");
     else fail(r.failMessage || "The lock won't budge. Check each clue again.");
   };
   $("#try").onclick = check; $("#answer").onkeydown = e => { if (e.key==="Enter") check(); };
@@ -257,6 +261,8 @@ function quiz(r, n){
     ${hintBlock(r)}`;
   $("#qf").onsubmit = e => {
     e.preventDefault();
+    const blank = qs.some((q,i) => q.kind==="choice" ? !document.querySelector(`input[name=q${i}]:checked`) : !ER.norm(document.querySelector(`input[name=q${i}]`).value));
+    if (blank) return notYet("Answer every question first.");
     let right = 0;
     qs.forEach((q,i) => {
       if (q.kind==="choice") { const v = document.querySelector(`input[name=q${i}]:checked`); if (v && +v.value === q.correct) right++; }
@@ -306,7 +312,7 @@ function sorting(r, n){
     b.parentElement.querySelectorAll("button").forEach(x=>{ const on=+x.dataset.v===pick[i]; x.classList.toggle("on",on); x.setAttribute("aria-pressed",on); });
   });
   $("#try").onclick = () => {
-    if (pick.includes(null)) return fail("Choose a category for every item first.");
+    if (pick.includes(null)) return notYet("Choose a category for every item first.");
     const right = pick.filter((p,i)=>p===items[i].category).length;
     if (right===items.length) pass(r.successMessage || "🔓 All sorted. The lock opens!");
     else fail(`${right} of ${items.length} are in the correct category.`);

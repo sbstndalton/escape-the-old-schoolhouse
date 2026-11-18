@@ -130,7 +130,7 @@
           "detail": "1796–1859",
           "icon": "🔔",
           "code": "4",
-          "clue": "I led the \"common school\" movement, calling free, tax-supported public education \"the great equalizer of the conditions of men.\"",
+          "clue": "I led the \"common school\" movement for free, tax-supported public schools. I called education \"the great equalizer of the conditions of men.\"",
           "source": "",
           "verified": false
         },
@@ -230,7 +230,7 @@
       ],
       "hints": [
         "Sort the events by century first. These ideas about education span more than 2,000 years.",
-        "Three of the events happened in the 1900s. Of those, the earliest one is about young children, and the latest one is a call for one curriculum for all students."
+        "Four of the events happened in the 1900s. Of those, the earliest one is about young children in Rome, and the latest one is a call for one curriculum for all students."
       ],
       "hintsEnabled": false
     },
@@ -514,7 +514,7 @@
               "profile": "PER"
             },
             {
-              "text": "John Dewey, the father of progressive education.",
+              "text": "John Dewey, the leading voice of progressive education.",
               "profile": "PRO"
             },
             {
