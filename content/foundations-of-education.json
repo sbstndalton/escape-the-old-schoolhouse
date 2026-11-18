@@ -1,0 +1,538 @@
+{
+  "schema": 1,
+  "meta": {
+    "title": "Escape the Old Schoolhouse",
+    "course": "EDU 216",
+    "codePrefix": "EDU216",
+    "learningOutcome": "Explore your own personal philosophy of education based on the historical and philosophical foundations of education."
+  },
+  "intro": {
+    "heading": "The Door Clicks Shut Behind You…",
+    "story": "You came to the old county schoolhouse, now a museum of education history, to research your Philosophy assignment. You lost track of time in the archives. When you look up, the lights are dim, the caretaker has gone home, and every door is locked.\n\nA note is pinned to the chalkboard: *\"Only someone who understands where our ideas about school came from may leave. Five rooms. Five locks. Good luck, future educator.\"*"
+  },
+  "scoring": {
+    "mode": "completion",
+    "hintPenalty": 5,
+    "wrongPenalty": 2,
+    "minScore": 50
+  },
+  "finish": {
+    "exitPassword": "DEWEY1916",
+    "certificateLine": "escaped the Old Schoolhouse by mastering the historical and philosophical foundations of education",
+    "instructions": "Enter the **exit password** in your course quiz, or submit your completion code or a screenshot of this page, as your instructor directs."
+  },
+  "rooms": [
+    {
+      "type": "matching",
+      "title": "The Library",
+      "codeStyle": "letters",
+      "codeWord": "LEARN",
+      "story": "Five dusty books glow on the shelf, each with one letter painted on its spine. A librarian's card catalog lists five descriptions, but the titles have been torn off. The lock on the library door takes a **5-letter word**.",
+      "cluesHeading": "Card Catalog",
+      "lockLabel": "🔒 Library lock",
+      "successMessage": "🔓 Click! The library door swings open.",
+      "failMessage": "The lock won't budge. Check which philosophy matches each description.",
+      "reference": "",
+      "cards": [
+        {
+          "term": "Essentialism",
+          "detail": "",
+          "icon": "",
+          "code": "",
+          "clue": "All students should master a common core of basic knowledge and skills (the \"3 R's,\" history, science). Teachers are authorities, and the classroom is orderly and disciplined. (William Bagley, E. D. Hirsch)",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Existentialism",
+          "detail": "",
+          "icon": "",
+          "code": "",
+          "clue": "Each student is a free individual who must make choices and create meaning in their own life. The curriculum emphasizes personal choice, the arts, and self-reflection. (Jean-Paul Sartre, Maxine Greene)",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Perennialism",
+          "detail": "",
+          "icon": "",
+          "code": "",
+          "clue": "Truth is universal and unchanging, so every student should study the same enduring ideas found in the \"Great Books\" of Western civilization. (Robert Hutchins, Mortimer Adler)",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Social Reconstructionism",
+          "detail": "",
+          "icon": "",
+          "code": "",
+          "clue": "Schools should be agents of change. Students study real social problems like poverty and injustice and work to build a fairer society. (George Counts, Paulo Freire)",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Progressivism",
+          "detail": "",
+          "icon": "",
+          "code": "",
+          "clue": "Education should be child-centered and grow out of students' interests and experiences. Learning happens through hands-on problem solving and cooperation. (John Dewey)",
+          "source": "",
+          "verified": false
+        }
+      ],
+      "hints": [
+        "Each numbered description matches one philosophy book. Write down the letter on that book's spine for descriptions 1 through 5, in order.",
+        "Description 1 (basics, core skills, discipline) is **Essentialism**, and description 5 (learning by doing) is **Progressivism**.",
+        "The answer is a five-letter word for what every student does in school."
+      ]
+    },
+    {
+      "type": "matching",
+      "title": "The Portrait Gallery",
+      "codeStyle": "numbers",
+      "codeWord": "",
+      "story": "Eight portraits line the hallway. Each has a numbered brass plate. A keypad by the far door asks for a **4-digit code**, and someone has scratched four clues into the wall.",
+      "cluesHeading": "Scratched on the wall",
+      "lockLabel": "🔢 Keypad",
+      "successMessage": "🔓 Beep-beep! The gallery door unlocks.",
+      "failMessage": "ERROR. Check each clue against the portraits.",
+      "reference": "",
+      "cards": [
+        {
+          "term": "John Dewey",
+          "detail": "1859–1952",
+          "icon": "🔬",
+          "code": "9",
+          "clue": "I believed school should be a small democratic community where children learn by doing. I wrote *Democracy and Education* (1916).",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Maria Montessori",
+          "detail": "1870–1952",
+          "icon": "🧸",
+          "code": "1",
+          "clue": "I was one of Italy's first women physicians. I designed a \"prepared environment\" with child-sized materials so young children could direct their own learning.",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Paulo Freire",
+          "detail": "1921–1997",
+          "icon": "✊",
+          "code": "5",
+          "clue": "I criticized the \"banking concept\" of education, where teachers deposit facts into passive students. I called for dialogue and critical consciousness instead.",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Horace Mann",
+          "detail": "1796–1859",
+          "icon": "🔔",
+          "code": "4",
+          "clue": "I led the \"common school\" movement, calling free, tax-supported public education \"the great equalizer of the conditions of men.\"",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Plato",
+          "detail": "c. 428–348 BCE",
+          "icon": "🏛️",
+          "code": "7",
+          "clue": "",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Jean-Jacques Rousseau",
+          "detail": "1712–1778",
+          "icon": "🌿",
+          "code": "3",
+          "clue": "",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "George Counts",
+          "detail": "1889–1974",
+          "icon": "⚖️",
+          "code": "2",
+          "clue": "",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Mortimer Adler",
+          "detail": "1902–2001",
+          "icon": "📚",
+          "code": "8",
+          "clue": "",
+          "source": "",
+          "verified": false
+        }
+      ],
+      "hints": [
+        "Each clue describes one philosopher. Find their portrait, then read the number on its brass plate. Enter the four numbers in the order of the clues (A, B, C, D).",
+        "Clue A is John Dewey, and Clue C is Paulo Freire.",
+        "Clue B is Maria Montessori, and Clue D is Horace Mann."
+      ]
+    },
+    {
+      "type": "ordering",
+      "title": "The History Hall",
+      "story": "A long wooden timeline covers the wall, but someone has knocked the event cards out of order. A brass lock is wired to the timeline. It will open only when every card is in **chronological order**, oldest at the top.",
+      "lockLabel": "🔒 Timeline lock",
+      "successMessage": "🔓 The timeline lights up and the lock drops open!",
+      "reference": "",
+      "items": [
+        {
+          "text": "Plato describes the education of philosopher-kings in *The Republic*.",
+          "label": "c. 375 BCE",
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "Rousseau publishes *Émile*, arguing that children learn best through nature and experience.",
+          "label": "1762",
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "Horace Mann becomes the first secretary of the Massachusetts Board of Education.",
+          "label": "1837",
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "Maria Montessori opens the first Casa dei Bambini (Children's House) in Rome.",
+          "label": "1907",
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "John Dewey publishes *Democracy and Education*.",
+          "label": "1916",
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "Paulo Freire writes *Pedagogy of the Oppressed*.",
+          "label": "1968",
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "Mortimer Adler publishes *The Paideia Proposal*, calling for one rigorous curriculum for all students.",
+          "label": "1982",
+          "source": "",
+          "verified": false
+        }
+      ],
+      "hints": [
+        "Use the ▲ and ▼ buttons to sort the events from oldest (top) to newest (bottom). When you check, the lock tells you how many are in the right spot.",
+        "Plato is the oldest by more than 2,000 years. Next comes the Enlightenment (Rousseau, 1700s), then the 1800s common school movement.",
+        "Twentieth-century order: Montessori (1907), then Dewey (1916), then Freire (1968), then Adler (1982)."
+      ]
+    },
+    {
+      "type": "sorting",
+      "title": "The Observation Room",
+      "story": "Behind a one-way mirror, you watch scenes from classrooms across the decades play out on old film reels. An observer's clipboard hangs on the door: label every observation as **Traditional (classical)** or **Progressive** to unlock it.",
+      "categories": [
+        "Traditional",
+        "Progressive"
+      ],
+      "lockLabel": "📋 Clipboard lock",
+      "successMessage": "🔓 Sharp eye! The observation room door opens.",
+      "reference": "",
+      "items": [
+        {
+          "text": "Desks sit in straight rows facing the teacher's desk and chalkboard.",
+          "category": 0,
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "Students design their own experiment to find out which brand of paper towel absorbs the most water.",
+          "category": 1,
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "The teacher lectures on the causes of the Civil War while students copy notes from the board.",
+          "category": 0,
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "Small groups plan and plant a class garden, measuring plots (math) and tracking plant growth (science).",
+          "category": 1,
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "Students recite multiplication tables together in timed drills until they've memorized them.",
+          "category": 0,
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "Each student chooses a local issue to research and presents solutions to community members.",
+          "category": 1,
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "The class works through the textbook chapter by chapter, with a unit test at the end of each one.",
+          "category": 0,
+          "source": "",
+          "verified": false
+        },
+        {
+          "text": "The class holds a meeting to discuss a playground problem and vote on new classroom rules.",
+          "category": 1,
+          "source": "",
+          "verified": false
+        }
+      ],
+      "hints": [
+        "**Traditional/classical**: teacher-centered, a set body of content, mastery through instruction and practice. **Progressive**: student-centered, inquiry, real-world problems, collaboration.",
+        "Exactly half of the observations are traditional and half are progressive.",
+        "The four progressive ones: the paper towel experiment, the class garden, the community project, and the class meeting."
+      ]
+    },
+    {
+      "type": "reflection",
+      "title": "The Mirror",
+      "story": "The last door has no keyhole, only a tall, old mirror. Words appear in the glass: *\"You have learned the philosophies of others. Now show me your own.\"*",
+      "buttonLabel": "Look into the mirror",
+      "successMessage": "✨ The mirror shimmers and becomes a doorway…",
+      "reference": "",
+      "resultHeading": "Your reflection",
+      "resultNote": "Most teachers blend philosophies. Use this result as a starting point, not a label.",
+      "profiles": [
+        {
+          "key": "ESS",
+          "name": "Essentialism",
+          "who": "William Bagley, E. D. Hirsch Jr.",
+          "desc": "You believe every student deserves a strong foundation in core knowledge and skills, taught clearly by a knowledgeable teacher in an orderly classroom.",
+          "next": "Consider William Bagley for your Philosophy PowerPoint, and look into his critique of progressive education in the 1930s.",
+          "source": "",
+          "verified": false
+        },
+        {
+          "key": "PER",
+          "name": "Perennialism",
+          "who": "Robert Hutchins, Mortimer Adler (with roots in Plato and Aristotle)",
+          "desc": "You value timeless ideas, great works, and the same rigorous intellectual education for every student.",
+          "next": "Consider Mortimer Adler (*The Paideia Proposal*) or Plato for your Philosophy PowerPoint.",
+          "source": "",
+          "verified": false
+        },
+        {
+          "key": "PRO",
+          "name": "Progressivism",
+          "who": "John Dewey (with roots in Rousseau)",
+          "desc": "You see learning as active and experiential. It should grow out of students' interests and real problems, and classrooms should be small democracies.",
+          "next": "Consider John Dewey for your Philosophy PowerPoint, and look into his Laboratory School at the University of Chicago.",
+          "source": "",
+          "verified": false
+        },
+        {
+          "key": "SOC",
+          "name": "Social Reconstructionism",
+          "who": "George Counts, Paulo Freire",
+          "desc": "You see schools as engines of social change, places where students learn to question injustice and act to improve their communities.",
+          "next": "Consider Paulo Freire (*Pedagogy of the Oppressed*) or George Counts for your Philosophy PowerPoint.",
+          "source": "",
+          "verified": false
+        },
+        {
+          "key": "EXI",
+          "name": "Existentialism",
+          "who": "Jean-Paul Sartre, Maxine Greene, A. S. Neill",
+          "desc": "You put the individual student at the center. School should help each person discover who they are and take responsibility for their own choices.",
+          "next": "Consider Maxine Greene or A. S. Neill (Summerhill School) for your Philosophy PowerPoint.",
+          "source": "",
+          "verified": false
+        },
+        {
+          "key": "MON",
+          "name": "Child-Centered / Montessori",
+          "who": "Maria Montessori",
+          "desc": "You trust children's natural drive to learn when they have a carefully prepared environment and the freedom to choose their work.",
+          "next": "Consider Maria Montessori for your Philosophy PowerPoint.",
+          "source": "",
+          "verified": false
+        }
+      ],
+      "questions": [
+        {
+          "prompt": "The main purpose of school is to…",
+          "options": [
+            {
+              "text": "pass on the essential knowledge and skills every citizen needs.",
+              "profile": "ESS"
+            },
+            {
+              "text": "develop the mind through humanity's greatest and most lasting ideas.",
+              "profile": "PER"
+            },
+            {
+              "text": "help students solve real problems and live in a democracy.",
+              "profile": "PRO"
+            },
+            {
+              "text": "prepare students to recognize and fix injustice in society.",
+              "profile": "SOC"
+            },
+            {
+              "text": "help each student discover who they are and what they value.",
+              "profile": "EXI"
+            }
+          ],
+          "source": "",
+          "verified": false
+        },
+        {
+          "prompt": "In my ideal classroom, the teacher is mainly…",
+          "options": [
+            {
+              "text": "an expert who explains content clearly and keeps high standards.",
+              "profile": "ESS"
+            },
+            {
+              "text": "a guide who leads students through the great books by asking questions.",
+              "profile": "PER"
+            },
+            {
+              "text": "a facilitator who sets up projects and supports students' inquiry.",
+              "profile": "PRO"
+            },
+            {
+              "text": "a partner in dialogue who learns alongside students.",
+              "profile": "SOC"
+            },
+            {
+              "text": "an observer who prepares the space and steps back.",
+              "profile": "MON"
+            }
+          ],
+          "source": "",
+          "verified": false
+        },
+        {
+          "prompt": "The curriculum should be based on…",
+          "options": [
+            {
+              "text": "core subjects, including reading, writing, math, science, and history.",
+              "profile": "ESS"
+            },
+            {
+              "text": "classic works of literature, philosophy, and science.",
+              "profile": "PER"
+            },
+            {
+              "text": "students' interests and real-world experiences.",
+              "profile": "PRO"
+            },
+            {
+              "text": "current social issues and students' communities.",
+              "profile": "SOC"
+            },
+            {
+              "text": "students' own choices, the arts, and personal reflection.",
+              "profile": "EXI"
+            }
+          ],
+          "source": "",
+          "verified": false
+        },
+        {
+          "prompt": "The best way to know whether a student has learned is…",
+          "options": [
+            {
+              "text": "tests that measure mastery of the standards.",
+              "profile": "ESS"
+            },
+            {
+              "text": "seminar discussion and writing about big ideas.",
+              "profile": "PER"
+            },
+            {
+              "text": "a project or product that solves a real problem.",
+              "profile": "PRO"
+            },
+            {
+              "text": "action the student takes in the community.",
+              "profile": "SOC"
+            },
+            {
+              "text": "the student's own self-assessment and portfolio.",
+              "profile": "EXI"
+            }
+          ],
+          "source": "",
+          "verified": false
+        },
+        {
+          "prompt": "A young child walks into my room. I want them to…",
+          "options": [
+            {
+              "text": "learn the routines and basic skills that set them up for success.",
+              "profile": "ESS"
+            },
+            {
+              "text": "hear great stories and start asking big questions.",
+              "profile": "PER"
+            },
+            {
+              "text": "explore, build, and play with classmates.",
+              "profile": "PRO"
+            },
+            {
+              "text": "choose their own activity from shelves of hands-on materials.",
+              "profile": "MON"
+            },
+            {
+              "text": "feel free to be themselves and express their feelings.",
+              "profile": "EXI"
+            }
+          ],
+          "source": "",
+          "verified": false
+        },
+        {
+          "prompt": "The educator I'd most like to have coffee with is…",
+          "options": [
+            {
+              "text": "E. D. Hirsch, the cultural literacy advocate.",
+              "profile": "ESS"
+            },
+            {
+              "text": "Mortimer Adler, the Great Books champion.",
+              "profile": "PER"
+            },
+            {
+              "text": "John Dewey, the father of progressive education.",
+              "profile": "PRO"
+            },
+            {
+              "text": "Paulo Freire, the critical pedagogue.",
+              "profile": "SOC"
+            },
+            {
+              "text": "Maria Montessori, the physician turned educator.",
+              "profile": "MON"
+            }
+          ],
+          "source": "",
+          "verified": false
+        }
+      ],
+      "hints": [
+        "There are no wrong answers here. Answer honestly, and the mirror will reflect your own philosophy."
+      ]
+    }
+  ]
+}

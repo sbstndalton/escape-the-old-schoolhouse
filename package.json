@@ -5,8 +5,8 @@
   "description": "Browser-based education escape room (Moodle/Canvas, SCORM)",
   "scripts": {
     "serve": "node scripts/serve.js",
-    "test": "node tests/playthrough.js",
-    "build:scorm": "rm -f EscapeRoom_SCORM.zip && zip -q EscapeRoom_SCORM.zip index.html imsmanifest.xml"
+    "test": "node scripts/build.js && node tests/playthrough.js && node tests/editor.js",
+    "build": "node scripts/build.js"
   },
   "devDependencies": {
     "playwright": "^1.56.0"

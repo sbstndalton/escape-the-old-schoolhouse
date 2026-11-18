@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Escape Room Editor</title>
+<style>
+  :root{--bg:#f6f4ee;--panel:#fff;--ink:#1f2a24;--muted:#5d6b63;--line:#d9d5ca;--accent:#24402f;--gold:#c9952b;--warn:#fff4d6;--warnline:#e3b64a;--ok:#e7f4ea;--okline:#7bb58a;--bad:#b3261e}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.45}
+  header{position:sticky;top:0;z-index:5;background:var(--accent);color:#fff;padding:.55rem 1rem;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+  header h1{font-size:1.05rem;margin:0 1rem 0 0}
+  header .spacer{flex:1}
+  .meter{display:flex;align-items:center;gap:.5rem;font-size:.85rem}
+  .meter .bar{width:120px;height:8px;background:rgba(255,255,255,.25);border-radius:4px;overflow:hidden}
+  .meter .bar i{display:block;height:100%;background:#7ccf8a}
+  button,.btn{font:inherit;font-size:.9rem;cursor:pointer;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:.38rem .75rem}
+  header button{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.35)}
+  header button.primary{background:#e8b84a;color:#2b1d0b;border-color:#e8b84a;font-weight:600}
+  button:hover{filter:brightness(.97)}
+  button.small{font-size:.8rem;padding:.2rem .5rem}
+  button.danger{color:var(--bad)}
+  button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #4a90e2;outline-offset:1px}
+  .layout{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 48px)}
+  nav{border-right:1px solid var(--line);background:#efece3;padding:.75rem;display:flex;flex-direction:column;gap:.3rem}
+  nav .item{display:flex;align-items:center;gap:.35rem;padding:.45rem .55rem;border-radius:6px;cursor:pointer;border:1px solid transparent}
+  nav .item.sel{background:#fff;border-color:var(--line);font-weight:600}
+  nav .item .t{flex:1;overflow-wrap:anywhere}
+  nav .pill{font-size:.72rem;border-radius:10px;padding:0 .45rem;background:var(--warn);border:1px solid var(--warnline);white-space:nowrap}
+  nav .pill.ok{background:var(--ok);border-color:var(--okline)}
+  nav h3{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:.8rem 0 .2rem}
+  main{padding:1.2rem 1.5rem 4rem;max-width:980px}
+  h2{margin:.2rem 0 .3rem;font-size:1.35rem}
+  .help{color:var(--muted);font-size:.88rem;margin:.1rem 0 .6rem}
+  .field{display:flex;flex-direction:column;gap:.2rem;margin:.55rem 0}
+  .field>span{font-weight:600;font-size:.88rem}
+  .field small{color:var(--muted);font-weight:normal}
+  input[type=text],input[type=number],textarea,select{font:inherit;font-size:.92rem;padding:.4rem .5rem;border:1px solid #c8c3b6;border-radius:6px;background:#fff;color:var(--ink);width:100%}
+  textarea{min-height:3.2rem;resize:vertical}
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end}
+  .row>.field{flex:1;min-width:160px}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem;margin:.8rem 0}
+  .box h3{margin:.1rem 0 .4rem;font-size:1rem}
+  .entry{border:1px solid var(--line);border-left:5px solid var(--warnline);background:#fffdf6;border-radius:8px;padding:.6rem .8rem;margin:.6rem 0}
+  .entry.verified{border-left-color:var(--okline);background:#fbfefb}
+  .entry .head{display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem}
+  .entry .head strong{flex:1;font-size:.85rem;color:var(--muted)}
+  .verify{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-top:.4rem;padding-top:.45rem;border-top:1px dashed var(--line)}
+  .verify .field{margin:0;flex:1;min-width:200px}
+  .verify label.chk{display:flex;gap:.35rem;align-items:center;font-weight:600;font-size:.88rem;white-space:nowrap}
+  .answer{background:#eef5f0;border:1px solid var(--okline);border-radius:8px;padding:.5rem .8rem;font-size:.92rem}
+  .answer code{font-size:1.05rem;font-weight:700;letter-spacing:.08em}
+  .choices .choice{display:flex;gap:.4rem;align-items:center;margin:.25rem 0}
+  .choices .choice input[type=text]{flex:1}
+  .notice{background:var(--warn);border:1px solid var(--warnline);border-radius:8px;padding:.6rem .8rem;margin:.6rem 0}
+  .errors{background:#fdecea;border:1px solid #f1b0aa;border-radius:8px;padding:.6rem .8rem;margin:.6rem 0}
+  .errors li{margin:.15rem 0}
+  .overlay{position:fixed;inset:0;background:rgba(10,20,15,.6);z-index:20;display:flex;flex-direction:column}
+  .overlay .bar{background:var(--accent);color:#fff;display:flex;gap:.5rem;align-items:center;padding:.5rem 1rem}
+  .overlay .bar span{flex:1;font-weight:600}
+  .overlay iframe{flex:1;border:0;background:#fff;width:100%}
+  .toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:#1f2a24;color:#fff;padding:.55rem 1rem;border-radius:8px;z-index:30;font-size:.9rem}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88rem}
+  @media (max-width:760px){.layout{grid-template-columns:1fr}nav{border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛠️ Escape Room Editor</h1>
+  <div class="meter" id="meter" title="Items checked against your sources"></div>
+  <span class="spacer"></span>
+  <button id="btn-new">New…</button>
+  <button id="btn-open">Open…</button>
+  <button id="btn-save">Save project</button>
+  <button id="btn-review">Review sheet</button>
+  <button id="btn-preview">▶ Preview</button>
+  <button id="btn-export" class="primary">Export for students ▾</button>
+  <input type="file" id="file" accept=".json,.html,.htm" hidden>
+</header>
+<div class="layout">
+  <nav id="nav" aria-label="Sections"></nav>
+  <main id="main"></main>
+</div>
+
+<script>
+/* Shared logic for the escape-room game and the teacher editor.
+ * Runs in browsers (inlined into both pages by scripts/build.js) and in Node (build + tests). */
+const ER = (() => {
+  // ---------- text ----------
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // Plain text with **bold** and *italic*; everything else is escaped.
+  const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>");
+  const paras = (s, cls = "") => String(s ?? "").split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
+    .map(p => `<p${cls ? ` class="${cls}"` : ""}>${fmt(p).replace(/\n/g, "<br>")}</p>`).join("");
+  // For comparing typed answers: case, accents, punctuation and extra spaces don't matter.
+  const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ").trim();
+  const accepted = a => String(a ?? "").split("|").map(norm).filter(Boolean);
+
+  // ---------- deterministic shuffle ----------
+  const hash = s => { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const rng = seed => () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  function scramble(n, seedText) {
+    const idx = [...Array(n).keys()]; if (n < 2) return idx;
+    const r = rng(hash(seedText));
+    for (let tries = 0; tries < 20; tries++) {
+      for (let i = n - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+      if (idx.some((v, i) => v !== i)) break;
+    }
+    return idx;
+  }
+
+  // ---------- matching rooms: which code is on each card, and what the lock wants ----------
+  const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", DIGITS = "123456789";
+  function matching(room) {
+    const cards = (room.cards || []).map((c, k) => ({ ...c, k }));
+    const answerCards = cards.filter(c => String(c.clue || "").trim());
+    const display = [...cards].sort((a, b) => String(a.term).localeCompare(String(b.term)));
+    const numbers = room.codeStyle === "numbers";
+    const code = {}; const used = new Set();
+    cards.forEach(c => { const v = String(c.code || "").trim().toUpperCase(); if (v) { code[c.k] = v; used.add(v); } });
+    const word = String(room.codeWord || "").replace(/\s+/g, "").toUpperCase();
+    if (!numbers && word && word.length === answerCards.length) {
+      answerCards.forEach((c, i) => { if (!code[c.k]) { code[c.k] = word[i]; used.add(word[i]); } });
+    }
+    const pool = [...(numbers ? DIGITS : LETTERS)].filter(ch => !used.has(ch));
+    display.forEach(c => { if (!code[c.k]) code[c.k] = pool.shift() || "?"; });
+    return { cards, display, answerCards, numbers, code, answer: answerCards.map(c => code[c.k]).join("") };
+  }
+
+  // ---------- review status ----------
+  // Every fact a student is graded on, so the teacher can check each one.
+  function reviewItems(cfg) {
+    const out = [];
+    (cfg.rooms || []).forEach((room, r) => {
+      const add = (list, label) => (list || []).forEach((it, i) => out.push({ room: r, list: label, i, item: it }));
+      if (room.type === "matching") add(room.cards, "cards");
+      if (room.type === "quiz") add(room.questions, "questions");
+      if (room.type === "ordering") add(room.items, "items");
+      if (room.type === "sorting") add(room.items, "items");
+      if (room.type === "reflection") { add(room.profiles, "profiles"); add(room.questions, "questions"); }
+    });
+    return out;
+  }
+  const reviewStatus = cfg => { const all = reviewItems(cfg); const done = all.filter(x => x.item.verified === true).length; return { total: all.length, verified: done, unverified: all.length - done }; };
+
+  // ---------- validation (problems that would make a room unsolvable) ----------
+  function validate(cfg) {
+    const errs = [];
+    if (!String(cfg.meta?.title || "").trim()) errs.push("Settings: the escape room needs a title.");
+    if (!(cfg.rooms || []).length) errs.push("Add at least one room.");
+    (cfg.rooms || []).forEach((room, r) => {
+      const where = `Room ${r + 1} (${room.title || "untitled"})`;
+      if (room.type === "matching") {
+        const m = matching(room);
+        if (!m.answerCards.length) errs.push(`${where}: at least one card needs a clue.`);
+        if ((room.cards || []).some(c => !String(c.term || "").trim())) errs.push(`${where}: every card needs a name.`);
+        if (m.answer.includes("?")) errs.push(`${where}: too many cards for ${m.numbers ? "number codes (max 9)" : "letter codes (max 26)"}.`);
+        const word = String(room.codeWord || "").replace(/\s+/g, "");
+        if (!m.numbers && word && word.length !== m.answerCards.length) errs.push(`${where}: the code word "${word}" has ${word.length} letters but there are ${m.answerCards.length} clues.`);
+      }
+      if (room.type === "quiz") {
+        if (!(room.questions || []).length) errs.push(`${where}: add at least one question.`);
+        (room.questions || []).forEach((q, i) => {
+          if (!String(q.prompt || "").trim()) errs.push(`${where}, question ${i + 1}: the question is empty.`);
+          if (q.kind === "choice") {
+            const ch = (q.choices || []).filter(c => String(c).trim());
+            if (ch.length < 2) errs.push(`${where}, question ${i + 1}: needs at least 2 choices.`);
+            if (!(q.correct >= 0 && q.correct < (q.choices || []).length && String(q.choices[q.correct]).trim())) errs.push(`${where}, question ${i + 1}: mark which choice is correct.`);
+          } else if (!accepted(q.answers).length) errs.push(`${where}, question ${i + 1}: needs at least one accepted answer.`);
+        });
+      }
+      if (room.type === "ordering" && (room.items || []).length < 2) errs.push(`${where}: needs at least 2 items to put in order.`);
+      if (room.type === "sorting") {
+        const cats = (room.categories || []).filter(c => String(c).trim());
+        if (cats.length < 2) errs.push(`${where}: needs at least 2 categories.`);
+        if (!(room.items || []).length) errs.push(`${where}: add at least one item to sort.`);
+        (room.items || []).forEach((it, i) => { if (!(it.category >= 0 && it.category < (room.categories || []).length)) errs.push(`${where}, item ${i + 1}: pick its correct category.`); });
+      }
+      if (room.type === "reflection") {
+        const keys = new Set((room.profiles || []).map(p => p.key));
+        if (!keys.size) errs.push(`${where}: add at least one result profile.`);
+        (room.questions || []).forEach((q, i) => (q.options || []).forEach((o, j) => {
+          if (!keys.has(o.profile)) errs.push(`${where}, question ${i + 1}, option ${j + 1}: pick which result it counts toward.`);
+        }));
+      }
+    });
+    return errs;
+  }
+
+  // ---------- packing content into the game file ----------
+  const encodeConfig = cfg => { const bytes = new TextEncoder().encode(JSON.stringify(cfg)); let s = ""; for (const b of bytes) s += String.fromCharCode(b); return btoa(s); };
+  const decodeConfig = b64 => JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(String(b64).trim()), c => c.charCodeAt(0))));
+  // Placeholders are built by concatenation so this code never matches itself once inlined into the game.
+  const P_TITLE = "__ESCAPE_" + "TITLE__", P_CONFIG = "__ESCAPE_" + "CONFIG__";
+  const buildGame = (template, cfg) => template.split(P_TITLE).join(esc(cfg.meta?.title || "Escape Room")).split(P_CONFIG).join(encodeConfig(cfg));
+  // Pull the content back out of an exported game file (so a teacher can reopen and edit it).
+  function configFromHtml(html) {
+    const m = String(html).match(/<script id="escape-config" type="text\/plain">([\s\S]*?)<\/script>/);
+    if (!m) throw new Error("This file isn't an escape room made with this editor.");
+    return decodeConfig(m[1]);
+  }
+
+  // ---------- zip (stored, no compression) for SCORM packages ----------
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = d => { let c = 0xFFFFFFFF; for (let i = 0; i < d.length; i++) c = CRC[(c ^ d[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  function zip(files, date = new Date()) {
+    const enc = new TextEncoder();
+    const dosTime = (date.getHours() << 11) | (date.getMinutes() << 5) | (date.getSeconds() >> 1);
+    const dosDate = ((date.getFullYear() - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+    const parts = [], central = []; let offset = 0;
+    for (const f of files) {
+      const name = enc.encode(f.name), data = typeof f.data === "string" ? enc.encode(f.data) : f.data, crc = crc32(data);
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+      h.setUint16(10, dosTime, true); h.setUint16(12, dosDate, true); h.setUint32(14, crc, true);
+      h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+      parts.push(new Uint8Array(h.buffer), name, data);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true);
+      c.setUint16(12, dosTime, true); c.setUint16(14, dosDate, true); c.setUint32(16, crc, true);
+      c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true);
+      c.setUint32(42, offset, true);
+      central.push(new Uint8Array(c.buffer), name);
+      offset += 30 + name.length + data.length;
+    }
+    const cdSize = central.reduce((s, p) => s + p.length, 0);
+    const e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+    e.setUint32(12, cdSize, true); e.setUint32(16, offset, true);
+    const all = [...parts, ...central, new Uint8Array(e.buffer)];
+    const out = new Uint8Array(all.reduce((s, p) => s + p.length, 0)); let p = 0;
+    for (const a of all) { out.set(a, p); p += a.length; }
+    return out;
+  }
+  const xml = s => esc(s);
+  function manifest(title) {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<manifest identifier="EscapeRoom_${hash(title)}" version="1.0"
+  xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2"
+  xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata><schema>ADL SCORM</schema><schemaversion>1.2</schemaversion></metadata>
+  <organizations default="ORG1">
+    <organization identifier="ORG1">
+      <title>${xml(title)}</title>
+      <item identifier="ITEM1" identifierref="RES1"><title>${xml(title)}</title></item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="RES1" type="webcontent" adlcp:scormtype="sco" href="index.html"><file href="index.html"/></resource>
+  </resources>
+</manifest>
+`;
+  }
+  const scorm = (gameHtml, title, date) => zip([{ name: "imsmanifest.xml", data: manifest(title) }, { name: "index.html", data: gameHtml }], date);
+  const fileSlug = s => String(s || "escape-room").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") || "escape-room";
+
+  return { esc, fmt, paras, norm, accepted, hash, scramble, matching, reviewItems, reviewStatus, validate,
+    encodeConfig, decodeConfig, buildGame, configFromHtml, zip, crc32, manifest, scorm, fileSlug };
+})();
+if (typeof module !== "undefined") module.exports = ER;
+
+</script>
+<script>
+const GAME_TEMPLATE = "\u003c!DOCTYPE html>\n\u003chtml lang=\"en\">\n\u003chead>\n\u003cmeta charset=\"UTF-8\">\n\u003cmeta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n\u003ctitle>__ESCAPE_TITLE__\u003c/title>\n\u003cstyle>\n  :root{\n    --board:#24402f; --board2:#1b3124; --chalk:#f4f1e6; --muted:#c9d3c4;\n    --wood:#8a5a32; --wood2:#6b4425; --gold:#e8b84a; --red:#e06a5a; --ok:#7ccf8a;\n    --card:#2d4d39;\n  }\n  *{box-sizing:border-box}\n  body{margin:0;font-family:Georgia,\"Times New Roman\",serif;color:var(--chalk);\n    background:radial-gradient(circle at 30% 20%,#2c4a37,#16281d 70%);min-height:100vh;line-height:1.5}\n  header{background:linear-gradient(var(--wood),var(--wood2));padding:.6rem 1rem;display:flex;\n    flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between;border-bottom:4px solid #4a2f19}\n  header h1{font-size:1.15rem;margin:0;letter-spacing:.03em}\n  .doors{display:flex;gap:.35rem;flex-wrap:wrap}\n  .door{width:2.1rem;height:2.1rem;border-radius:.3rem;display:grid;place-items:center;font-size:.85rem;\n    background:#3d2716;border:2px solid #2a1a0e;color:#b99d82}\n  .door.open{background:var(--gold);color:#3d2716;border-color:#a37a1f;font-weight:bold}\n  .door.current{outline:2px solid var(--chalk)}\n  .stats{font-family:ui-monospace,Menlo,monospace;font-size:.9rem;display:flex;gap:1rem}\n  .draft{background:#5a3a12;color:#ffe2a8;border-bottom:2px solid #a37a1f;padding:.45rem 1rem;font-size:.9rem;text-align:center}\n  main{max-width:860px;margin:1.5rem auto;padding:0 1rem}\n  .panel{background:var(--board);border:10px solid var(--wood);border-radius:.6rem;padding:1.5rem 1.6rem;\n    box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 60px rgba(0,0,0,.35)}\n  h2{margin-top:0;font-size:1.6rem;border-bottom:1px dashed rgba(244,241,230,.35);padding-bottom:.4rem}\n  .story{font-style:italic;color:var(--muted)}\n  .ref{font-size:.88rem;color:var(--muted);border-left:3px solid var(--gold);padding-left:.6rem}\n  .grid{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}\n  .card{background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:.45rem;padding:.75rem .9rem}\n  .mcard{display:flex;gap:.7rem;align-items:center}\n  .badge{min-width:2.4rem;height:3rem;border-radius:.25rem;display:grid;place-items:center;font-weight:bold;\n    font-size:1.35rem;color:#3d2716;background:var(--gold);font-family:ui-monospace,monospace;box-shadow:inset -4px 0 0 rgba(0,0,0,.18)}\n  .icon{font-size:1.5rem}\n  ol.clues li{margin:.4rem 0}\n  .lock{margin-top:1.2rem;padding:1rem;background:#15261b;border-radius:.45rem;border:2px solid #0f1c13;\n    display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}\n  .lock label{font-weight:bold}\n  input[type=text]{font-family:ui-monospace,Menlo,monospace;font-size:1.3rem;letter-spacing:.35em;width:11rem;\n    padding:.35rem .5rem;border-radius:.3rem;border:2px solid var(--gold);background:#0c160f;color:var(--chalk);\n    text-transform:uppercase}\n  input.free{letter-spacing:normal;text-transform:none;font-family:inherit;font-size:1rem;width:100%;max-width:26rem}\n  button{font-family:inherit;font-size:1rem;cursor:pointer;border-radius:.35rem;border:0;padding:.5rem 1rem;\n    background:var(--gold);color:#3d2716;font-weight:bold}\n  button.ghost{background:transparent;color:var(--chalk);border:1px solid rgba(244,241,230,.5);font-weight:normal}\n  button:disabled{opacity:.45;cursor:not-allowed}\n  button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}\n  .msg{min-height:1.5rem;font-weight:bold}\n  .msg.bad{color:var(--red)} .msg.good{color:var(--ok)}\n  .hint{margin-top:.8rem;padding:.6rem .8rem;border-left:4px solid var(--gold);background:rgba(232,184,74,.1)}\n  .list{list-style:none;padding:0;margin:0}\n  .list>li{display:flex;align-items:center;gap:.5rem;margin:.4rem 0;background:var(--card);\n    border:1px solid rgba(255,255,255,.12);border-radius:.4rem;padding:.45rem .6rem}\n  .list>li>span{flex:1}\n  .list .pos{font-family:ui-monospace,monospace;color:var(--gold);flex:0 0 1.6rem}\n  .mv{padding:.2rem .55rem;font-size:.9rem}\n  .scene>li{flex-wrap:wrap;justify-content:space-between}\n  .seg{display:flex;flex-wrap:wrap;gap:.3rem}\n  .seg button{padding:.3rem .65rem;font-size:.85rem;background:#1b3124;color:var(--chalk);border:1px solid rgba(255,255,255,.3);font-weight:normal}\n  .seg button.on{background:var(--gold);color:#3d2716;font-weight:bold}\n  fieldset{border:1px solid rgba(255,255,255,.2);border-radius:.45rem;margin:0 0 .8rem;padding:.6rem .9rem}\n  legend{font-weight:bold;padding:0 .3rem}\n  fieldset label{display:block;margin:.25rem 0;cursor:pointer}\n  .result{background:#f4f1e6;color:#24402f;border-radius:.45rem;padding:1rem 1.2rem}\n  .result h3{margin-top:0}\n  .cert{border:6px double var(--gold);border-radius:.5rem;padding:1.4rem;text-align:center;background:#1b3124}\n  .code{font-family:ui-monospace,monospace;font-size:1.5rem;color:var(--gold);letter-spacing:.1em;overflow-wrap:anywhere}\n  .small{font-size:.88rem;color:var(--muted)}\n  .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:1rem}\n  .sr{position:absolute;left:-9999px}\n  .shake{animation:shake .4s}\n  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}\n  @media (prefers-reduced-motion: reduce){.shake{animation:none}}\n  @media print{header,.draft,.row button{display:none}body{background:#fff;color:#000}.cert{background:#fff;color:#000}}\n\u003c/style>\n\u003c/head>\n\u003cbody>\n\u003cheader>\n  \u003ch1 id=\"game-title\">\u003c/h1>\n  \u003cdiv class=\"doors\" id=\"doors\" aria-label=\"Progress\">\u003c/div>\n  \u003cdiv class=\"stats\">\u003cspan>⏱ \u003cspan id=\"timer\">00:00\u003c/span>\u003c/span>\u003cspan>💡 \u003cspan id=\"hintCount\">0\u003c/span>\u003c/span>\u003c/div>\n\u003c/header>\n\u003cdiv id=\"draft\" class=\"draft\" hidden>\u003c/div>\n\u003cmain>\u003cdiv class=\"panel\" id=\"stage\" tabindex=\"-1\">\u003c/div>\u003c/main>\n\u003cdiv class=\"sr\" aria-live=\"polite\" id=\"live\">\u003c/div>\n\u003c!-- The escape room's content (questions, answers, story). Edit it with editor.html, not by hand. -->\n\u003cscript id=\"escape-config\" type=\"text/plain\">__ESCAPE_CONFIG__\u003c/script>\n\u003cscript>\n/* Shared logic for the escape-room game and the teacher editor.\n * Runs in browsers (inlined into both pages by scripts/build.js) and in Node (build + tests). */\nconst ER = (() => {\n  // ---------- text ----------\n  const esc = s => String(s ?? \"\").replace(/[&\u003c>\"']/g, c => ({ \"&\": \"&amp;\", \"\u003c\": \"&lt;\", \">\": \"&gt;\", '\"': \"&quot;\", \"'\": \"&#39;\" }[c]));\n  // Plain text with **bold** and *italic*; everything else is escaped.\n  const fmt = s => esc(s).replace(/\\*\\*(.+?)\\*\\*/g, \"\u003cstrong>$1\u003c/strong>\").replace(/\\*(.+?)\\*/g, \"\u003cem>$1\u003c/em>\");\n  const paras = (s, cls = \"\") => String(s ?? \"\").split(/\\n\\s*\\n/).map(p => p.trim()).filter(Boolean)\n    .map(p => `\u003cp${cls ? ` class=\"${cls}\"` : \"\"}>${fmt(p).replace(/\\n/g, \"\u003cbr>\")}\u003c/p>`).join(\"\");\n  // For comparing typed answers: case, accents, punctuation and extra spaces don't matter.\n  const norm = s => String(s ?? \"\").normalize(\"NFD\").replace(/[̀-ͯ]/g, \"\").toLowerCase()\n    .replace(/[^a-z0-9]+/g, \" \").trim();\n  const accepted = a => String(a ?? \"\").split(\"|\").map(norm).filter(Boolean);\n\n  // ---------- deterministic shuffle ----------\n  const hash = s => { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };\n  const rng = seed => () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);\n    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };\n  function scramble(n, seedText) {\n    const idx = [...Array(n).keys()]; if (n \u003c 2) return idx;\n    const r = rng(hash(seedText));\n    for (let tries = 0; tries \u003c 20; tries++) {\n      for (let i = n - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }\n      if (idx.some((v, i) => v !== i)) break;\n    }\n    return idx;\n  }\n\n  // ---------- matching rooms: which code is on each card, and what the lock wants ----------\n  const LETTERS = \"ABCDEFGHIJKLMNOPQRSTUVWXYZ\", DIGITS = \"123456789\";\n  function matching(room) {\n    const cards = (room.cards || []).map((c, k) => ({ ...c, k }));\n    const answerCards = cards.filter(c => String(c.clue || \"\").trim());\n    const display = [...cards].sort((a, b) => String(a.term).localeCompare(String(b.term)));\n    const numbers = room.codeStyle === \"numbers\";\n    const code = {}; const used = new Set();\n    cards.forEach(c => { const v = String(c.code || \"\").trim().toUpperCase(); if (v) { code[c.k] = v; used.add(v); } });\n    const word = String(room.codeWord || \"\").replace(/\\s+/g, \"\").toUpperCase();\n    if (!numbers && word && word.length === answerCards.length) {\n      answerCards.forEach((c, i) => { if (!code[c.k]) { code[c.k] = word[i]; used.add(word[i]); } });\n    }\n    const pool = [...(numbers ? DIGITS : LETTERS)].filter(ch => !used.has(ch));\n    display.forEach(c => { if (!code[c.k]) code[c.k] = pool.shift() || \"?\"; });\n    return { cards, display, answerCards, numbers, code, answer: answerCards.map(c => code[c.k]).join(\"\") };\n  }\n\n  // ---------- review status ----------\n  // Every fact a student is graded on, so the teacher can check each one.\n  function reviewItems(cfg) {\n    const out = [];\n    (cfg.rooms || []).forEach((room, r) => {\n      const add = (list, label) => (list || []).forEach((it, i) => out.push({ room: r, list: label, i, item: it }));\n      if (room.type === \"matching\") add(room.cards, \"cards\");\n      if (room.type === \"quiz\") add(room.questions, \"questions\");\n      if (room.type === \"ordering\") add(room.items, \"items\");\n      if (room.type === \"sorting\") add(room.items, \"items\");\n      if (room.type === \"reflection\") { add(room.profiles, \"profiles\"); add(room.questions, \"questions\"); }\n    });\n    return out;\n  }\n  const reviewStatus = cfg => { const all = reviewItems(cfg); const done = all.filter(x => x.item.verified === true).length; return { total: all.length, verified: done, unverified: all.length - done }; };\n\n  // ---------- validation (problems that would make a room unsolvable) ----------\n  function validate(cfg) {\n    const errs = [];\n    if (!String(cfg.meta?.title || \"\").trim()) errs.push(\"Settings: the escape room needs a title.\");\n    if (!(cfg.rooms || []).length) errs.push(\"Add at least one room.\");\n    (cfg.rooms || []).forEach((room, r) => {\n      const where = `Room ${r + 1} (${room.title || \"untitled\"})`;\n      if (room.type === \"matching\") {\n        const m = matching(room);\n        if (!m.answerCards.length) errs.push(`${where}: at least one card needs a clue.`);\n        if ((room.cards || []).some(c => !String(c.term || \"\").trim())) errs.push(`${where}: every card needs a name.`);\n        if (m.answer.includes(\"?\")) errs.push(`${where}: too many cards for ${m.numbers ? \"number codes (max 9)\" : \"letter codes (max 26)\"}.`);\n        const word = String(room.codeWord || \"\").replace(/\\s+/g, \"\");\n        if (!m.numbers && word && word.length !== m.answerCards.length) errs.push(`${where}: the code word \"${word}\" has ${word.length} letters but there are ${m.answerCards.length} clues.`);\n      }\n      if (room.type === \"quiz\") {\n        if (!(room.questions || []).length) errs.push(`${where}: add at least one question.`);\n        (room.questions || []).forEach((q, i) => {\n          if (!String(q.prompt || \"\").trim()) errs.push(`${where}, question ${i + 1}: the question is empty.`);\n          if (q.kind === \"choice\") {\n            const ch = (q.choices || []).filter(c => String(c).trim());\n            if (ch.length \u003c 2) errs.push(`${where}, question ${i + 1}: needs at least 2 choices.`);\n            if (!(q.correct >= 0 && q.correct \u003c (q.choices || []).length && String(q.choices[q.correct]).trim())) errs.push(`${where}, question ${i + 1}: mark which choice is correct.`);\n          } else if (!accepted(q.answers).length) errs.push(`${where}, question ${i + 1}: needs at least one accepted answer.`);\n        });\n      }\n      if (room.type === \"ordering\" && (room.items || []).length \u003c 2) errs.push(`${where}: needs at least 2 items to put in order.`);\n      if (room.type === \"sorting\") {\n        const cats = (room.categories || []).filter(c => String(c).trim());\n        if (cats.length \u003c 2) errs.push(`${where}: needs at least 2 categories.`);\n        if (!(room.items || []).length) errs.push(`${where}: add at least one item to sort.`);\n        (room.items || []).forEach((it, i) => { if (!(it.category >= 0 && it.category \u003c (room.categories || []).length)) errs.push(`${where}, item ${i + 1}: pick its correct category.`); });\n      }\n      if (room.type === \"reflection\") {\n        const keys = new Set((room.profiles || []).map(p => p.key));\n        if (!keys.size) errs.push(`${where}: add at least one result profile.`);\n        (room.questions || []).forEach((q, i) => (q.options || []).forEach((o, j) => {\n          if (!keys.has(o.profile)) errs.push(`${where}, question ${i + 1}, option ${j + 1}: pick which result it counts toward.`);\n        }));\n      }\n    });\n    return errs;\n  }\n\n  // ---------- packing content into the game file ----------\n  const encodeConfig = cfg => { const bytes = new TextEncoder().encode(JSON.stringify(cfg)); let s = \"\"; for (const b of bytes) s += String.fromCharCode(b); return btoa(s); };\n  const decodeConfig = b64 => JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(String(b64).trim()), c => c.charCodeAt(0))));\n  // Placeholders are built by concatenation so this code never matches itself once inlined into the game.\n  const P_TITLE = \"__ESCAPE_\" + \"TITLE__\", P_CONFIG = \"__ESCAPE_\" + \"CONFIG__\";\n  const buildGame = (template, cfg) => template.split(P_TITLE).join(esc(cfg.meta?.title || \"Escape Room\")).split(P_CONFIG).join(encodeConfig(cfg));\n  // Pull the content back out of an exported game file (so a teacher can reopen and edit it).\n  function configFromHtml(html) {\n    const m = String(html).match(/\u003cscript id=\"escape-config\" type=\"text\\/plain\">([\\s\\S]*?)\u003c\\/script>/);\n    if (!m) throw new Error(\"This file isn't an escape room made with this editor.\");\n    return decodeConfig(m[1]);\n  }\n\n  // ---------- zip (stored, no compression) for SCORM packages ----------\n  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n \u003c 256; n++) { let c = n; for (let k = 0; k \u003c 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();\n  const crc32 = d => { let c = 0xFFFFFFFF; for (let i = 0; i \u003c d.length; i++) c = CRC[(c ^ d[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };\n  function zip(files, date = new Date()) {\n    const enc = new TextEncoder();\n    const dosTime = (date.getHours() \u003c\u003c 11) | (date.getMinutes() \u003c\u003c 5) | (date.getSeconds() >> 1);\n    const dosDate = ((date.getFullYear() - 1980) \u003c\u003c 9) | ((date.getMonth() + 1) \u003c\u003c 5) | date.getDate();\n    const parts = [], central = []; let offset = 0;\n    for (const f of files) {\n      const name = enc.encode(f.name), data = typeof f.data === \"string\" ? enc.encode(f.data) : f.data, crc = crc32(data);\n      const h = new DataView(new ArrayBuffer(30));\n      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);\n      h.setUint16(10, dosTime, true); h.setUint16(12, dosDate, true); h.setUint32(14, crc, true);\n      h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);\n      parts.push(new Uint8Array(h.buffer), name, data);\n      const c = new DataView(new ArrayBuffer(46));\n      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true);\n      c.setUint16(12, dosTime, true); c.setUint16(14, dosDate, true); c.setUint32(16, crc, true);\n      c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true);\n      c.setUint32(42, offset, true);\n      central.push(new Uint8Array(c.buffer), name);\n      offset += 30 + name.length + data.length;\n    }\n    const cdSize = central.reduce((s, p) => s + p.length, 0);\n    const e = new DataView(new ArrayBuffer(22));\n    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);\n    e.setUint32(12, cdSize, true); e.setUint32(16, offset, true);\n    const all = [...parts, ...central, new Uint8Array(e.buffer)];\n    const out = new Uint8Array(all.reduce((s, p) => s + p.length, 0)); let p = 0;\n    for (const a of all) { out.set(a, p); p += a.length; }\n    return out;\n  }\n  const xml = s => esc(s);\n  function manifest(title) {\n    return `\u003c?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\u003cmanifest identifier=\"EscapeRoom_${hash(title)}\" version=\"1.0\"\n  xmlns=\"http://www.imsproject.org/xsd/imscp_rootv1p1p2\"\n  xmlns:adlcp=\"http://www.adlnet.org/xsd/adlcp_rootv1p2\"\n  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n  xsi:schemaLocation=\"http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd\">\n  \u003cmetadata>\u003cschema>ADL SCORM\u003c/schema>\u003cschemaversion>1.2\u003c/schemaversion>\u003c/metadata>\n  \u003corganizations default=\"ORG1\">\n    \u003corganization identifier=\"ORG1\">\n      \u003ctitle>${xml(title)}\u003c/title>\n      \u003citem identifier=\"ITEM1\" identifierref=\"RES1\">\u003ctitle>${xml(title)}\u003c/title>\u003c/item>\n    \u003c/organization>\n  \u003c/organizations>\n  \u003cresources>\n    \u003cresource identifier=\"RES1\" type=\"webcontent\" adlcp:scormtype=\"sco\" href=\"index.html\">\u003cfile href=\"index.html\"/>\u003c/resource>\n  \u003c/resources>\n\u003c/manifest>\n`;\n  }\n  const scorm = (gameHtml, title, date) => zip([{ name: \"imsmanifest.xml\", data: manifest(title) }, { name: \"index.html\", data: gameHtml }], date);\n  const fileSlug = s => String(s || \"escape-room\").normalize(\"NFD\").replace(/[̀-ͯ]/g, \"\").replace(/[^A-Za-z0-9]+/g, \"-\").replace(/^-|-$/g, \"\") || \"escape-room\";\n\n  return { esc, fmt, paras, norm, accepted, hash, scramble, matching, reviewItems, reviewStatus, validate,\n    encodeConfig, decodeConfig, buildGame, configFromHtml, zip, crc32, manifest, scorm, fileSlug };\n})();\nif (typeof module !== \"undefined\") module.exports = ER;\n\n\u003c/script>\n\u003cscript>\n/* ===================== SCORM 1.2 (optional — runs only inside an LMS) ===================== */\nconst SCORM = (() => {\n  let api = null;\n  function find(w){ let n=0; while(w && !w.API && w.parent && w.parent!==w && n\u003c10){ w=w.parent; n++; } return w && w.API ? w.API : null; }\n  try { api = find(window) || (window.opener ? find(window.opener) : null); } catch(e){ api = null; }\n  const ok = !!api;\n  if (ok) { try { api.LMSInitialize(\"\");\n    if (api.LMSGetValue(\"cmi.core.lesson_status\") === \"not attempted\") api.LMSSetValue(\"cmi.core.lesson_status\",\"incomplete\");\n    api.LMSCommit(\"\"); } catch(e){} }\n  return {\n    ok,\n    name(){ if(!ok) return \"\"; try{ const n=api.LMSGetValue(\"cmi.core.student_name\")||\"\"; const p=n.split(\",\"); return p.length===2? (p[1].trim()+\" \"+p[0].trim()):n; }catch(e){return \"\"} },\n    complete(score, seconds){\n      if(!ok) return;\n      try{\n        api.LMSSetValue(\"cmi.core.score.min\",\"0\"); api.LMSSetValue(\"cmi.core.score.max\",\"100\");\n        api.LMSSetValue(\"cmi.core.score.raw\", String(score));\n        const h=String(Math.floor(seconds/3600)).padStart(4,\"0\"), m=String(Math.floor(seconds%3600/60)).padStart(2,\"0\"), s=String(seconds%60).padStart(2,\"0\");\n        api.LMSSetValue(\"cmi.core.session_time\", `${h}:${m}:${s}`);\n        api.LMSSetValue(\"cmi.core.lesson_status\",\"completed\");\n        api.LMSCommit(\"\");\n      }catch(e){}\n    },\n    finish(){ if(ok){ try{ api.LMSFinish(\"\"); }catch(e){} } }\n  };\n})();\nwindow.addEventListener(\"beforeunload\", () => SCORM.finish());\n\n/* ===================== Content ===================== */\nconst CFG = ER.decodeConfig(document.getElementById(\"escape-config\").textContent);\nconst ROOMS = CFG.rooms || [];\nconst { esc, fmt, paras } = ER;\n\n/* ===================== State ===================== */\nconst S = { room:0, start:null, hints:0, wrong:0, hintsShown:{}, reflection:null };\nlet tick = null;\nconst $ = s => document.querySelector(s);\nconst stage = $(\"#stage\");\nconst say = t => { $(\"#live\").textContent = t; };\n\nfunction fmtTime(sec){ return String(Math.floor(sec/60)).padStart(2,\"0\")+\":\"+String(sec%60).padStart(2,\"0\"); }\nfunction elapsed(){ return S.start ? Math.floor((Date.now()-S.start)/1000) : 0; }\nfunction startTimer(){ if(!S.start){ S.start=Date.now(); tick=setInterval(()=>$(\"#timer\").textContent=fmtTime(elapsed()),1000);} }\n\nfunction renderDoors(){\n  $(\"#doors\").innerHTML = ROOMS.map((_,i)=>{\n    const r=i+1; const cls = S.room>r ? \"door open\" : (S.room===r ? \"door current\" : \"door\");\n    return `\u003cdiv class=\"${cls}\" title=\"Room ${r}\">${S.room>r?\"🔓\":r}\u003c/div>`;\n  }).join(\"\");\n}\n\nfunction hintBlock(room){\n  if (!(room.hints||[]).length) return \"\";\n  return `\u003cdiv class=\"row\">\u003cbutton class=\"ghost\" id=\"hint-btn\">💡 Get a hint\u003c/button>\u003c/div>\u003cdiv id=\"hints\">\u003c/div>`;\n}\nfunction wireHints(room, r){\n  const btn = $(\"#hint-btn\"); if (!btn) return;\n  const list = room.hints;\n  const show = () => {\n    const n = S.hintsShown[r] || 0;\n    $(\"#hints\").innerHTML = list.slice(0,n).map((h,i)=>`\u003cdiv class=\"hint\">\u003cstrong>Hint ${i+1}:\u003c/strong> ${fmt(h)}\u003c/div>`).join(\"\");\n    if (n >= list.length) { btn.disabled = true; btn.textContent = \"No more hints\"; }\n  };\n  btn.onclick = () => { const n = S.hintsShown[r] || 0; if (n >= list.length) return; S.hintsShown[r] = n+1; S.hints++; $(\"#hintCount\").textContent = S.hints; show(); };\n  show();\n}\n\nfunction fail(text){\n  S.wrong++; const m=$(\"#msg\"); m.className=\"msg bad\"; m.textContent=text; say(text);\n  stage.classList.remove(\"shake\"); void stage.offsetWidth; stage.classList.add(\"shake\");\n}\nfunction pass(text){\n  const m=$(\"#msg\"); m.className=\"msg good\"; m.textContent=text; say(text);\n  stage.querySelectorAll(\".lock button, #answer\").forEach(el => el.disabled = true);\n  setTimeout(() => go(S.room+1), 1300);\n}\nfunction go(n){ S.room=n; renderDoors(); (n===0 ? intro : n>ROOMS.length ? finish : () => room(n))(); stage.focus(); window.scrollTo(0,0); }\n\nfunction roomHead(r, n){\n  return `\u003ch2>Room ${n} · ${esc(r.title||\"\")}\u003c/h2>${paras(r.story,\"story\")}${r.reference?`\u003cp class=\"ref\">📖 ${fmt(r.reference)}\u003c/p>`:\"\"}`;\n}\nconst lockRow = (label, inner) => `\u003cdiv class=\"lock\">${label?`\u003cspan>\u003cstrong>${fmt(label)}\u003c/strong>\u003c/span>`:\"\"}${inner}\u003cspan class=\"msg\" id=\"msg\" role=\"status\">\u003c/span>\u003c/div>`;\n\n/* ===================== Screens ===================== */\nfunction intro(){\n  const n = ROOMS.length;\n  stage.innerHTML = `\n  \u003ch2>${esc(CFG.intro?.heading || CFG.meta?.title || \"\")}\u003c/h2>\n  ${paras(CFG.intro?.story, \"story\")}\n  \u003cdiv class=\"card\">\n    \u003cstrong>How to play\u003c/strong>\n    \u003cul>\n      \u003cli>Solve the puzzle in each room to open its lock. There ${n===1?\"is 1 room\":`are ${n} rooms`}.\u003c/li>\n      \u003cli>Wrong answers ${CFG.scoring?.mode===\"deductions\" && CFG.scoring.wrongPenalty ? `cost ${CFG.scoring.wrongPenalty} points each, so think before you try` : \"cost nothing, so keep trying\"}.\u003c/li>\n      \u003cli>Stuck? Most rooms have hints. ${CFG.scoring?.mode===\"deductions\" && CFG.scoring.hintPenalty ? `Each hint costs ${CFG.scoring.hintPenalty} points.` : \"They're counted, but they don't affect your grade.\"}\u003c/li>\n      \u003cli>At the end you'll get a \u003cstrong>certificate\u003c/strong>${CFG.finish?.exitPassword ? \" with the exit password\" : \"\"}.\u003c/li>\n    \u003c/ul>\n    ${CFG.meta?.learningOutcome ? `\u003cp class=\"small\">Learning Outcome: \u003cem>${fmt(CFG.meta.learningOutcome)}\u003c/em>\u003c/p>` : \"\"}\n  \u003c/div>\n  \u003cdiv class=\"row\">\u003clabel for=\"pname\">\u003cstrong>Your name:\u003c/strong>\u003c/label>\n    \u003cinput id=\"pname\" type=\"text\" class=\"free\" style=\"width:16rem\" value=\"${esc(SCORM.name())}\" autocomplete=\"name\">\n    \u003cbutton id=\"begin\">Enter →\u003c/button>\u003c/div>`;\n  $(\"#begin\").onclick = () => { S.player = ($(\"#pname\").value||\"\").trim() || \"Student\"; startTimer(); go(1); };\n}\n\nfunction room(n){\n  const r = ROOMS[n-1];\n  ({ matching, quiz, ordering, sorting, reflection }[r.type] || unknown)(r, n);\n  wireHints(r, n);\n}\nfunction unknown(r, n){ stage.innerHTML = roomHead(r,n) + `\u003cp>This room type isn't supported.\u003c/p>\u003cbutton onclick=\"go(${n+1})\">Skip\u003c/button>`; }\n\n/* ---- Matching: cards with codes, numbered clues, enter the code ---- */\nfunction matching(r, n){\n  const m = ER.matching(r);\n  const clueStyle = m.numbers ? \"A\" : \"1\";\n  stage.innerHTML = roomHead(r,n) + `\n    \u003cdiv class=\"grid\">${m.display.map(c=>`\u003cdiv class=\"card mcard\">\u003cdiv class=\"badge\">${esc(m.code[c.k])}\u003c/div>\n      ${c.icon?`\u003cspan class=\"icon\" aria-hidden=\"true\">${esc(c.icon)}\u003c/span>`:\"\"}\u003cdiv>\u003cstrong>${fmt(c.term)}\u003c/strong>${c.detail?`\u003cdiv class=\"small\">${fmt(c.detail)}\u003c/div>`:\"\"}\u003c/div>\u003c/div>`).join(\"\")}\u003c/div>\n    \u003ch3>${esc(r.cluesHeading || \"Clues\")}\u003c/h3>\n    \u003col class=\"clues\" type=\"${clueStyle}\">${m.answerCards.map(c=>`\u003cli>${fmt(c.clue)}\u003c/li>`).join(\"\")}\u003c/ol>\n    ${lockRow(\"\", `\u003clabel for=\"answer\">${fmt(r.lockLabel || \"🔒 Lock\")}:\u003c/label>\n      \u003cinput id=\"answer\" type=\"text\" maxlength=\"${m.answer.length}\" ${m.numbers?'inputmode=\"numeric\"':\"\"} autocomplete=\"off\">\n      \u003cbutton id=\"try\">Try it\u003c/button>`)}\n    ${hintBlock(r)}`;\n  const check = () => {\n    if ($(\"#answer\").value.replace(/\\s+/g,\"\").toUpperCase() === m.answer) pass(r.successMessage || \"🔓 The lock opens!\");\n    else fail(r.failMessage || \"The lock won't budge. Check each clue again.\");\n  };\n  $(\"#try\").onclick = check; $(\"#answer\").onkeydown = e => { if (e.key===\"Enter\") check(); };\n}\n\n/* ---- Quiz: short-answer and multiple-choice questions; all must be right ---- */\nfunction quiz(r, n){\n  const qs = r.questions || [];\n  stage.innerHTML = roomHead(r,n) + `\u003cform id=\"qf\" novalidate>${qs.map((q,i)=>`\n    \u003cfieldset>\u003clegend>${i+1}. ${fmt(q.prompt)}\u003c/legend>${\n      q.kind===\"choice\"\n        ? (q.choices||[]).map((c,j)=>String(c).trim()?`\u003clabel>\u003cinput type=\"radio\" name=\"q${i}\" value=\"${j}\"> ${fmt(c)}\u003c/label>`:\"\").join(\"\")\n        : `\u003cinput type=\"text\" class=\"free\" name=\"q${i}\" aria-label=\"Answer to question ${i+1}\" autocomplete=\"off\">`\n    }\u003c/fieldset>`).join(\"\")}\n    ${lockRow(r.lockLabel || \"🔒 Question lock\", `\u003cbutton id=\"try\" type=\"submit\">Check answers\u003c/button>`)}\u003c/form>\n    ${hintBlock(r)}`;\n  $(\"#qf\").onsubmit = e => {\n    e.preventDefault();\n    let right = 0;\n    qs.forEach((q,i) => {\n      if (q.kind===\"choice\") { const v = document.querySelector(`input[name=q${i}]:checked`); if (v && +v.value === q.correct) right++; }\n      else { const v = ER.norm(document.querySelector(`input[name=q${i}]`).value); if (v && ER.accepted(q.answers).includes(v)) right++; }\n    });\n    if (right === qs.length) pass(r.successMessage || \"🔓 Every answer is right. The lock opens!\");\n    else fail(`${right} of ${qs.length} answers are correct.`);\n  };\n}\n\n/* ---- Ordering: put items in the right order ---- */\nfunction ordering(r, n){\n  const items = r.items || [];\n  let order = ER.scramble(items.length, (r.title||\"\") + items.map(i=>i.text).join(\"|\"));\n  const draw = () => {\n    $(\"#order\").innerHTML = order.map((idx,i)=>`\u003cli>\u003cspan class=\"pos\">${i+1}.\u003c/span>\u003cspan>${fmt(items[idx].text)}\u003c/span>\n      \u003cbutton class=\"mv ghost\" aria-label=\"Move up\" ${i===0?\"disabled\":\"\"} data-i=\"${i}\" data-d=\"-1\">▲\u003c/button>\n      \u003cbutton class=\"mv ghost\" aria-label=\"Move down\" ${i===order.length-1?\"disabled\":\"\"} data-i=\"${i}\" data-d=\"1\">▼\u003c/button>\u003c/li>`).join(\"\");\n  };\n  stage.innerHTML = roomHead(r,n) + `\u003cul class=\"list\" id=\"order\">\u003c/ul>\n    ${lockRow(r.lockLabel || \"🔒 Order lock\", `\u003cbutton id=\"try\">Check order\u003c/button>`)}${hintBlock(r)}`;\n  $(\"#order\").onclick = e => {\n    const b = e.target.closest(\"button[data-i]\"); if (!b) return;\n    const i = +b.dataset.i, d = +b.dataset.d, j = i + d;\n    [order[i], order[j]] = [order[j], order[i]]; draw();\n    const nb = $(\"#order\").children[j].querySelectorAll(\"button\")[d\u003c0?0:1]; if (nb && !nb.disabled) nb.focus();\n  };\n  draw();\n  $(\"#try\").onclick = () => {\n    const right = order.filter((v,i)=>v===i).length;\n    if (right === order.length) {\n      $(\"#order\").innerHTML = order.map((idx,i)=>`\u003cli>\u003cspan class=\"pos\">${i+1}.\u003c/span>\u003cspan>${fmt(items[idx].text)}${items[idx].label?` \u003cstrong style=\"color:var(--gold)\">(${fmt(items[idx].label)})\u003c/strong>`:\"\"}\u003c/span>\u003c/li>`).join(\"\");\n      pass(r.successMessage || \"🔓 Everything is in order. The lock opens!\");\n    } else fail(`${right} of ${order.length} are in the correct position.`);\n  };\n}\n\n/* ---- Sorting: put each item in a category ---- */\nfunction sorting(r, n){\n  const items = r.items || [], cats = r.categories || [];\n  const pick = new Array(items.length).fill(null);\n  stage.innerHTML = roomHead(r,n) + `\u003cul class=\"list scene\">${items.map((it,i)=>`\u003cli>\u003cspan style=\"flex:1;min-width:220px\">${fmt(it.text)}\u003c/span>\n     \u003cspan class=\"seg\" role=\"group\" aria-label=\"Item ${i+1}\">${cats.map((c,j)=>`\u003cbutton data-i=\"${i}\" data-v=\"${j}\" aria-pressed=\"false\">${esc(c)}\u003c/button>`).join(\"\")}\u003c/span>\u003c/li>`).join(\"\")}\u003c/ul>\n    ${lockRow(r.lockLabel || \"📋 Sorting lock\", `\u003cbutton id=\"try\">Submit\u003c/button>`)}${hintBlock(r)}`;\n  stage.querySelectorAll(\".seg button\").forEach(b => b.onclick = () => {\n    const i=+b.dataset.i; pick[i]=+b.dataset.v;\n    b.parentElement.querySelectorAll(\"button\").forEach(x=>{ const on=+x.dataset.v===pick[i]; x.classList.toggle(\"on\",on); x.setAttribute(\"aria-pressed\",on); });\n  });\n  $(\"#try\").onclick = () => {\n    if (pick.includes(null)) return fail(\"Choose a category for every item first.\");\n    const right = pick.filter((p,i)=>p===items[i].category).length;\n    if (right===items.length) pass(r.successMessage || \"🔓 All sorted. The lock opens!\");\n    else fail(`${right} of ${items.length} are in the correct category.`);\n  };\n}\n\n/* ---- Reflection: no wrong answers; result profile shown on the certificate ---- */\nfunction reflection(r, n){\n  const qs = r.questions || [];\n  stage.innerHTML = roomHead(r,n) + `\u003cform id=\"mf\">${qs.map((q,qi)=>`\u003cfieldset>\u003clegend>${qi+1}. ${fmt(q.prompt)}\u003c/legend>${(q.options||[]).map(o=>\n     `\u003clabel>\u003cinput type=\"radio\" name=\"q${qi}\" value=\"${esc(o.profile)}\" required> ${fmt(o.text)}\u003c/label>`).join(\"\")}\u003c/fieldset>`).join(\"\")}\n    ${lockRow(\"🪞\", `\u003cbutton id=\"try\" type=\"submit\">${esc(r.buttonLabel || \"Continue\")}\u003c/button>`)}\u003c/form>${hintBlock(r)}`;\n  $(\"#mf\").onsubmit = e => {\n    e.preventDefault();\n    const tally = {}; qs.forEach((q,qi)=>{ const v=document.querySelector(`input[name=q${qi}]:checked`); if (v) tally[v.value]=(tally[v.value]||0)+1; });\n    const ranked = Object.entries(tally).sort((a,b)=>b[1]-a[1]);\n    const prof = k => (r.profiles||[]).find(p=>p.key===k);\n    S.reflection = { room:r, first: ranked[0] && prof(ranked[0][0]), second: ranked[1] && prof(ranked[1][0]) };\n    pass(r.successMessage || \"✨ Done!\");\n  };\n}\n\n/* ---- Finish ---- */\nfunction score(){\n  const sc = CFG.scoring || {};\n  if (sc.mode !== \"deductions\") return 100;\n  return Math.max(+sc.minScore||0, Math.min(100, 100 - S.hints*(+sc.hintPenalty||0) - S.wrong*(+sc.wrongPenalty||0)));\n}\nfunction finish(){\n  clearInterval(tick);\n  const secs = elapsed(), pts = score();\n  const prefix = String(CFG.meta?.codePrefix || \"ESC\").replace(/[^A-Za-z0-9]/g,\"\").toUpperCase() || \"ESC\";\n  const code = `${prefix}-${S.hints}${Math.min(S.wrong,9)}-${((secs*7919)+S.hints*31+S.wrong*17)%9000+1000}`;\n  SCORM.complete(pts, secs);\n  const f = CFG.finish || {}, R = S.reflection;\n  stage.innerHTML = `\n  \u003ch2>🎉 You Escaped!\u003c/h2>\n  \u003cdiv class=\"cert\">\n    \u003cdiv class=\"small\">THIS CERTIFIES THAT\u003c/div>\n    \u003cdiv style=\"font-size:1.6rem;margin:.3rem 0\">${esc(S.player)}\u003c/div>\n    \u003cdiv class=\"small\">${fmt(f.certificateLine || \"escaped the room\")}\u003c/div>\n    \u003cp>Time: \u003cstrong>${fmtTime(secs)}\u003c/strong> · Hints used: \u003cstrong>${S.hints}\u003c/strong>${CFG.scoring?.mode===\"deductions\"?` · Score: \u003cstrong>${pts}%\u003c/strong>`:\"\"} · ${new Date().toLocaleDateString()}\u003c/p>\n    ${f.exitPassword ? `\u003cdiv class=\"small\">Exit password (enter this in your course quiz)\u003c/div>\u003cdiv class=\"code\" id=\"exit-password\" style=\"font-size:1.9rem\">${esc(f.exitPassword)}\u003c/div>` : \"\"}\n    \u003cdiv class=\"small\" style=\"margin-top:.6rem\">Personal completion code\u003c/div>\u003cdiv class=\"code\" style=\"font-size:1.1rem\">${code}\u003c/div>\n  \u003c/div>\n  ${R && R.first ? `\u003cdiv class=\"result\" style=\"margin-top:1rem\">\n    \u003ch3>🪞 ${esc(R.room.resultHeading || \"Your result\")}: ${esc(R.first.name)}\u003c/h3>\n    ${paras(R.first.desc)}\n    ${R.first.who ? `\u003cp>\u003cstrong>Thinkers to explore:\u003c/strong> ${fmt(R.first.who)}\u003c/p>` : \"\"}\n    ${R.second && R.second !== R.first ? `\u003cp>\u003cstrong>Your second-strongest lean:\u003c/strong> ${esc(R.second.name)}${R.second.who?` (${fmt(R.second.who)})`:\"\"}\u003c/p>` : \"\"}\n    ${R.first.next ? `\u003cp>\u003cstrong>Next step:\u003c/strong> ${fmt(R.first.next)}\u003c/p>` : \"\"}\n    ${R.room.resultNote ? `\u003cp class=\"small\" style=\"color:#24402f\">${fmt(R.room.resultNote)}\u003c/p>` : \"\"}\n  \u003c/div>` : \"\"}\n  \u003cdiv class=\"row\">\u003cbutton onclick=\"window.print()\">🖨️ Print / save as PDF\u003c/button>\n    \u003cbutton class=\"ghost\" onclick=\"location.reload()\">Play again\u003c/button>\u003c/div>\n  ${f.instructions ? `\u003cp class=\"small\">${fmt(f.instructions)}\u003c/p>` : \"\"}`;\n}\n\n/* ===================== Start ===================== */\ndocument.title = CFG.meta?.title || document.title;\n$(\"#game-title\").textContent = \"🏫 \" + (CFG.meta?.title || \"Escape Room\");\nconst review = ER.reviewStatus(CFG);\nif (review.unverified) {\n  const d = $(\"#draft\"); d.hidden = false;\n  d.textContent = `⚠️ Draft: ${review.unverified} of ${review.total} items haven't been checked by the instructor yet. Answers may contain errors.`;\n}\nrenderDoors(); go(0);\n\u003c/script>\n\u003c/body>\n\u003c/html>\n";
+const SAMPLE = {"schema":1,"meta":{"title":"Escape the Old Schoolhouse","course":"EDU 216","codePrefix":"EDU216","learningOutcome":"Explore your own personal philosophy of education based on the historical and philosophical foundations of education."},"intro":{"heading":"The Door Clicks Shut Behind You…","story":"You came to the old county schoolhouse, now a museum of education history, to research your Philosophy assignment. You lost track of time in the archives. When you look up, the lights are dim, the caretaker has gone home, and every door is locked.\n\nA note is pinned to the chalkboard: *\"Only someone who understands where our ideas about school came from may leave. Five rooms. Five locks. Good luck, future educator.\"*"},"scoring":{"mode":"completion","hintPenalty":5,"wrongPenalty":2,"minScore":50},"finish":{"exitPassword":"DEWEY1916","certificateLine":"escaped the Old Schoolhouse by mastering the historical and philosophical foundations of education","instructions":"Enter the **exit password** in your course quiz, or submit your completion code or a screenshot of this page, as your instructor directs."},"rooms":[{"type":"matching","title":"The Library","codeStyle":"letters","codeWord":"LEARN","story":"Five dusty books glow on the shelf, each with one letter painted on its spine. A librarian's card catalog lists five descriptions, but the titles have been torn off. The lock on the library door takes a **5-letter word**.","cluesHeading":"Card Catalog","lockLabel":"🔒 Library lock","successMessage":"🔓 Click! The library door swings open.","failMessage":"The lock won't budge. Check which philosophy matches each description.","reference":"","cards":[{"term":"Essentialism","detail":"","icon":"","code":"","clue":"All students should master a common core of basic knowledge and skills (the \"3 R's,\" history, science). Teachers are authorities, and the classroom is orderly and disciplined. (William Bagley, E. D. Hirsch)","source":"","verified":false},{"term":"Existentialism","detail":"","icon":"","code":"","clue":"Each student is a free individual who must make choices and create meaning in their own life. The curriculum emphasizes personal choice, the arts, and self-reflection. (Jean-Paul Sartre, Maxine Greene)","source":"","verified":false},{"term":"Perennialism","detail":"","icon":"","code":"","clue":"Truth is universal and unchanging, so every student should study the same enduring ideas found in the \"Great Books\" of Western civilization. (Robert Hutchins, Mortimer Adler)","source":"","verified":false},{"term":"Social Reconstructionism","detail":"","icon":"","code":"","clue":"Schools should be agents of change. Students study real social problems like poverty and injustice and work to build a fairer society. (George Counts, Paulo Freire)","source":"","verified":false},{"term":"Progressivism","detail":"","icon":"","code":"","clue":"Education should be child-centered and grow out of students' interests and experiences. Learning happens through hands-on problem solving and cooperation. (John Dewey)","source":"","verified":false}],"hints":["Each numbered description matches one philosophy book. Write down the letter on that book's spine for descriptions 1 through 5, in order.","Description 1 (basics, core skills, discipline) is **Essentialism**, and description 5 (learning by doing) is **Progressivism**.","The answer is a five-letter word for what every student does in school."]},{"type":"matching","title":"The Portrait Gallery","codeStyle":"numbers","codeWord":"","story":"Eight portraits line the hallway. Each has a numbered brass plate. A keypad by the far door asks for a **4-digit code**, and someone has scratched four clues into the wall.","cluesHeading":"Scratched on the wall","lockLabel":"🔢 Keypad","successMessage":"🔓 Beep-beep! The gallery door unlocks.","failMessage":"ERROR. Check each clue against the portraits.","reference":"","cards":[{"term":"John Dewey","detail":"1859–1952","icon":"🔬","code":"9","clue":"I believed school should be a small democratic community where children learn by doing. I wrote *Democracy and Education* (1916).","source":"","verified":false},{"term":"Maria Montessori","detail":"1870–1952","icon":"🧸","code":"1","clue":"I was one of Italy's first women physicians. I designed a \"prepared environment\" with child-sized materials so young children could direct their own learning.","source":"","verified":false},{"term":"Paulo Freire","detail":"1921–1997","icon":"✊","code":"5","clue":"I criticized the \"banking concept\" of education, where teachers deposit facts into passive students. I called for dialogue and critical consciousness instead.","source":"","verified":false},{"term":"Horace Mann","detail":"1796–1859","icon":"🔔","code":"4","clue":"I led the \"common school\" movement, calling free, tax-supported public education \"the great equalizer of the conditions of men.\"","source":"","verified":false},{"term":"Plato","detail":"c. 428–348 BCE","icon":"🏛️","code":"7","clue":"","source":"","verified":false},{"term":"Jean-Jacques Rousseau","detail":"1712–1778","icon":"🌿","code":"3","clue":"","source":"","verified":false},{"term":"George Counts","detail":"1889–1974","icon":"⚖️","code":"2","clue":"","source":"","verified":false},{"term":"Mortimer Adler","detail":"1902–2001","icon":"📚","code":"8","clue":"","source":"","verified":false}],"hints":["Each clue describes one philosopher. Find their portrait, then read the number on its brass plate. Enter the four numbers in the order of the clues (A, B, C, D).","Clue A is John Dewey, and Clue C is Paulo Freire.","Clue B is Maria Montessori, and Clue D is Horace Mann."]},{"type":"ordering","title":"The History Hall","story":"A long wooden timeline covers the wall, but someone has knocked the event cards out of order. A brass lock is wired to the timeline. It will open only when every card is in **chronological order**, oldest at the top.","lockLabel":"🔒 Timeline lock","successMessage":"🔓 The timeline lights up and the lock drops open!","reference":"","items":[{"text":"Plato describes the education of philosopher-kings in *The Republic*.","label":"c. 375 BCE","source":"","verified":false},{"text":"Rousseau publishes *Émile*, arguing that children learn best through nature and experience.","label":"1762","source":"","verified":false},{"text":"Horace Mann becomes the first secretary of the Massachusetts Board of Education.","label":"1837","source":"","verified":false},{"text":"Maria Montessori opens the first Casa dei Bambini (Children's House) in Rome.","label":"1907","source":"","verified":false},{"text":"John Dewey publishes *Democracy and Education*.","label":"1916","source":"","verified":false},{"text":"Paulo Freire writes *Pedagogy of the Oppressed*.","label":"1968","source":"","verified":false},{"text":"Mortimer Adler publishes *The Paideia Proposal*, calling for one rigorous curriculum for all students.","label":"1982","source":"","verified":false}],"hints":["Use the ▲ and ▼ buttons to sort the events from oldest (top) to newest (bottom). When you check, the lock tells you how many are in the right spot.","Plato is the oldest by more than 2,000 years. Next comes the Enlightenment (Rousseau, 1700s), then the 1800s common school movement.","Twentieth-century order: Montessori (1907), then Dewey (1916), then Freire (1968), then Adler (1982)."]},{"type":"sorting","title":"The Observation Room","story":"Behind a one-way mirror, you watch scenes from classrooms across the decades play out on old film reels. An observer's clipboard hangs on the door: label every observation as **Traditional (classical)** or **Progressive** to unlock it.","categories":["Traditional","Progressive"],"lockLabel":"📋 Clipboard lock","successMessage":"🔓 Sharp eye! The observation room door opens.","reference":"","items":[{"text":"Desks sit in straight rows facing the teacher's desk and chalkboard.","category":0,"source":"","verified":false},{"text":"Students design their own experiment to find out which brand of paper towel absorbs the most water.","category":1,"source":"","verified":false},{"text":"The teacher lectures on the causes of the Civil War while students copy notes from the board.","category":0,"source":"","verified":false},{"text":"Small groups plan and plant a class garden, measuring plots (math) and tracking plant growth (science).","category":1,"source":"","verified":false},{"text":"Students recite multiplication tables together in timed drills until they've memorized them.","category":0,"source":"","verified":false},{"text":"Each student chooses a local issue to research and presents solutions to community members.","category":1,"source":"","verified":false},{"text":"The class works through the textbook chapter by chapter, with a unit test at the end of each one.","category":0,"source":"","verified":false},{"text":"The class holds a meeting to discuss a playground problem and vote on new classroom rules.","category":1,"source":"","verified":false}],"hints":["**Traditional/classical**: teacher-centered, a set body of content, mastery through instruction and practice. **Progressive**: student-centered, inquiry, real-world problems, collaboration.","Exactly half of the observations are traditional and half are progressive.","The four progressive ones: the paper towel experiment, the class garden, the community project, and the class meeting."]},{"type":"reflection","title":"The Mirror","story":"The last door has no keyhole, only a tall, old mirror. Words appear in the glass: *\"You have learned the philosophies of others. Now show me your own.\"*","buttonLabel":"Look into the mirror","successMessage":"✨ The mirror shimmers and becomes a doorway…","reference":"","resultHeading":"Your reflection","resultNote":"Most teachers blend philosophies. Use this result as a starting point, not a label.","profiles":[{"key":"ESS","name":"Essentialism","who":"William Bagley, E. D. Hirsch Jr.","desc":"You believe every student deserves a strong foundation in core knowledge and skills, taught clearly by a knowledgeable teacher in an orderly classroom.","next":"Consider William Bagley for your Philosophy PowerPoint, and look into his critique of progressive education in the 1930s.","source":"","verified":false},{"key":"PER","name":"Perennialism","who":"Robert Hutchins, Mortimer Adler (with roots in Plato and Aristotle)","desc":"You value timeless ideas, great works, and the same rigorous intellectual education for every student.","next":"Consider Mortimer Adler (*The Paideia Proposal*) or Plato for your Philosophy PowerPoint.","source":"","verified":false},{"key":"PRO","name":"Progressivism","who":"John Dewey (with roots in Rousseau)","desc":"You see learning as active and experiential. It should grow out of students' interests and real problems, and classrooms should be small democracies.","next":"Consider John Dewey for your Philosophy PowerPoint, and look into his Laboratory School at the University of Chicago.","source":"","verified":false},{"key":"SOC","name":"Social Reconstructionism","who":"George Counts, Paulo Freire","desc":"You see schools as engines of social change, places where students learn to question injustice and act to improve their communities.","next":"Consider Paulo Freire (*Pedagogy of the Oppressed*) or George Counts for your Philosophy PowerPoint.","source":"","verified":false},{"key":"EXI","name":"Existentialism","who":"Jean-Paul Sartre, Maxine Greene, A. S. Neill","desc":"You put the individual student at the center. School should help each person discover who they are and take responsibility for their own choices.","next":"Consider Maxine Greene or A. S. Neill (Summerhill School) for your Philosophy PowerPoint.","source":"","verified":false},{"key":"MON","name":"Child-Centered / Montessori","who":"Maria Montessori","desc":"You trust children's natural drive to learn when they have a carefully prepared environment and the freedom to choose their work.","next":"Consider Maria Montessori for your Philosophy PowerPoint.","source":"","verified":false}],"questions":[{"prompt":"The main purpose of school is to…","options":[{"text":"pass on the essential knowledge and skills every citizen needs.","profile":"ESS"},{"text":"develop the mind through humanity's greatest and most lasting ideas.","profile":"PER"},{"text":"help students solve real problems and live in a democracy.","profile":"PRO"},{"text":"prepare students to recognize and fix injustice in society.","profile":"SOC"},{"text":"help each student discover who they are and what they value.","profile":"EXI"}],"source":"","verified":false},{"prompt":"In my ideal classroom, the teacher is mainly…","options":[{"text":"an expert who explains content clearly and keeps high standards.","profile":"ESS"},{"text":"a guide who leads students through the great books by asking questions.","profile":"PER"},{"text":"a facilitator who sets up projects and supports students' inquiry.","profile":"PRO"},{"text":"a partner in dialogue who learns alongside students.","profile":"SOC"},{"text":"an observer who prepares the space and steps back.","profile":"MON"}],"source":"","verified":false},{"prompt":"The curriculum should be based on…","options":[{"text":"core subjects, including reading, writing, math, science, and history.","profile":"ESS"},{"text":"classic works of literature, philosophy, and science.","profile":"PER"},{"text":"students' interests and real-world experiences.","profile":"PRO"},{"text":"current social issues and students' communities.","profile":"SOC"},{"text":"students' own choices, the arts, and personal reflection.","profile":"EXI"}],"source":"","verified":false},{"prompt":"The best way to know whether a student has learned is…","options":[{"text":"tests that measure mastery of the standards.","profile":"ESS"},{"text":"seminar discussion and writing about big ideas.","profile":"PER"},{"text":"a project or product that solves a real problem.","profile":"PRO"},{"text":"action the student takes in the community.","profile":"SOC"},{"text":"the student's own self-assessment and portfolio.","profile":"EXI"}],"source":"","verified":false},{"prompt":"A young child walks into my room. I want them to…","options":[{"text":"learn the routines and basic skills that set them up for success.","profile":"ESS"},{"text":"hear great stories and start asking big questions.","profile":"PER"},{"text":"explore, build, and play with classmates.","profile":"PRO"},{"text":"choose their own activity from shelves of hands-on materials.","profile":"MON"},{"text":"feel free to be themselves and express their feelings.","profile":"EXI"}],"source":"","verified":false},{"prompt":"The educator I'd most like to have coffee with is…","options":[{"text":"E. D. Hirsch, the cultural literacy advocate.","profile":"ESS"},{"text":"Mortimer Adler, the Great Books champion.","profile":"PER"},{"text":"John Dewey, the father of progressive education.","profile":"PRO"},{"text":"Paulo Freire, the critical pedagogue.","profile":"SOC"},{"text":"Maria Montessori, the physician turned educator.","profile":"MON"}],"source":"","verified":false}],"hints":["There are no wrong answers here. Answer honestly, and the mirror will reflect your own philosophy."]}]};
+const STORE = "escape-room-editor-v1";
+const clone = o => JSON.parse(JSON.stringify(o));
+
+/* ===================== State ===================== */
+let cfg = load() || clone(SAMPLE);
+let sel = "settings";      // "settings" | "intro" | "finish" | room index (number)
+let quizText = {};         // room index -> true when editing a quiz as plain text
+
+function load(){ try { const s = localStorage.getItem(STORE); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
+let saveTimer = null;
+function changed(){ clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(cfg)); } catch(e){} }, 300); refreshStatus(); }
+
+/* ===================== Tiny DOM helper ===================== */
+function h(tag, props = {}, ...kids){
+  const el = document.createElement(tag);
+  for (const [k,v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "class") el.className = v;
+    else if (k === "value") el.value = v;
+    else if (k === "checked") el.checked = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  return el;
+}
+let uid = 0;
+/* A labelled input bound to obj[key]. opts: {type, help, rows, placeholder, content(bool: editing it un-verifies the item), item, onChange} */
+function field(label, obj, key, opts = {}){
+  const id = "f" + (++uid);
+  const tag = opts.type === "textarea" ? "textarea" : "input";
+  const input = h(tag, { id, type: tag === "input" ? (opts.type || "text") : null, rows: opts.rows, placeholder: opts.placeholder,
+    value: obj[key] ?? "", min: opts.min, max: opts.max,
+    oninput: e => {
+      obj[key] = opts.type === "number" ? Number(e.target.value) : e.target.value;
+      if (opts.item && opts.item.verified) { opts.item.verified = false; const box = e.target.closest(".entry"); if (box) { box.classList.remove("verified"); const c = box.querySelector(".verify input[type=checkbox]"); if (c) c.checked = false; } }
+      opts.onChange && opts.onChange(e);
+      changed();
+    }});
+  return h("label", { class: "field", for: id }, h("span", {}, label, opts.help ? h("small", {}, " — " + opts.help) : null), input);
+}
+function select(label, obj, key, options, opts = {}){
+  const id = "f" + (++uid);
+  const s = h("select", { id, onchange: e => { const v = e.target.value; obj[key] = opts.number ? Number(v) : v;
+    if (opts.item && opts.item.verified) { opts.item.verified = false; }
+    changed(); opts.rerender ? render() : null; } },
+    options.map(([v, t]) => h("option", { value: v }, t)));
+  s.value = obj[key] ?? "";
+  return h("label", { class: "field", for: id }, h("span", {}, label, opts.help ? h("small", {}, " — " + opts.help) : null), s);
+}
+/* Source + "I checked this" row shown on every gradable item. */
+function verifyRow(item){
+  return h("div", { class: "verify" },
+    field("Source", item, "source", { placeholder: "e.g. Textbook ch. 3, p. 45" }),
+    h("label", { class: "chk" }, h("input", { type: "checkbox", checked: item.verified === true, onchange: e => {
+      item.verified = e.target.checked; e.target.closest(".entry").classList.toggle("verified", item.verified); changed(); } }),
+      "✔ I checked this is correct"));
+}
+/* Generic list editor: move / delete / add. */
+function listEditor(list, renderItem, opts){
+  const wrap = h("div", {});
+  list.forEach((it, i) => {
+    const gradable = opts.gradable !== false;
+    wrap.append(h("div", { class: "entry" + (gradable && it.verified ? " verified" : "") + (gradable ? "" : " verified") },
+      h("div", { class: "head" }, h("strong", {}, `${opts.noun} ${i+1}`),
+        h("button", { class: "small", title: "Move up", "aria-label": `Move ${opts.noun} ${i+1} up`, disabled: i === 0, onclick: () => { [list[i-1], list[i]] = [list[i], list[i-1]]; changed(); render(); } }, "▲"),
+        h("button", { class: "small", title: "Move down", "aria-label": `Move ${opts.noun} ${i+1} down`, disabled: i === list.length - 1, onclick: () => { [list[i+1], list[i]] = [list[i], list[i+1]]; changed(); render(); } }, "▼"),
+        h("button", { class: "small danger", "aria-label": `Delete ${opts.noun} ${i+1}`, onclick: () => { if (confirm(`Delete ${opts.noun.toLowerCase()} ${i+1}?`)) { list.splice(i, 1); changed(); render(); } } }, "Delete")),
+      renderItem(it, i),
+      gradable ? verifyRow(it) : null));
+  });
+  wrap.append(h("button", { onclick: () => { list.push(opts.blank()); changed(); render(); } }, `+ Add ${opts.noun.toLowerCase()}`));
+  return wrap;
+}
+function hintsEditor(room){
+  room.hints = room.hints || [];
+  return h("div", { class: "box" }, h("h3", {}, "Hints"),
+    h("p", { class: "help" }, "Students reveal these one at a time. Leave empty for no hints."),
+    room.hints.map((hint, i) => h("div", { class: "row" },
+      field(`Hint ${i+1}`, room.hints, i, { type: "textarea", rows: 2 }),
+      h("button", { class: "small danger", onclick: () => { room.hints.splice(i, 1); changed(); render(); } }, "Remove"))),
+    h("button", { onclick: () => { room.hints.push(""); changed(); render(); } }, "+ Add hint"));
+}
+
+/* ===================== Room types ===================== */
+const TYPES = {
+  quiz:       { name: "Question lock", desc: "Short-answer or multiple-choice questions. All must be right to open the lock. Works like a chapter quiz.",
+                blank: () => ({ type: "quiz", title: "New question room", story: "", reference: "", lockLabel: "🔒 Question lock", successMessage: "🔓 Every answer is right. The lock opens!", hints: [], questions: [blankQuestion()] }) },
+  matching:   { name: "Matching code", desc: "Cards with codes and clues. Students match each clue to a card and enter the codes as the lock combination.",
+                blank: () => ({ type: "matching", title: "New matching room", story: "", reference: "", codeStyle: "letters", codeWord: "", cluesHeading: "Clues", lockLabel: "🔒 Lock", successMessage: "🔓 The lock opens!", failMessage: "The lock won't budge. Check each clue again.", hints: [], cards: [blankCard(), blankCard()] }) },
+  ordering:   { name: "Put in order", desc: "Students arrange items in the correct order (timelines, steps in a process).",
+                blank: () => ({ type: "ordering", title: "New timeline room", story: "", reference: "", lockLabel: "🔒 Order lock", successMessage: "🔓 Everything is in order. The lock opens!", hints: [], items: [blankOrder(), blankOrder()] }) },
+  sorting:    { name: "Sort into groups", desc: "Students put each item into the right category.",
+                blank: () => ({ type: "sorting", title: "New sorting room", story: "", reference: "", categories: ["Group A", "Group B"], lockLabel: "📋 Sorting lock", successMessage: "🔓 All sorted. The lock opens!", hints: [], items: [blankSort()] }) },
+  reflection: { name: "Reflection survey", desc: "No wrong answers. Each choice counts toward a result profile, shown on the certificate.",
+                blank: () => ({ type: "reflection", title: "New reflection room", story: "", reference: "", buttonLabel: "Continue", successMessage: "✨ Done!", resultHeading: "Your result", resultNote: "", hints: [], profiles: [blankProfile("A"), blankProfile("B")], questions: [] }) }
+};
+function blankQuestion(kind = "short"){ return { prompt: "", kind, answers: "", choices: ["", "", "", ""], correct: 0, source: "", verified: false }; }
+function blankCard(){ return { term: "", detail: "", icon: "", clue: "", code: "", source: "", verified: false }; }
+function blankOrder(){ return { text: "", label: "", source: "", verified: false }; }
+function blankSort(){ return { text: "", category: 0, source: "", verified: false }; }
+function blankProfile(k){ return { key: k || ("P" + Date.now().toString(36)), name: "", who: "", desc: "", next: "", source: "", verified: false }; }
+
+function commonRoomFields(room){
+  return h("div", { class: "box" }, h("h3", {}, "Room text"),
+    field("Room title", room, "title", { onChange: () => renderNav() }),
+    field("Story / instructions", room, "story", { type: "textarea", rows: 3, help: "what students read when they enter. Use **bold** and *italics*" }),
+    field("Reading reference shown to students", room, "reference", { placeholder: "e.g. Review: Chapter 4, pages 88–102", help: "optional" }),
+    h("div", { class: "row" },
+      field("Lock label", room, "lockLabel"),
+      field("Message when solved", room, "successMessage")));
+}
+
+function editMatching(room){
+  const m = ER.matching(room);
+  const answer = h("div", { class: "answer" }, "Lock combination students must enter: ", h("code", {}, m.answer || "—"),
+    h("div", { class: "help", style: "margin:.3rem 0 0" }, "Calculated from the cards below. Cards are shown to students in A–Z order; clues are shown in the order you list them."));
+  return [
+    commonRoomFields(room),
+    h("div", { class: "box" }, h("h3", {}, "Lock"),
+      h("div", { class: "row" },
+        select("Code on each card", room, "codeStyle", [["letters", "Letters (A–Z)"], ["numbers", "Numbers (1–9)"]], { rerender: true }),
+        room.codeStyle !== "numbers" ? field("Code word (optional)", room, "codeWord", { help: "one letter per clue, e.g. LEARN", onChange: () => render() }) : null,
+        field("Clues heading", room, "cluesHeading")),
+      field("Message for a wrong code", room, "failMessage"),
+      answer),
+    h("div", { class: "box" }, h("h3", {}, "Cards and clues"),
+      h("p", { class: "help" }, "Each card is a term or person. Give it a clue to make it part of the answer. A card with no clue is a decoy."),
+      listEditor(room.cards, c => [
+        h("div", { class: "row" }, field("Name on card", c, "term", { item: c, onChange: refreshAnswer }), field("Small detail", c, "detail", { help: "e.g. dates", item: c }),
+          field("Icon", c, "icon", { help: "emoji, optional" }), field("Fixed code", c, "code", { help: "optional", onChange: refreshAnswer })),
+        field("Clue (blank = decoy card)", c, "clue", { type: "textarea", rows: 2, item: c, onChange: refreshAnswer })
+      ], { noun: "Card", blank: blankCard })),
+    hintsEditor(room)
+  ];
+  function refreshAnswer(){ answer.querySelector("code").textContent = ER.matching(room).answer || "—"; }
+}
+
+function editQuiz(room, r){
+  const asText = !!quizText[r];
+  const body = asText ? quizTextEditor(room, r) : listEditor(room.questions, q => [
+    field("Question", q, "prompt", { type: "textarea", rows: 2, item: q }),
+    select("Answer type", q, "kind", [["short", "Short answer (typed)"], ["choice", "Multiple choice"]], { rerender: true, item: q }),
+    q.kind === "choice" ? choicesEditor(q) :
+      field("Accepted answers", q, "answers", { item: q, help: "separate different acceptable answers with |  e.g.  John Dewey | Dewey. Capitals, accents and punctuation are ignored." })
+  ], { noun: "Question", blank: () => blankQuestion() });
+  return [
+    commonRoomFields(room),
+    h("div", { class: "box" }, h("h3", {}, "Questions"),
+      h("p", { class: "help" }, "Students must get every question right to open the lock. They're told how many are right, not which ones."),
+      h("div", { class: "row", style: "margin-bottom:.4rem" },
+        h("button", { onclick: () => { quizText[r] = !asText; render(); } }, asText ? "← Back to form view" : "✎ Edit all questions as text")),
+      body),
+    hintsEditor(room)
+  ];
+}
+function choicesEditor(q){
+  q.choices = q.choices || [];
+  const name = "c" + (++uid);
+  return h("div", { class: "field choices" }, h("span", {}, "Choices ", h("small", {}, "— select the correct one")),
+    q.choices.map((c, j) => h("div", { class: "choice" },
+      h("input", { type: "radio", name, checked: q.correct === j, "aria-label": `Choice ${j+1} is correct`, onchange: () => { q.correct = j; q.verified = false; changed(); render(); } }),
+      h("input", { type: "text", value: c, "aria-label": `Choice ${j+1}`, oninput: e => { q.choices[j] = e.target.value; q.verified = false; changed(); } }),
+      h("button", { class: "small danger", onclick: () => { q.choices.splice(j, 1); if (q.correct >= q.choices.length) q.correct = 0; changed(); render(); } }, "✕"))),
+    h("div", {}, h("button", { class: "small", onclick: () => { q.choices.push(""); changed(); render(); } }, "+ Add choice")));
+}
+/* Plain-text quiz format:
+   Q: question            A: answer | other accepted answer
+   - wrong choice         * correct choice
+   Source: …              Verified: yes          (blank line between questions) */
+function quizToText(qs){
+  return qs.map(q => [ `Q: ${q.prompt}`,
+    ...(q.kind === "choice" ? (q.choices || []).filter(c => String(c).trim()).map((c, j) => `${j === q.correct ? "*" : "-"} ${c}`) : [`A: ${q.answers}`]),
+    q.source ? `Source: ${q.source}` : null, q.verified ? "Verified: yes" : null ].filter(x => x != null).join("\n")).join("\n\n");
+}
+function textToQuiz(text){
+  const out = [], problems = [];
+  text.replace(/\r/g, "").split(/\n\s*\n/).map(b => b.trim()).filter(Boolean).forEach((block, n) => {
+    const q = blankQuestion(); q.choices = []; let hasA = false;
+    block.split("\n").forEach(line => {
+      const l = line.trim(); let m;
+      if ((m = l.match(/^q\s*[:.)]\s*(.*)$/i))) q.prompt = m[1];
+      else if ((m = l.match(/^a\s*[:.)]\s*(.*)$/i))) { q.answers = m[1]; hasA = true; }
+      else if ((m = l.match(/^([*-])\s*(.*)$/))) { if (m[1] === "*") q.correct = q.choices.length; q.choices.push(m[2]); }
+      else if ((m = l.match(/^source\s*:\s*(.*)$/i))) q.source = m[1];
+      else if (/^verified\s*:\s*(yes|y|true|✔|✓)\s*$/i.test(l)) q.verified = true;
+      else if (l) q.prompt = q.prompt ? q.prompt + " " + l : l;
+    });
+    q.kind = q.choices.length ? "choice" : "short";
+    if (!q.choices.length) q.choices = ["", "", "", ""];
+    if (!q.prompt) problems.push(`Question ${n+1} has no "Q:" line.`);
+    if (q.kind === "short" && !hasA) problems.push(`Question ${n+1} has no "A:" answer line or choices.`);
+    if (q.kind === "choice" && !block.split("\n").some(l => l.trim().startsWith("*"))) problems.push(`Question ${n+1}: mark the correct choice with * instead of -.`);
+    out.push(q);
+  });
+  return { questions: out, problems };
+}
+function quizTextEditor(room, r){
+  const ta = h("textarea", { class: "mono", rows: 18, "aria-label": "Questions as text", value: quizToText(room.questions) });
+  const msg = h("div", {});
+  return h("div", {},
+    h("div", { class: "notice" }, h("strong", {}, "Format: "), "one question per paragraph (leave a blank line between questions).",
+      h("pre", { class: "mono", style: "margin:.4rem 0 0;white-space:pre-wrap" },
+        "Q: Who wrote Democracy and Education (1916)?\nA: John Dewey | Dewey\nSource: Ch. 3, p. 45\n\nQ: Which philosophy focuses on the \"Great Books\"?\n- Essentialism\n* Perennialism\n- Existentialism\nVerified: yes")),
+    ta, msg,
+    h("div", { class: "row", style: "margin-top:.5rem" },
+      h("button", { onclick: () => {
+        const { questions, problems } = textToQuiz(ta.value);
+        msg.replaceChildren(problems.length ? h("div", { class: "errors" }, h("strong", {}, "Please fix:"), h("ul", {}, problems.map(p => h("li", {}, p)))) : "");
+        if (problems.length) return;
+        room.questions = questions; changed(); toast(`Saved ${questions.length} questions.`); quizText[r] = false; render();
+      } }, "Use this text")));
+}
+
+function editOrdering(room){
+  return [ commonRoomFields(room),
+    h("div", { class: "box" }, h("h3", {}, "Items, in the correct order"),
+      h("p", { class: "help" }, "List these in the right order (first at the top). Students see them shuffled. The label (like a year) is revealed after they solve it."),
+      listEditor(room.items, it => h("div", { class: "row" },
+        h("div", { style: "flex:3" }, field("Item", it, "text", { type: "textarea", rows: 2, item: it })),
+        h("div", { style: "flex:1" }, field("Label shown after solving", it, "label", { item: it, help: "optional" }))),
+      { noun: "Item", blank: blankOrder })),
+    hintsEditor(room) ];
+}
+
+function editSorting(room){
+  room.categories = room.categories || [];
+  return [ commonRoomFields(room),
+    h("div", { class: "box" }, h("h3", {}, "Categories"),
+      room.categories.map((c, j) => h("div", { class: "row" }, field(`Category ${j+1}`, room.categories, j, { onChange: () => {} }),
+        room.categories.length > 2 ? h("button", { class: "small danger", onclick: () => { room.categories.splice(j, 1); room.items.forEach(it => { if (it.category === j) it.category = 0; else if (it.category > j) it.category--; }); changed(); render(); } }, "Remove") : null)),
+      h("button", { onclick: () => { room.categories.push(""); changed(); render(); } }, "+ Add category")),
+    h("div", { class: "box" }, h("h3", {}, "Items to sort"),
+      listEditor(room.items, it => h("div", { class: "row" },
+        h("div", { style: "flex:3" }, field("Item", it, "text", { type: "textarea", rows: 2, item: it })),
+        h("div", { style: "flex:1" }, select("Correct category", it, "category", room.categories.map((c, j) => [j, c || `Category ${j+1}`]), { number: true, item: it, rerender: true }))),
+      { noun: "Item", blank: blankSort })),
+    hintsEditor(room) ];
+}
+
+function editReflection(room){
+  const profOpts = () => room.profiles.map(p => [p.key, p.name || "(unnamed result)"]);
+  return [ commonRoomFields(room),
+    h("div", { class: "box" }, h("h3", {}, "Result screen"),
+      h("div", { class: "row" }, field("Result heading", room, "resultHeading"), field("Button label", room, "buttonLabel")),
+      field("Note under the result", room, "resultNote", { type: "textarea", rows: 2 })),
+    h("div", { class: "box" }, h("h3", {}, "Possible results"),
+      h("p", { class: "help" }, "The result with the most matching answers is shown on the certificate."),
+      listEditor(room.profiles, p => [
+        h("div", { class: "row" }, field("Result name", p, "name", { item: p, onChange: () => {} }), field("Thinkers to explore", p, "who", { item: p })),
+        field("Description", p, "desc", { type: "textarea", rows: 2, item: p }),
+        field("Next step", p, "next", { type: "textarea", rows: 2, item: p })
+      ], { noun: "Result", blank: () => blankProfile() })),
+    h("div", { class: "box" }, h("h3", {}, "Questions"),
+      listEditor(room.questions, q => {
+        q.options = q.options || [];
+        return [ field("Question", q, "prompt", { item: q }),
+          h("div", { class: "field" }, h("span", {}, "Options ", h("small", {}, "— each counts toward one result")),
+            q.options.map((o, j) => h("div", { class: "row" },
+              h("div", { style: "flex:3" }, field(`Option ${j+1}`, o, "text", { item: q })),
+              h("div", { style: "flex:1" }, select("Counts toward", o, "profile", [["", "— choose —"], ...profOpts()], { item: q, rerender: true })),
+              h("button", { class: "small danger", onclick: () => { q.options.splice(j, 1); changed(); render(); } }, "✕"))),
+            h("div", {}, h("button", { class: "small", onclick: () => { q.options.push({ text: "", profile: "" }); changed(); render(); } }, "+ Add option"))) ];
+      }, { noun: "Question", blank: () => ({ prompt: "", options: [{ text: "", profile: "" }, { text: "", profile: "" }], source: "", verified: false }) })),
+    hintsEditor(room) ];
+}
+
+/* ===================== Sections ===================== */
+function editSettings(){
+  cfg.meta = cfg.meta || {};
+  return [ h("h2", {}, "Settings"), h("p", { class: "help" }, "Basic information about this escape room. Make one escape room per chapter or unit, and save each as its own file."),
+    h("div", { class: "box" },
+      field("Escape room title", cfg.meta, "title", { onChange: () => renderNav() }),
+      h("div", { class: "row" }, field("Course", cfg.meta, "course", { placeholder: "e.g. EDU 216" }),
+        field("Completion code prefix", cfg.meta, "codePrefix", { help: "letters/numbers, starts each student's code" })),
+      field("Learning outcome shown to students", cfg.meta, "learningOutcome", { type: "textarea", rows: 2 })),
+    h("div", { class: "box" }, h("h3", {}, "Rooms"),
+      h("p", { class: "help" }, "Add, remove and reorder rooms in the list on the left. Room types:"),
+      h("ul", {}, Object.values(TYPES).map(t => h("li", {}, h("strong", {}, t.name + ": "), t.desc)))) ];
+}
+function editIntro(){
+  cfg.intro = cfg.intro || {};
+  return [ h("h2", {}, "Story & intro"), h("p", { class: "help" }, "The first screen students see. The \"How to play\" box is added automatically."),
+    h("div", { class: "box" }, field("Heading", cfg.intro, "heading"),
+      field("Story", cfg.intro, "story", { type: "textarea", rows: 7, help: "leave a blank line between paragraphs. Use **bold** and *italics*" })) ];
+}
+function editFinish(){
+  cfg.finish = cfg.finish || {}; cfg.scoring = cfg.scoring || { mode: "completion" };
+  const deductions = cfg.scoring.mode === "deductions";
+  return [ h("h2", {}, "Finish & grading"),
+    h("div", { class: "box" }, h("h3", {}, "Certificate"),
+      field("Exit password", cfg.finish, "exitPassword", { help: "same for every student. Use it as the answer to a one-question LMS quiz. Leave blank for none" }),
+      field("Certificate line", cfg.finish, "certificateLine", { help: "after the student's name" }),
+      field("Instructions under the certificate", cfg.finish, "instructions", { type: "textarea", rows: 2 })),
+    h("div", { class: "box" }, h("h3", {}, "Grade sent to Moodle/Canvas (SCORM version)"),
+      select("Grading", cfg.scoring, "mode", [["completion", "Completion: 100% for finishing"], ["deductions", "Accuracy: points off for hints and wrong tries"]], { rerender: true }),
+      deductions ? h("div", { class: "row" },
+        field("Points off per hint", cfg.scoring, "hintPenalty", { type: "number", min: 0, max: 100 }),
+        field("Points off per wrong try", cfg.scoring, "wrongPenalty", { type: "number", min: 0, max: 100 }),
+        field("Lowest possible score", cfg.scoring, "minScore", { type: "number", min: 0, max: 100, help: "for finishing" })) : null,
+      h("p", { class: "help" }, "The plain HTML version can't send grades. Use the exit password with an LMS quiz instead.")) ];
+}
+function editRoom(r){
+  const room = cfg.rooms[r]; const t = TYPES[room.type];
+  const body = { matching: editMatching, quiz: editQuiz, ordering: editOrdering, sorting: editSorting, reflection: editReflection }[room.type];
+  return [ h("h2", {}, `Room ${r+1}: ${room.title || "Untitled"}`), h("p", { class: "help" }, `${t ? t.name : room.type}. ${t ? t.desc : ""}`),
+    body ? body(room, r) : h("p", {}, "This room type can't be edited here.") ];
+}
+
+/* ===================== Navigation & status ===================== */
+function roomStatus(r){ const items = ER.reviewItems({ rooms: [cfg.rooms[r]] }); const left = items.filter(x => x.item.verified !== true).length; return { left, total: items.length }; }
+function renderNav(){
+  const nav = document.getElementById("nav");
+  const item = (key, label, pill) => h("div", { class: "item" + (sel === key ? " sel" : ""), tabindex: 0, role: "button",
+      onclick: () => { sel = key; render(); }, onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sel = key; render(); } } },
+    h("span", { class: "t" }, label), pill || null);
+  const addSel = h("select", { "aria-label": "Add a room", onchange: e => { if (!e.target.value) return; cfg.rooms.push(TYPES[e.target.value].blank()); sel = cfg.rooms.length - 1; changed(); render(); } },
+    h("option", { value: "" }, "+ Add a room…"), Object.entries(TYPES).map(([k, t]) => h("option", { value: k }, t.name)));
+  nav.replaceChildren(
+    item("settings", "⚙️ Settings"), item("intro", "📜 Story & intro"),
+    h("h3", {}, "Rooms"),
+    ...cfg.rooms.map((room, r) => {
+      const st = roomStatus(r);
+      const pill = st.total ? h("span", { class: "pill" + (st.left ? "" : " ok"), title: `${st.total - st.left} of ${st.total} checked` }, st.left ? `${st.left} to check` : "✔ checked") : null;
+      const el = item(r, `${r+1}. ${room.title || "Untitled"}`, pill);
+      el.append(
+        h("button", { class: "small", title: "Move up", "aria-label": `Move room ${r+1} up`, disabled: r === 0, onclick: e => { e.stopPropagation(); [cfg.rooms[r-1], cfg.rooms[r]] = [cfg.rooms[r], cfg.rooms[r-1]]; if (sel === r) sel = r - 1; changed(); render(); } }, "▲"),
+        h("button", { class: "small danger", title: "Delete room", "aria-label": `Delete room ${r+1}`, onclick: e => { e.stopPropagation(); if (confirm(`Delete room ${r+1} "${room.title}"? This can't be undone.`)) { cfg.rooms.splice(r, 1); sel = "settings"; changed(); render(); } } }, "✕"));
+      return el;
+    }),
+    addSel,
+    h("h3", {}, "End"), item("finish", "🏁 Finish & grading"),
+    h("p", { class: "help", style: "margin-top:1rem" }, "Changes save automatically in this browser. Use ", h("strong", {}, "Save project"), " or ", h("strong", {}, "Export"), " to keep a file you can share or reopen."));
+}
+function refreshStatus(){
+  const st = ER.reviewStatus(cfg); const pct = st.total ? Math.round(100 * st.verified / st.total) : 100;
+  document.getElementById("meter").replaceChildren(h("div", { class: "bar" }, h("i", { style: `width:${pct}%` })), `${st.verified} of ${st.total} items checked`);
+  clearTimeout(refreshStatus.t); refreshStatus.t = setTimeout(renderNav, 400);
+}
+function render(){
+  if (typeof sel === "number" && !cfg.rooms[sel]) sel = "settings";
+  renderNav(); refreshStatus();
+  const main = document.getElementById("main");
+  const st = ER.reviewStatus(cfg);
+  const banner = st.unverified ? h("div", { class: "notice" }, "⚠️ ", h("strong", {}, `${st.unverified} of ${st.total} items haven't been checked yet.`),
+    " Everything in the sample was written with AI help and may contain mistakes. Check each item against your textbook or sources, then tick ", h("em", {}, "✔ I checked this is correct"),
+    ". Students see a “Draft” notice until every item is checked. Tip: ", h("strong", {}, "Review sheet"), " prints everything with the answers.") : null;
+  const view = sel === "settings" ? editSettings() : sel === "intro" ? editIntro() : sel === "finish" ? editFinish() : editRoom(sel);
+  main.replaceChildren(banner || "", ...view.flat(Infinity));
+}
+
+/* ===================== Files ===================== */
+function download(name, data, type){
+  const url = URL.createObjectURL(new Blob([data], { type }));
+  const a = h("a", { href: url, download: name }); document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function toast(text){ document.querySelectorAll(".toast").forEach(t => t.remove()); const t = h("div", { class: "toast", role: "status" }, text); document.body.append(t); setTimeout(() => t.remove(), 2600); }
+function checkReady(action){
+  const errs = ER.validate(cfg);
+  if (errs.length) { showErrors(errs); return false; }
+  const st = ER.reviewStatus(cfg);
+  if (st.unverified && action === "export" && !confirm(`${st.unverified} of ${st.total} items haven't been checked yet.\n\nStudents will see a "Draft" notice saying answers may contain errors.\n\nExport anyway?`)) return false;
+  return true;
+}
+function showErrors(errs){
+  overlay("Fix these before previewing or exporting", h("div", { style: "padding:1rem 1.5rem;background:#fff;overflow:auto;flex:1" },
+    h("div", { class: "errors" }, h("ul", {}, errs.map(e => h("li", {}, e))))));
+}
+function overlay(title, content, extraButtons = []){
+  const close = () => { o.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = e => { if (e.key === "Escape") close(); };
+  const o = h("div", { class: "overlay", role: "dialog", "aria-label": title },
+    h("div", { class: "bar" }, h("span", {}, title), ...extraButtons, h("button", { onclick: close, id: "overlay-close" }, "✕ Close")), content);
+  document.body.append(o); document.addEventListener("keydown", onKey);
+  o.querySelector("#overlay-close").focus();
+  return o;
+}
+const gameHtml = () => ER.buildGame(GAME_TEMPLATE, cfg);
+const slug = () => ER.fileSlug(cfg.meta?.title);
+
+document.getElementById("btn-preview").onclick = () => {
+  if (!checkReady("preview")) return;
+  const frame = h("iframe", { title: "Preview of the student game" });
+  frame.srcdoc = gameHtml();
+  overlay("Preview: this is what students see (nothing is saved or graded)", frame, [h("button", { onclick: () => { frame.srcdoc = gameHtml(); } }, "↻ Restart")]);
+};
+document.getElementById("btn-export").onclick = () => {
+  const box = h("div", { style: "padding:1.2rem 1.5rem;background:#fff;overflow:auto;flex:1" },
+    h("h2", {}, "Export for students"),
+    h("div", { class: "box" }, h("h3", {}, "SCORM package (.zip) for Moodle or Canvas"),
+      h("p", { class: "help" }, "Grades go to the gradebook automatically. Moodle: Add an activity → SCORM package. Canvas: SCORM tool. Upload the zip without unzipping it."),
+      h("button", { id: "export-scorm", onclick: () => { if (checkReady("export")) { download(`${slug()}-SCORM.zip`, ER.scorm(gameHtml(), cfg.meta.title), "application/zip"); toast("SCORM package downloaded."); } } }, "⬇ Download SCORM .zip")),
+    h("div", { class: "box" }, h("h3", {}, "Web page (.html)"),
+      h("p", { class: "help" }, "One file that works anywhere: double-click it, upload it as a Moodle/Canvas file, or put it on a website. Pair it with the exit password and an LMS quiz for credit. You can also reopen this file in the editor later."),
+      h("button", { id: "export-html", onclick: () => { if (checkReady("export")) { download(`${slug()}.html`, gameHtml(), "text/html"); toast("Game file downloaded."); } } }, "⬇ Download game .html")));
+  overlay("Export", box);
+};
+document.getElementById("btn-save").onclick = () => { download(`${slug()}-project.json`, JSON.stringify(cfg, null, 2), "application/json"); toast("Project saved. Open it again with Open…"); };
+document.getElementById("btn-open").onclick = () => document.getElementById("file").click();
+document.getElementById("file").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const text = await f.text();
+    const next = /\.html?$/i.test(f.name) ? ER.configFromHtml(text) : JSON.parse(text);
+    if (!next || !Array.isArray(next.rooms)) throw new Error("This file doesn't contain an escape room.");
+    if (!confirm(`Open "${next.meta?.title || f.name}"? This replaces what's in the editor now (save it first if you need it).`)) return;
+    cfg = next; sel = "settings"; changed(); render(); toast("Opened " + f.name);
+  } catch (err) { alert("Couldn't open that file: " + err.message); }
+};
+document.getElementById("btn-new").onclick = () => {
+  const box = h("div", { style: "padding:1.2rem 1.5rem;background:#fff;overflow:auto;flex:1" },
+    h("h2", {}, "Start a new escape room"),
+    h("p", { class: "notice" }, "This replaces what's in the editor now. Save project first if you want to keep it."),
+    h("div", { class: "row" },
+      h("button", { id: "new-blank", onclick: () => { cfg = blankConfig(); sel = "settings"; changed(); render(); document.querySelector(".overlay")?.remove(); toast("Started a blank escape room."); } }, "Blank (one question room)"),
+      h("button", { id: "new-sample", onclick: () => { cfg = clone(SAMPLE); sel = "settings"; changed(); render(); document.querySelector(".overlay")?.remove(); toast("Loaded the sample escape room."); } }, "Copy of the sample (Old Schoolhouse)")));
+  overlay("New", box);
+};
+function blankConfig(){
+  return { schema: 1, meta: { title: "New Escape Room", course: cfg.meta?.course || "", codePrefix: cfg.meta?.codePrefix || "", learningOutcome: "" },
+    intro: { heading: "You're locked in!", story: "Solve every room to escape." },
+    scoring: { mode: "completion", hintPenalty: 5, wrongPenalty: 2, minScore: 50 },
+    finish: { exitPassword: "", certificateLine: "escaped by mastering this chapter", instructions: "" },
+    rooms: [TYPES.quiz.blank()] };
+}
+
+/* ===================== Review sheet ===================== */
+document.getElementById("btn-review").onclick = () => {
+  const E = ER.esc, F = ER.fmt;
+  const chk = it => `<span class="ck">${it.verified ? "☑" : "☐"}</span>`;
+  const src = it => it.source ? `<div class="src">Source: ${E(it.source)}</div>` : `<div class="src none">Source: ________________________</div>`;
+  const rooms = cfg.rooms.map((r, i) => {
+    let body = "";
+    if (r.type === "matching") { const m = ER.matching(r);
+      body = `<p><strong>Lock combination:</strong> <code>${E(m.answer)}</code></p><ol>${r.cards.map(c => `<li>${chk(c)} <strong>${F(c.term)}</strong>${c.detail ? ` (${F(c.detail)})` : ""} — code <code>${E(m.code[r.cards.indexOf(c)])}</code><br>${c.clue ? "Clue: " + F(c.clue) : "<em>Decoy card (no clue)</em>"}${src(c)}</li>`).join("")}</ol>`; }
+    if (r.type === "quiz") body = `<ol>${r.questions.map(q => `<li>${chk(q)} ${F(q.prompt)}<br><strong>Answer:</strong> ${q.kind === "choice" ? (q.choices || []).filter(c=>String(c).trim()).map((c, j) => j === q.correct ? `<u><strong>${F(c)}</strong></u>` : F(c)).join(" · ") : E(q.answers)}${src(q)}</li>`).join("")}</ol>`;
+    if (r.type === "ordering") body = `<p>Correct order:</p><ol>${r.items.map(it => `<li>${chk(it)} ${F(it.text)}${it.label ? ` <strong>(${F(it.label)})</strong>` : ""}${src(it)}</li>`).join("")}</ol>`;
+    if (r.type === "sorting") body = `<ol>${r.items.map(it => `<li>${chk(it)} ${F(it.text)} → <strong>${E(r.categories[it.category] || "?")}</strong>${src(it)}</li>`).join("")}</ol>`;
+    if (r.type === "reflection") body = `<p>Results:</p><ol>${r.profiles.map(p => `<li>${chk(p)} <strong>${E(p.name)}</strong> — ${F(p.desc)}${p.who ? `<br>Thinkers: ${F(p.who)}` : ""}${p.next ? `<br>Next step: ${F(p.next)}` : ""}${src(p)}</li>`).join("")}</ol>
+      <p>Questions:</p><ol>${r.questions.map(q => `<li>${chk(q)} ${F(q.prompt)}<ul>${(q.options||[]).map(o => `<li>${F(o.text)} → ${E((r.profiles.find(p => p.key === o.profile) || {}).name || "?")}</li>`).join("")}</ul>${src(q)}</li>`).join("")}</ol>`;
+    const hints = (r.hints || []).length ? `<p class="hints"><strong>Hints:</strong></p><ol class="hints">${r.hints.map(x => `<li>${F(x)}</li>`).join("")}</ol>` : "";
+    return `<section><h2>Room ${i+1}: ${E(r.title)}</h2><p class="story">${F(r.story || "")}</p>${r.reference ? `<p>Reference shown to students: ${F(r.reference)}</p>` : ""}${body}${hints}</section>`;
+  }).join("");
+  const st = ER.reviewStatus(cfg);
+  const doc = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Review sheet: ${E(cfg.meta.title)}</title><style>
+    body{font-family:Georgia,serif;max-width:800px;margin:1.5rem auto;padding:0 1rem;color:#111;line-height:1.45}
+    h1{font-size:1.5rem;margin-bottom:.2rem} h2{font-size:1.15rem;border-bottom:1px solid #999;margin-top:1.6rem}
+    li{margin:.45rem 0} .ck{font-size:1.15rem} .src{font-size:.85rem;color:#444} .src.none{color:#999}
+    .story{font-style:italic;color:#444} .hints{font-size:.9rem;color:#444} code{font-size:1.05rem}
+    section{break-inside:auto} @media print{.noprint{display:none}}</style></head><body>
+    <h1>Review sheet: ${E(cfg.meta.title)}</h1>
+    <p>${E(cfg.meta.course || "")} · ${st.verified} of ${st.total} items checked · ☐ = not yet checked<br>
+    Exit password: <strong>${E(cfg.finish?.exitPassword || "(none)")}</strong> · Grading: ${cfg.scoring?.mode === "deductions" ? "accuracy" : "completion"}</p>
+    <p><em>Check every item against your textbook or sources. Content written with AI help can contain mistakes. Mark items as checked in the editor.</em></p>
+    ${rooms}</body></html>`;
+  const frame = h("iframe", { title: "Review sheet" }); frame.srcdoc = doc;
+  overlay("Review sheet (contains answers: for instructors only)", frame, [h("button", { onclick: () => frame.contentWindow.print() }, "🖨️ Print")]);
+};
+
+render();
+</script>
+</body>
+</html>

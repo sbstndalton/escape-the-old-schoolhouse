@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__ESCAPE_TITLE__</title>
+<style>
+  :root{
+    --board:#24402f; --board2:#1b3124; --chalk:#f4f1e6; --muted:#c9d3c4;
+    --wood:#8a5a32; --wood2:#6b4425; --gold:#e8b84a; --red:#e06a5a; --ok:#7ccf8a;
+    --card:#2d4d39;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Georgia,"Times New Roman",serif;color:var(--chalk);
+    background:radial-gradient(circle at 30% 20%,#2c4a37,#16281d 70%);min-height:100vh;line-height:1.5}
+  header{background:linear-gradient(var(--wood),var(--wood2));padding:.6rem 1rem;display:flex;
+    flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between;border-bottom:4px solid #4a2f19}
+  header h1{font-size:1.15rem;margin:0;letter-spacing:.03em}
+  .doors{display:flex;gap:.35rem;flex-wrap:wrap}
+  .door{width:2.1rem;height:2.1rem;border-radius:.3rem;display:grid;place-items:center;font-size:.85rem;
+    background:#3d2716;border:2px solid #2a1a0e;color:#b99d82}
+  .door.open{background:var(--gold);color:#3d2716;border-color:#a37a1f;font-weight:bold}
+  .door.current{outline:2px solid var(--chalk)}
+  .stats{font-family:ui-monospace,Menlo,monospace;font-size:.9rem;display:flex;gap:1rem}
+  .draft{background:#5a3a12;color:#ffe2a8;border-bottom:2px solid #a37a1f;padding:.45rem 1rem;font-size:.9rem;text-align:center}
+  main{max-width:860px;margin:1.5rem auto;padding:0 1rem}
+  .panel{background:var(--board);border:10px solid var(--wood);border-radius:.6rem;padding:1.5rem 1.6rem;
+    box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 60px rgba(0,0,0,.35)}
+  h2{margin-top:0;font-size:1.6rem;border-bottom:1px dashed rgba(244,241,230,.35);padding-bottom:.4rem}
+  .story{font-style:italic;color:var(--muted)}
+  .ref{font-size:.88rem;color:var(--muted);border-left:3px solid var(--gold);padding-left:.6rem}
+  .grid{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:.45rem;padding:.75rem .9rem}
+  .mcard{display:flex;gap:.7rem;align-items:center}
+  .badge{min-width:2.4rem;height:3rem;border-radius:.25rem;display:grid;place-items:center;font-weight:bold;
+    font-size:1.35rem;color:#3d2716;background:var(--gold);font-family:ui-monospace,monospace;box-shadow:inset -4px 0 0 rgba(0,0,0,.18)}
+  .icon{font-size:1.5rem}
+  ol.clues li{margin:.4rem 0}
+  .lock{margin-top:1.2rem;padding:1rem;background:#15261b;border-radius:.45rem;border:2px solid #0f1c13;
+    display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+  .lock label{font-weight:bold}
+  input[type=text]{font-family:ui-monospace,Menlo,monospace;font-size:1.3rem;letter-spacing:.35em;width:11rem;
+    padding:.35rem .5rem;border-radius:.3rem;border:2px solid var(--gold);background:#0c160f;color:var(--chalk);
+    text-transform:uppercase}
+  input.free{letter-spacing:normal;text-transform:none;font-family:inherit;font-size:1rem;width:100%;max-width:26rem}
+  button{font-family:inherit;font-size:1rem;cursor:pointer;border-radius:.35rem;border:0;padding:.5rem 1rem;
+    background:var(--gold);color:#3d2716;font-weight:bold}
+  button.ghost{background:transparent;color:var(--chalk);border:1px solid rgba(244,241,230,.5);font-weight:normal}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}
+  .msg{min-height:1.5rem;font-weight:bold}
+  .msg.bad{color:var(--red)} .msg.good{color:var(--ok)}
+  .hint{margin-top:.8rem;padding:.6rem .8rem;border-left:4px solid var(--gold);background:rgba(232,184,74,.1)}
+  .list{list-style:none;padding:0;margin:0}
+  .list>li{display:flex;align-items:center;gap:.5rem;margin:.4rem 0;background:var(--card);
+    border:1px solid rgba(255,255,255,.12);border-radius:.4rem;padding:.45rem .6rem}
+  .list>li>span{flex:1}
+  .list .pos{font-family:ui-monospace,monospace;color:var(--gold);flex:0 0 1.6rem}
+  .mv{padding:.2rem .55rem;font-size:.9rem}
+  .scene>li{flex-wrap:wrap;justify-content:space-between}
+  .seg{display:flex;flex-wrap:wrap;gap:.3rem}
+  .seg button{padding:.3rem .65rem;font-size:.85rem;background:#1b3124;color:var(--chalk);border:1px solid rgba(255,255,255,.3);font-weight:normal}
+  .seg button.on{background:var(--gold);color:#3d2716;font-weight:bold}
+  fieldset{border:1px solid rgba(255,255,255,.2);border-radius:.45rem;margin:0 0 .8rem;padding:.6rem .9rem}
+  legend{font-weight:bold;padding:0 .3rem}
+  fieldset label{display:block;margin:.25rem 0;cursor:pointer}
+  .result{background:#f4f1e6;color:#24402f;border-radius:.45rem;padding:1rem 1.2rem}
+  .result h3{margin-top:0}
+  .cert{border:6px double var(--gold);border-radius:.5rem;padding:1.4rem;text-align:center;background:#1b3124}
+  .code{font-family:ui-monospace,monospace;font-size:1.5rem;color:var(--gold);letter-spacing:.1em;overflow-wrap:anywhere}
+  .small{font-size:.88rem;color:var(--muted)}
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:1rem}
+  .sr{position:absolute;left:-9999px}
+  .shake{animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  @media (prefers-reduced-motion: reduce){.shake{animation:none}}
+  @media print{header,.draft,.row button{display:none}body{background:#fff;color:#000}.cert{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="game-title"></h1>
+  <div class="doors" id="doors" aria-label="Progress"></div>
+  <div class="stats"><span>⏱ <span id="timer">00:00</span></span><span>💡 <span id="hintCount">0</span></span></div>
+</header>
+<div id="draft" class="draft" hidden></div>
+<main><div class="panel" id="stage" tabindex="-1"></div></main>
+<div class="sr" aria-live="polite" id="live"></div>
+<!-- The escape room's content (questions, answers, story). Edit it with editor.html, not by hand. -->
+<script id="escape-config" type="text/plain">__ESCAPE_CONFIG__</script>
+<script>
+/*__SHARED__*/
+</script>
+<script>
+/* ===================== SCORM 1.2 (optional — runs only inside an LMS) ===================== */
+const SCORM = (() => {
+  let api = null;
+  function find(w){ let n=0; while(w && !w.API && w.parent && w.parent!==w && n<10){ w=w.parent; n++; } return w && w.API ? w.API : null; }
+  try { api = find(window) || (window.opener ? find(window.opener) : null); } catch(e){ api = null; }
+  const ok = !!api;
+  if (ok) { try { api.LMSInitialize("");
+    if (api.LMSGetValue("cmi.core.lesson_status") === "not attempted") api.LMSSetValue("cmi.core.lesson_status","incomplete");
+    api.LMSCommit(""); } catch(e){} }
+  return {
+    ok,
+    name(){ if(!ok) return ""; try{ const n=api.LMSGetValue("cmi.core.student_name")||""; const p=n.split(","); return p.length===2? (p[1].trim()+" "+p[0].trim()):n; }catch(e){return ""} },
+    complete(score, seconds){
+      if(!ok) return;
+      try{
+        api.LMSSetValue("cmi.core.score.min","0"); api.LMSSetValue("cmi.core.score.max","100");
+        api.LMSSetValue("cmi.core.score.raw", String(score));
+        const h=String(Math.floor(seconds/3600)).padStart(4,"0"), m=String(Math.floor(seconds%3600/60)).padStart(2,"0"), s=String(seconds%60).padStart(2,"0");
+        api.LMSSetValue("cmi.core.session_time", `${h}:${m}:${s}`);
+        api.LMSSetValue("cmi.core.lesson_status","completed");
+        api.LMSCommit("");
+      }catch(e){}
+    },
+    finish(){ if(ok){ try{ api.LMSFinish(""); }catch(e){} } }
+  };
+})();
+window.addEventListener("beforeunload", () => SCORM.finish());
+
+/* ===================== Content ===================== */
+const CFG = ER.decodeConfig(document.getElementById("escape-config").textContent);
+const ROOMS = CFG.rooms || [];
+const { esc, fmt, paras } = ER;
+
+/* ===================== State ===================== */
+const S = { room:0, start:null, hints:0, wrong:0, hintsShown:{}, reflection:null };
+let tick = null;
+const $ = s => document.querySelector(s);
+const stage = $("#stage");
+const say = t => { $("#live").textContent = t; };
+
+function fmtTime(sec){ return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0"); }
+function elapsed(){ return S.start ? Math.floor((Date.now()-S.start)/1000) : 0; }
+function startTimer(){ if(!S.start){ S.start=Date.now(); tick=setInterval(()=>$("#timer").textContent=fmtTime(elapsed()),1000);} }
+
+function renderDoors(){
+  $("#doors").innerHTML = ROOMS.map((_,i)=>{
+    const r=i+1; const cls = S.room>r ? "door open" : (S.room===r ? "door current" : "door");
+    return `<div class="${cls}" title="Room ${r}">${S.room>r?"🔓":r}</div>`;
+  }).join("");
+}
+
+function hintBlock(room){
+  if (!(room.hints||[]).length) return "";
+  return `<div class="row"><button class="ghost" id="hint-btn">💡 Get a hint</button></div><div id="hints"></div>`;
+}
+function wireHints(room, r){
+  const btn = $("#hint-btn"); if (!btn) return;
+  const list = room.hints;
+  const show = () => {
+    const n = S.hintsShown[r] || 0;
+    $("#hints").innerHTML = list.slice(0,n).map((h,i)=>`<div class="hint"><strong>Hint ${i+1}:</strong> ${fmt(h)}</div>`).join("");
+    if (n >= list.length) { btn.disabled = true; btn.textContent = "No more hints"; }
+  };
+  btn.onclick = () => { const n = S.hintsShown[r] || 0; if (n >= list.length) return; S.hintsShown[r] = n+1; S.hints++; $("#hintCount").textContent = S.hints; show(); };
+  show();
+}
+
+function fail(text){
+  S.wrong++; const m=$("#msg"); m.className="msg bad"; m.textContent=text; say(text);
+  stage.classList.remove("shake"); void stage.offsetWidth; stage.classList.add("shake");
+}
+function pass(text){
+  const m=$("#msg"); m.className="msg good"; m.textContent=text; say(text);
+  stage.querySelectorAll(".lock button, #answer").forEach(el => el.disabled = true);
+  setTimeout(() => go(S.room+1), 1300);
+}
+function go(n){ S.room=n; renderDoors(); (n===0 ? intro : n>ROOMS.length ? finish : () => room(n))(); stage.focus(); window.scrollTo(0,0); }
+
+function roomHead(r, n){
+  return `<h2>Room ${n} · ${esc(r.title||"")}</h2>${paras(r.story,"story")}${r.reference?`<p class="ref">📖 ${fmt(r.reference)}</p>`:""}`;
+}
+const lockRow = (label, inner) => `<div class="lock">${label?`<span><strong>${fmt(label)}</strong></span>`:""}${inner}<span class="msg" id="msg" role="status"></span></div>`;
+
+/* ===================== Screens ===================== */
+function intro(){
+  const n = ROOMS.length;
+  stage.innerHTML = `
+  <h2>${esc(CFG.intro?.heading || CFG.meta?.title || "")}</h2>
+  ${paras(CFG.intro?.story, "story")}
+  <div class="card">
+    <strong>How to play</strong>
+    <ul>
+      <li>Solve the puzzle in each room to open its lock. There ${n===1?"is 1 room":`are ${n} rooms`}.</li>
+      <li>Wrong answers ${CFG.scoring?.mode==="deductions" && CFG.scoring.wrongPenalty ? `cost ${CFG.scoring.wrongPenalty} points each, so think before you try` : "cost nothing, so keep trying"}.</li>
+      <li>Stuck? Most rooms have hints. ${CFG.scoring?.mode==="deductions" && CFG.scoring.hintPenalty ? `Each hint costs ${CFG.scoring.hintPenalty} points.` : "They're counted, but they don't affect your grade."}</li>
+      <li>At the end you'll get a <strong>certificate</strong>${CFG.finish?.exitPassword ? " with the exit password" : ""}.</li>
+    </ul>
+    ${CFG.meta?.learningOutcome ? `<p class="small">Learning Outcome: <em>${fmt(CFG.meta.learningOutcome)}</em></p>` : ""}
+  </div>
+  <div class="row"><label for="pname"><strong>Your name:</strong></label>
+    <input id="pname" type="text" class="free" style="width:16rem" value="${esc(SCORM.name())}" autocomplete="name">
+    <button id="begin">Enter →</button></div>`;
+  $("#begin").onclick = () => { S.player = ($("#pname").value||"").trim() || "Student"; startTimer(); go(1); };
+}
+
+function room(n){
+  const r = ROOMS[n-1];
+  ({ matching, quiz, ordering, sorting, reflection }[r.type] || unknown)(r, n);
+  wireHints(r, n);
+}
+function unknown(r, n){ stage.innerHTML = roomHead(r,n) + `<p>This room type isn't supported.</p><button onclick="go(${n+1})">Skip</button>`; }
+
+/* ---- Matching: cards with codes, numbered clues, enter the code ---- */
+function matching(r, n){
+  const m = ER.matching(r);
+  const clueStyle = m.numbers ? "A" : "1";
+  stage.innerHTML = roomHead(r,n) + `
+    <div class="grid">${m.display.map(c=>`<div class="card mcard"><div class="badge">${esc(m.code[c.k])}</div>
+      ${c.icon?`<span class="icon" aria-hidden="true">${esc(c.icon)}</span>`:""}<div><strong>${fmt(c.term)}</strong>${c.detail?`<div class="small">${fmt(c.detail)}</div>`:""}</div></div>`).join("")}</div>
+    <h3>${esc(r.cluesHeading || "Clues")}</h3>
+    <ol class="clues" type="${clueStyle}">${m.answerCards.map(c=>`<li>${fmt(c.clue)}</li>`).join("")}</ol>
+    ${lockRow("", `<label for="answer">${fmt(r.lockLabel || "🔒 Lock")}:</label>
+      <input id="answer" type="text" maxlength="${m.answer.length}" ${m.numbers?'inputmode="numeric"':""} autocomplete="off">
+      <button id="try">Try it</button>`)}
+    ${hintBlock(r)}`;
+  const check = () => {
+    if ($("#answer").value.replace(/\s+/g,"").toUpperCase() === m.answer) pass(r.successMessage || "🔓 The lock opens!");
+    else fail(r.failMessage || "The lock won't budge. Check each clue again.");
+  };
+  $("#try").onclick = check; $("#answer").onkeydown = e => { if (e.key==="Enter") check(); };
+}
+
+/* ---- Quiz: short-answer and multiple-choice questions; all must be right ---- */
+function quiz(r, n){
+  const qs = r.questions || [];
+  stage.innerHTML = roomHead(r,n) + `<form id="qf" novalidate>${qs.map((q,i)=>`
+    <fieldset><legend>${i+1}. ${fmt(q.prompt)}</legend>${
+      q.kind==="choice"
+        ? (q.choices||[]).map((c,j)=>String(c).trim()?`<label><input type="radio" name="q${i}" value="${j}"> ${fmt(c)}</label>`:"").join("")
+        : `<input type="text" class="free" name="q${i}" aria-label="Answer to question ${i+1}" autocomplete="off">`
+    }</fieldset>`).join("")}
+    ${lockRow(r.lockLabel || "🔒 Question lock", `<button id="try" type="submit">Check answers</button>`)}</form>
+    ${hintBlock(r)}`;
+  $("#qf").onsubmit = e => {
+    e.preventDefault();
+    let right = 0;
+    qs.forEach((q,i) => {
+      if (q.kind==="choice") { const v = document.querySelector(`input[name=q${i}]:checked`); if (v && +v.value === q.correct) right++; }
+      else { const v = ER.norm(document.querySelector(`input[name=q${i}]`).value); if (v && ER.accepted(q.answers).includes(v)) right++; }
+    });
+    if (right === qs.length) pass(r.successMessage || "🔓 Every answer is right. The lock opens!");
+    else fail(`${right} of ${qs.length} answers are correct.`);
+  };
+}
+
+/* ---- Ordering: put items in the right order ---- */
+function ordering(r, n){
+  const items = r.items || [];
+  let order = ER.scramble(items.length, (r.title||"") + items.map(i=>i.text).join("|"));
+  const draw = () => {
+    $("#order").innerHTML = order.map((idx,i)=>`<li><span class="pos">${i+1}.</span><span>${fmt(items[idx].text)}</span>
+      <button class="mv ghost" aria-label="Move up" ${i===0?"disabled":""} data-i="${i}" data-d="-1">▲</button>
+      <button class="mv ghost" aria-label="Move down" ${i===order.length-1?"disabled":""} data-i="${i}" data-d="1">▼</button></li>`).join("");
+  };
+  stage.innerHTML = roomHead(r,n) + `<ul class="list" id="order"></ul>
+    ${lockRow(r.lockLabel || "🔒 Order lock", `<button id="try">Check order</button>`)}${hintBlock(r)}`;
+  $("#order").onclick = e => {
+    const b = e.target.closest("button[data-i]"); if (!b) return;
+    const i = +b.dataset.i, d = +b.dataset.d, j = i + d;
+    [order[i], order[j]] = [order[j], order[i]]; draw();
+    const nb = $("#order").children[j].querySelectorAll("button")[d<0?0:1]; if (nb && !nb.disabled) nb.focus();
+  };
+  draw();
+  $("#try").onclick = () => {
+    const right = order.filter((v,i)=>v===i).length;
+    if (right === order.length) {
+      $("#order").innerHTML = order.map((idx,i)=>`<li><span class="pos">${i+1}.</span><span>${fmt(items[idx].text)}${items[idx].label?` <strong style="color:var(--gold)">(${fmt(items[idx].label)})</strong>`:""}</span></li>`).join("");
+      pass(r.successMessage || "🔓 Everything is in order. The lock opens!");
+    } else fail(`${right} of ${order.length} are in the correct position.`);
+  };
+}
+
+/* ---- Sorting: put each item in a category ---- */
+function sorting(r, n){
+  const items = r.items || [], cats = r.categories || [];
+  const pick = new Array(items.length).fill(null);
+  stage.innerHTML = roomHead(r,n) + `<ul class="list scene">${items.map((it,i)=>`<li><span style="flex:1;min-width:220px">${fmt(it.text)}</span>
+     <span class="seg" role="group" aria-label="Item ${i+1}">${cats.map((c,j)=>`<button data-i="${i}" data-v="${j}" aria-pressed="false">${esc(c)}</button>`).join("")}</span></li>`).join("")}</ul>
+    ${lockRow(r.lockLabel || "📋 Sorting lock", `<button id="try">Submit</button>`)}${hintBlock(r)}`;
+  stage.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
+    const i=+b.dataset.i; pick[i]=+b.dataset.v;
+    b.parentElement.querySelectorAll("button").forEach(x=>{ const on=+x.dataset.v===pick[i]; x.classList.toggle("on",on); x.setAttribute("aria-pressed",on); });
+  });
+  $("#try").onclick = () => {
+    if (pick.includes(null)) return fail("Choose a category for every item first.");
+    const right = pick.filter((p,i)=>p===items[i].category).length;
+    if (right===items.length) pass(r.successMessage || "🔓 All sorted. The lock opens!");
+    else fail(`${right} of ${items.length} are in the correct category.`);
+  };
+}
+
+/* ---- Reflection: no wrong answers; result profile shown on the certificate ---- */
+function reflection(r, n){
+  const qs = r.questions || [];
+  stage.innerHTML = roomHead(r,n) + `<form id="mf">${qs.map((q,qi)=>`<fieldset><legend>${qi+1}. ${fmt(q.prompt)}</legend>${(q.options||[]).map(o=>
+     `<label><input type="radio" name="q${qi}" value="${esc(o.profile)}" required> ${fmt(o.text)}</label>`).join("")}</fieldset>`).join("")}
+    ${lockRow("🪞", `<button id="try" type="submit">${esc(r.buttonLabel || "Continue")}</button>`)}</form>${hintBlock(r)}`;
+  $("#mf").onsubmit = e => {
+    e.preventDefault();
+    const tally = {}; qs.forEach((q,qi)=>{ const v=document.querySelector(`input[name=q${qi}]:checked`); if (v) tally[v.value]=(tally[v.value]||0)+1; });
+    const ranked = Object.entries(tally).sort((a,b)=>b[1]-a[1]);
+    const prof = k => (r.profiles||[]).find(p=>p.key===k);
+    S.reflection = { room:r, first: ranked[0] && prof(ranked[0][0]), second: ranked[1] && prof(ranked[1][0]) };
+    pass(r.successMessage || "✨ Done!");
+  };
+}
+
+/* ---- Finish ---- */
+function score(){
+  const sc = CFG.scoring || {};
+  if (sc.mode !== "deductions") return 100;
+  return Math.max(+sc.minScore||0, Math.min(100, 100 - S.hints*(+sc.hintPenalty||0) - S.wrong*(+sc.wrongPenalty||0)));
+}
+function finish(){
+  clearInterval(tick);
+  const secs = elapsed(), pts = score();
+  const prefix = String(CFG.meta?.codePrefix || "ESC").replace(/[^A-Za-z0-9]/g,"").toUpperCase() || "ESC";
+  const code = `${prefix}-${S.hints}${Math.min(S.wrong,9)}-${((secs*7919)+S.hints*31+S.wrong*17)%9000+1000}`;
+  SCORM.complete(pts, secs);
+  const f = CFG.finish || {}, R = S.reflection;
+  stage.innerHTML = `
+  <h2>🎉 You Escaped!</h2>
+  <div class="cert">
+    <div class="small">THIS CERTIFIES THAT</div>
+    <div style="font-size:1.6rem;margin:.3rem 0">${esc(S.player)}</div>
+    <div class="small">${fmt(f.certificateLine || "escaped the room")}</div>
+    <p>Time: <strong>${fmtTime(secs)}</strong> · Hints used: <strong>${S.hints}</strong>${CFG.scoring?.mode==="deductions"?` · Score: <strong>${pts}%</strong>`:""} · ${new Date().toLocaleDateString()}</p>
+    ${f.exitPassword ? `<div class="small">Exit password (enter this in your course quiz)</div><div class="code" id="exit-password" style="font-size:1.9rem">${esc(f.exitPassword)}</div>` : ""}
+    <div class="small" style="margin-top:.6rem">Personal completion code</div><div class="code" style="font-size:1.1rem">${code}</div>
+  </div>
+  ${R && R.first ? `<div class="result" style="margin-top:1rem">
+    <h3>🪞 ${esc(R.room.resultHeading || "Your result")}: ${esc(R.first.name)}</h3>
+    ${paras(R.first.desc)}
+    ${R.first.who ? `<p><strong>Thinkers to explore:</strong> ${fmt(R.first.who)}</p>` : ""}
+    ${R.second && R.second !== R.first ? `<p><strong>Your second-strongest lean:</strong> ${esc(R.second.name)}${R.second.who?` (${fmt(R.second.who)})`:""}</p>` : ""}
+    ${R.first.next ? `<p><strong>Next step:</strong> ${fmt(R.first.next)}</p>` : ""}
+    ${R.room.resultNote ? `<p class="small" style="color:#24402f">${fmt(R.room.resultNote)}</p>` : ""}
+  </div>` : ""}
+  <div class="row"><button onclick="window.print()">🖨️ Print / save as PDF</button>
+    <button class="ghost" onclick="location.reload()">Play again</button></div>
+  ${f.instructions ? `<p class="small">${fmt(f.instructions)}</p>` : ""}`;
+}
+
+/* ===================== Start ===================== */
+document.title = CFG.meta?.title || document.title;
+$("#game-title").textContent = "🏫 " + (CFG.meta?.title || "Escape Room");
+const review = ER.reviewStatus(CFG);
+if (review.unverified) {
+  const d = $("#draft"); d.hidden = false;
+  d.textContent = `⚠️ Draft: ${review.unverified} of ${review.total} items haven't been checked by the instructor yet. Answers may contain errors.`;
+}
+renderDoors(); go(0);
+</script>
+</body>
+</html>

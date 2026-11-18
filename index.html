@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Escape the Old Schoolhouse – EDU 216</title>
+<title>Escape the Old Schoolhouse</title>
 <style>
   :root{
     --board:#24402f; --board2:#1b3124; --chalk:#f4f1e6; --muted:#c9d3c4;
@@ -16,29 +16,25 @@
   header{background:linear-gradient(var(--wood),var(--wood2));padding:.6rem 1rem;display:flex;
     flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:space-between;border-bottom:4px solid #4a2f19}
   header h1{font-size:1.15rem;margin:0;letter-spacing:.03em}
-  .doors{display:flex;gap:.35rem}
+  .doors{display:flex;gap:.35rem;flex-wrap:wrap}
   .door{width:2.1rem;height:2.1rem;border-radius:.3rem;display:grid;place-items:center;font-size:.85rem;
     background:#3d2716;border:2px solid #2a1a0e;color:#b99d82}
   .door.open{background:var(--gold);color:#3d2716;border-color:#a37a1f;font-weight:bold}
   .door.current{outline:2px solid var(--chalk)}
   .stats{font-family:ui-monospace,Menlo,monospace;font-size:.9rem;display:flex;gap:1rem}
+  .draft{background:#5a3a12;color:#ffe2a8;border-bottom:2px solid #a37a1f;padding:.45rem 1rem;font-size:.9rem;text-align:center}
   main{max-width:860px;margin:1.5rem auto;padding:0 1rem}
   .panel{background:var(--board);border:10px solid var(--wood);border-radius:.6rem;padding:1.5rem 1.6rem;
     box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 60px rgba(0,0,0,.35)}
   h2{margin-top:0;font-size:1.6rem;border-bottom:1px dashed rgba(244,241,230,.35);padding-bottom:.4rem}
   .story{font-style:italic;color:var(--muted)}
-  .grid{display:grid;gap:.75rem}
-  .g2{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
-  .g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  .ref{font-size:.88rem;color:var(--muted);border-left:3px solid var(--gold);padding-left:.6rem}
+  .grid{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
   .card{background:var(--card);border:1px solid rgba(255,255,255,.12);border-radius:.45rem;padding:.75rem .9rem}
-  .book{display:flex;gap:.7rem;align-items:center}
-  .spine{min-width:2.4rem;height:3.4rem;border-radius:.2rem;display:grid;place-items:center;font-weight:bold;
-    font-size:1.4rem;color:#fff;box-shadow:inset -4px 0 0 rgba(0,0,0,.25)}
-  .portrait{text-align:center}
-  .frame{width:4.2rem;height:4.2rem;margin:0 auto .35rem;border:5px solid var(--gold);border-radius:50%;
-    display:grid;place-items:center;font-size:1.6rem;background:#1b3124}
-  .plate{display:inline-block;background:var(--gold);color:#3d2716;font-weight:bold;border-radius:.2rem;
-    padding:0 .45rem;font-family:ui-monospace,monospace}
+  .mcard{display:flex;gap:.7rem;align-items:center}
+  .badge{min-width:2.4rem;height:3rem;border-radius:.25rem;display:grid;place-items:center;font-weight:bold;
+    font-size:1.35rem;color:#3d2716;background:var(--gold);font-family:ui-monospace,monospace;box-shadow:inset -4px 0 0 rgba(0,0,0,.18)}
+  .icon{font-size:1.5rem}
   ol.clues li{margin:.4rem 0}
   .lock{margin-top:1.2rem;padding:1rem;background:#15261b;border-radius:.45rem;border:2px solid #0f1c13;
     display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
@@ -46,23 +42,23 @@
   input[type=text]{font-family:ui-monospace,Menlo,monospace;font-size:1.3rem;letter-spacing:.35em;width:11rem;
     padding:.35rem .5rem;border-radius:.3rem;border:2px solid var(--gold);background:#0c160f;color:var(--chalk);
     text-transform:uppercase}
+  input.free{letter-spacing:normal;text-transform:none;font-family:inherit;font-size:1rem;width:100%;max-width:26rem}
   button{font-family:inherit;font-size:1rem;cursor:pointer;border-radius:.35rem;border:0;padding:.5rem 1rem;
     background:var(--gold);color:#3d2716;font-weight:bold}
   button.ghost{background:transparent;color:var(--chalk);border:1px solid rgba(244,241,230,.5);font-weight:normal}
   button:disabled{opacity:.45;cursor:not-allowed}
-  button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #fff;outline-offset:2px}
+  button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:2px}
   .msg{min-height:1.5rem;font-weight:bold}
   .msg.bad{color:var(--red)} .msg.good{color:var(--ok)}
   .hint{margin-top:.8rem;padding:.6rem .8rem;border-left:4px solid var(--gold);background:rgba(232,184,74,.1)}
-  .timeline{list-style:none;padding:0;margin:0}
-  .timeline li{display:flex;align-items:center;gap:.5rem;margin:.4rem 0;background:var(--card);
+  .list{list-style:none;padding:0;margin:0}
+  .list>li{display:flex;align-items:center;gap:.5rem;margin:.4rem 0;background:var(--card);
     border:1px solid rgba(255,255,255,.12);border-radius:.4rem;padding:.45rem .6rem}
-  .timeline li span{flex:1}
-  .timeline .pos{font-family:ui-monospace,monospace;color:var(--gold);flex:0 0 1.6rem}
+  .list>li>span{flex:1}
+  .list .pos{font-family:ui-monospace,monospace;color:var(--gold);flex:0 0 1.6rem}
   .mv{padding:.2rem .55rem;font-size:.9rem}
-  .scene li{margin:.5rem 0;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between;
-    background:var(--card);border-radius:.4rem;padding:.5rem .7rem;border:1px solid rgba(255,255,255,.12)}
-  .scene ul{list-style:none;padding:0}
+  .scene>li{flex-wrap:wrap;justify-content:space-between}
+  .seg{display:flex;flex-wrap:wrap;gap:.3rem}
   .seg button{padding:.3rem .65rem;font-size:.85rem;background:#1b3124;color:var(--chalk);border:1px solid rgba(255,255,255,.3);font-weight:normal}
   .seg button.on{background:var(--gold);color:#3d2716;font-weight:bold}
   fieldset{border:1px solid rgba(255,255,255,.2);border-radius:.45rem;margin:0 0 .8rem;padding:.6rem .9rem}
@@ -71,24 +67,209 @@
   .result{background:#f4f1e6;color:#24402f;border-radius:.45rem;padding:1rem 1.2rem}
   .result h3{margin-top:0}
   .cert{border:6px double var(--gold);border-radius:.5rem;padding:1.4rem;text-align:center;background:#1b3124}
-  .code{font-family:ui-monospace,monospace;font-size:1.5rem;color:var(--gold);letter-spacing:.1em}
+  .code{font-family:ui-monospace,monospace;font-size:1.5rem;color:var(--gold);letter-spacing:.1em;overflow-wrap:anywhere}
   .small{font-size:.88rem;color:var(--muted)}
   .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:1rem}
   .sr{position:absolute;left:-9999px}
   .shake{animation:shake .4s}
   @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-  @media print{header,.row button{display:none}body{background:#fff;color:#000}.cert{background:#fff;color:#000}}
+  @media (prefers-reduced-motion: reduce){.shake{animation:none}}
+  @media print{header,.draft,.row button{display:none}body{background:#fff;color:#000}.cert{background:#fff;color:#000}}
 </style>
 </head>
 <body>
 <header>
-  <h1>🏫 Escape the Old Schoolhouse</h1>
+  <h1 id="game-title"></h1>
   <div class="doors" id="doors" aria-label="Progress"></div>
   <div class="stats"><span>⏱ <span id="timer">00:00</span></span><span>💡 <span id="hintCount">0</span></span></div>
 </header>
+<div id="draft" class="draft" hidden></div>
 <main><div class="panel" id="stage" tabindex="-1"></div></main>
 <div class="sr" aria-live="polite" id="live"></div>
+<!-- The escape room's content (questions, answers, story). Edit it with editor.html, not by hand. -->
+<script id="escape-config" type="text/plain">eyJzY2hlbWEiOjEsIm1ldGEiOnsidGl0bGUiOiJFc2NhcGUgdGhlIE9sZCBTY2hvb2xob3VzZSIsImNvdXJzZSI6IkVEVSAyMTYiLCJjb2RlUHJlZml4IjoiRURVMjE2IiwibGVhcm5pbmdPdXRjb21lIjoiRXhwbG9yZSB5b3VyIG93biBwZXJzb25hbCBwaGlsb3NvcGh5IG9mIGVkdWNhdGlvbiBiYXNlZCBvbiB0aGUgaGlzdG9yaWNhbCBhbmQgcGhpbG9zb3BoaWNhbCBmb3VuZGF0aW9ucyBvZiBlZHVjYXRpb24uIn0sImludHJvIjp7ImhlYWRpbmciOiJUaGUgRG9vciBDbGlja3MgU2h1dCBCZWhpbmQgWW914oCmIiwic3RvcnkiOiJZb3UgY2FtZSB0byB0aGUgb2xkIGNvdW50eSBzY2hvb2xob3VzZSwgbm93IGEgbXVzZXVtIG9mIGVkdWNhdGlvbiBoaXN0b3J5LCB0byByZXNlYXJjaCB5b3VyIFBoaWxvc29waHkgYXNzaWdubWVudC4gWW91IGxvc3QgdHJhY2sgb2YgdGltZSBpbiB0aGUgYXJjaGl2ZXMuIFdoZW4geW91IGxvb2sgdXAsIHRoZSBsaWdodHMgYXJlIGRpbSwgdGhlIGNhcmV0YWtlciBoYXMgZ29uZSBob21lLCBhbmQgZXZlcnkgZG9vciBpcyBsb2NrZWQuXG5cbkEgbm90ZSBpcyBwaW5uZWQgdG8gdGhlIGNoYWxrYm9hcmQ6ICpcIk9ubHkgc29tZW9uZSB3aG8gdW5kZXJzdGFuZHMgd2hlcmUgb3VyIGlkZWFzIGFib3V0IHNjaG9vbCBjYW1lIGZyb20gbWF5IGxlYXZlLiBGaXZlIHJvb21zLiBGaXZlIGxvY2tzLiBHb29kIGx1Y2ssIGZ1dHVyZSBlZHVjYXRvci5cIioifSwic2NvcmluZyI6eyJtb2RlIjoiY29tcGxldGlvbiIsImhpbnRQZW5hbHR5Ijo1LCJ3cm9uZ1BlbmFsdHkiOjIsIm1pblNjb3JlIjo1MH0sImZpbmlzaCI6eyJleGl0UGFzc3dvcmQiOiJERVdFWTE5MTYiLCJjZXJ0aWZpY2F0ZUxpbmUiOiJlc2NhcGVkIHRoZSBPbGQgU2Nob29saG91c2UgYnkgbWFzdGVyaW5nIHRoZSBoaXN0b3JpY2FsIGFuZCBwaGlsb3NvcGhpY2FsIGZvdW5kYXRpb25zIG9mIGVkdWNhdGlvbiIsImluc3RydWN0aW9ucyI6IkVudGVyIHRoZSAqKmV4aXQgcGFzc3dvcmQqKiBpbiB5b3VyIGNvdXJzZSBxdWl6LCBvciBzdWJtaXQgeW91ciBjb21wbGV0aW9uIGNvZGUgb3IgYSBzY3JlZW5zaG90IG9mIHRoaXMgcGFnZSwgYXMgeW91ciBpbnN0cnVjdG9yIGRpcmVjdHMuIn0sInJvb21zIjpbeyJ0eXBlIjoibWF0Y2hpbmciLCJ0aXRsZSI6IlRoZSBMaWJyYXJ5IiwiY29kZVN0eWxlIjoibGV0dGVycyIsImNvZGVXb3JkIjoiTEVBUk4iLCJzdG9yeSI6IkZpdmUgZHVzdHkgYm9va3MgZ2xvdyBvbiB0aGUgc2hlbGYsIGVhY2ggd2l0aCBvbmUgbGV0dGVyIHBhaW50ZWQgb24gaXRzIHNwaW5lLiBBIGxpYnJhcmlhbidzIGNhcmQgY2F0YWxvZyBsaXN0cyBmaXZlIGRlc2NyaXB0aW9ucywgYnV0IHRoZSB0aXRsZXMgaGF2ZSBiZWVuIHRvcm4gb2ZmLiBUaGUgbG9jayBvbiB0aGUgbGlicmFyeSBkb29yIHRha2VzIGEgKio1LWxldHRlciB3b3JkKiouIiwiY2x1ZXNIZWFkaW5nIjoiQ2FyZCBDYXRhbG9nIiwibG9ja0xhYmVsIjoi8J+UkiBMaWJyYXJ5IGxvY2siLCJzdWNjZXNzTWVzc2FnZSI6IvCflJMgQ2xpY2shIFRoZSBsaWJyYXJ5IGRvb3Igc3dpbmdzIG9wZW4uIiwiZmFpbE1lc3NhZ2UiOiJUaGUgbG9jayB3b24ndCBidWRnZS4gQ2hlY2sgd2hpY2ggcGhpbG9zb3BoeSBtYXRjaGVzIGVhY2ggZGVzY3JpcHRpb24uIiwicmVmZXJlbmNlIjoiIiwiY2FyZHMiOlt7InRlcm0iOiJFc3NlbnRpYWxpc20iLCJkZXRhaWwiOiIiLCJpY29uIjoiIiwiY29kZSI6IiIsImNsdWUiOiJBbGwgc3R1ZGVudHMgc2hvdWxkIG1hc3RlciBhIGNvbW1vbiBjb3JlIG9mIGJhc2ljIGtub3dsZWRnZSBhbmQgc2tpbGxzICh0aGUgXCIzIFIncyxcIiBoaXN0b3J5LCBzY2llbmNlKS4gVGVhY2hlcnMgYXJlIGF1dGhvcml0aWVzLCBhbmQgdGhlIGNsYXNzcm9vbSBpcyBvcmRlcmx5IGFuZCBkaXNjaXBsaW5lZC4gKFdpbGxpYW0gQmFnbGV5LCBFLiBELiBIaXJzY2gpIiwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7InRlcm0iOiJFeGlzdGVudGlhbGlzbSIsImRldGFpbCI6IiIsImljb24iOiIiLCJjb2RlIjoiIiwiY2x1ZSI6IkVhY2ggc3R1ZGVudCBpcyBhIGZyZWUgaW5kaXZpZHVhbCB3aG8gbXVzdCBtYWtlIGNob2ljZXMgYW5kIGNyZWF0ZSBtZWFuaW5nIGluIHRoZWlyIG93biBsaWZlLiBUaGUgY3VycmljdWx1bSBlbXBoYXNpemVzIHBlcnNvbmFsIGNob2ljZSwgdGhlIGFydHMsIGFuZCBzZWxmLXJlZmxlY3Rpb24uIChKZWFuLVBhdWwgU2FydHJlLCBNYXhpbmUgR3JlZW5lKSIsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJ0ZXJtIjoiUGVyZW5uaWFsaXNtIiwiZGV0YWlsIjoiIiwiaWNvbiI6IiIsImNvZGUiOiIiLCJjbHVlIjoiVHJ1dGggaXMgdW5pdmVyc2FsIGFuZCB1bmNoYW5naW5nLCBzbyBldmVyeSBzdHVkZW50IHNob3VsZCBzdHVkeSB0aGUgc2FtZSBlbmR1cmluZyBpZGVhcyBmb3VuZCBpbiB0aGUgXCJHcmVhdCBCb29rc1wiIG9mIFdlc3Rlcm4gY2l2aWxpemF0aW9uLiAoUm9iZXJ0IEh1dGNoaW5zLCBNb3J0aW1lciBBZGxlcikiLCJzb3VyY2UiOiIiLCJ2ZXJpZmllZCI6ZmFsc2V9LHsidGVybSI6IlNvY2lhbCBSZWNvbnN0cnVjdGlvbmlzbSIsImRldGFpbCI6IiIsImljb24iOiIiLCJjb2RlIjoiIiwiY2x1ZSI6IlNjaG9vbHMgc2hvdWxkIGJlIGFnZW50cyBvZiBjaGFuZ2UuIFN0dWRlbnRzIHN0dWR5IHJlYWwgc29jaWFsIHByb2JsZW1zIGxpa2UgcG92ZXJ0eSBhbmQgaW5qdXN0aWNlIGFuZCB3b3JrIHRvIGJ1aWxkIGEgZmFpcmVyIHNvY2lldHkuIChHZW9yZ2UgQ291bnRzLCBQYXVsbyBGcmVpcmUpIiwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7InRlcm0iOiJQcm9ncmVzc2l2aXNtIiwiZGV0YWlsIjoiIiwiaWNvbiI6IiIsImNvZGUiOiIiLCJjbHVlIjoiRWR1Y2F0aW9uIHNob3VsZCBiZSBjaGlsZC1jZW50ZXJlZCBhbmQgZ3JvdyBvdXQgb2Ygc3R1ZGVudHMnIGludGVyZXN0cyBhbmQgZXhwZXJpZW5jZXMuIExlYXJuaW5nIGhhcHBlbnMgdGhyb3VnaCBoYW5kcy1vbiBwcm9ibGVtIHNvbHZpbmcgYW5kIGNvb3BlcmF0aW9uLiAoSm9obiBEZXdleSkiLCJzb3VyY2UiOiIiLCJ2ZXJpZmllZCI6ZmFsc2V9XSwiaGludHMiOlsiRWFjaCBudW1iZXJlZCBkZXNjcmlwdGlvbiBtYXRjaGVzIG9uZSBwaGlsb3NvcGh5IGJvb2suIFdyaXRlIGRvd24gdGhlIGxldHRlciBvbiB0aGF0IGJvb2sncyBzcGluZSBmb3IgZGVzY3JpcHRpb25zIDEgdGhyb3VnaCA1LCBpbiBvcmRlci4iLCJEZXNjcmlwdGlvbiAxIChiYXNpY3MsIGNvcmUgc2tpbGxzLCBkaXNjaXBsaW5lKSBpcyAqKkVzc2VudGlhbGlzbSoqLCBhbmQgZGVzY3JpcHRpb24gNSAobGVhcm5pbmcgYnkgZG9pbmcpIGlzICoqUHJvZ3Jlc3NpdmlzbSoqLiIsIlRoZSBhbnN3ZXIgaXMgYSBmaXZlLWxldHRlciB3b3JkIGZvciB3aGF0IGV2ZXJ5IHN0dWRlbnQgZG9lcyBpbiBzY2hvb2wuIl19LHsidHlwZSI6Im1hdGNoaW5nIiwidGl0bGUiOiJUaGUgUG9ydHJhaXQgR2FsbGVyeSIsImNvZGVTdHlsZSI6Im51bWJlcnMiLCJjb2RlV29yZCI6IiIsInN0b3J5IjoiRWlnaHQgcG9ydHJhaXRzIGxpbmUgdGhlIGhhbGx3YXkuIEVhY2ggaGFzIGEgbnVtYmVyZWQgYnJhc3MgcGxhdGUuIEEga2V5cGFkIGJ5IHRoZSBmYXIgZG9vciBhc2tzIGZvciBhICoqNC1kaWdpdCBjb2RlKiosIGFuZCBzb21lb25lIGhhcyBzY3JhdGNoZWQgZm91ciBjbHVlcyBpbnRvIHRoZSB3YWxsLiIsImNsdWVzSGVhZGluZyI6IlNjcmF0Y2hlZCBvbiB0aGUgd2FsbCIsImxvY2tMYWJlbCI6IvCflKIgS2V5cGFkIiwic3VjY2Vzc01lc3NhZ2UiOiLwn5STIEJlZXAtYmVlcCEgVGhlIGdhbGxlcnkgZG9vciB1bmxvY2tzLiIsImZhaWxNZXNzYWdlIjoiRVJST1IuIENoZWNrIGVhY2ggY2x1ZSBhZ2FpbnN0IHRoZSBwb3J0cmFpdHMuIiwicmVmZXJlbmNlIjoiIiwiY2FyZHMiOlt7InRlcm0iOiJKb2huIERld2V5IiwiZGV0YWlsIjoiMTg1OeKAkzE5NTIiLCJpY29uIjoi8J+UrCIsImNvZGUiOiI5IiwiY2x1ZSI6IkkgYmVsaWV2ZWQgc2Nob29sIHNob3VsZCBiZSBhIHNtYWxsIGRlbW9jcmF0aWMgY29tbXVuaXR5IHdoZXJlIGNoaWxkcmVuIGxlYXJuIGJ5IGRvaW5nLiBJIHdyb3RlICpEZW1vY3JhY3kgYW5kIEVkdWNhdGlvbiogKDE5MTYpLiIsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJ0ZXJtIjoiTWFyaWEgTW9udGVzc29yaSIsImRldGFpbCI6IjE4NzDigJMxOTUyIiwiaWNvbiI6IvCfp7giLCJjb2RlIjoiMSIsImNsdWUiOiJJIHdhcyBvbmUgb2YgSXRhbHkncyBmaXJzdCB3b21lbiBwaHlzaWNpYW5zLiBJIGRlc2lnbmVkIGEgXCJwcmVwYXJlZCBlbnZpcm9ubWVudFwiIHdpdGggY2hpbGQtc2l6ZWQgbWF0ZXJpYWxzIHNvIHlvdW5nIGNoaWxkcmVuIGNvdWxkIGRpcmVjdCB0aGVpciBvd24gbGVhcm5pbmcuIiwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7InRlcm0iOiJQYXVsbyBGcmVpcmUiLCJkZXRhaWwiOiIxOTIx4oCTMTk5NyIsImljb24iOiLinIoiLCJjb2RlIjoiNSIsImNsdWUiOiJJIGNyaXRpY2l6ZWQgdGhlIFwiYmFua2luZyBjb25jZXB0XCIgb2YgZWR1Y2F0aW9uLCB3aGVyZSB0ZWFjaGVycyBkZXBvc2l0IGZhY3RzIGludG8gcGFzc2l2ZSBzdHVkZW50cy4gSSBjYWxsZWQgZm9yIGRpYWxvZ3VlIGFuZCBjcml0aWNhbCBjb25zY2lvdXNuZXNzIGluc3RlYWQuIiwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7InRlcm0iOiJIb3JhY2UgTWFubiIsImRldGFpbCI6IjE3OTbigJMxODU5IiwiaWNvbiI6IvCflJQiLCJjb2RlIjoiNCIsImNsdWUiOiJJIGxlZCB0aGUgXCJjb21tb24gc2Nob29sXCIgbW92ZW1lbnQsIGNhbGxpbmcgZnJlZSwgdGF4LXN1cHBvcnRlZCBwdWJsaWMgZWR1Y2F0aW9uIFwidGhlIGdyZWF0IGVxdWFsaXplciBvZiB0aGUgY29uZGl0aW9ucyBvZiBtZW4uXCIiLCJzb3VyY2UiOiIiLCJ2ZXJpZmllZCI6ZmFsc2V9LHsidGVybSI6IlBsYXRvIiwiZGV0YWlsIjoiYy4gNDI44oCTMzQ4IEJDRSIsImljb24iOiLwn4+b77iPIiwiY29kZSI6IjciLCJjbHVlIjoiIiwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7InRlcm0iOiJKZWFuLUphY3F1ZXMgUm91c3NlYXUiLCJkZXRhaWwiOiIxNzEy4oCTMTc3OCIsImljb24iOiLwn4y/IiwiY29kZSI6IjMiLCJjbHVlIjoiIiwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7InRlcm0iOiJHZW9yZ2UgQ291bnRzIiwiZGV0YWlsIjoiMTg4OeKAkzE5NzQiLCJpY29uIjoi4pqW77iPIiwiY29kZSI6IjIiLCJjbHVlIjoiIiwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7InRlcm0iOiJNb3J0aW1lciBBZGxlciIsImRldGFpbCI6IjE5MDLigJMyMDAxIiwiaWNvbiI6IvCfk5oiLCJjb2RlIjoiOCIsImNsdWUiOiIiLCJzb3VyY2UiOiIiLCJ2ZXJpZmllZCI6ZmFsc2V9XSwiaGludHMiOlsiRWFjaCBjbHVlIGRlc2NyaWJlcyBvbmUgcGhpbG9zb3BoZXIuIEZpbmQgdGhlaXIgcG9ydHJhaXQsIHRoZW4gcmVhZCB0aGUgbnVtYmVyIG9uIGl0cyBicmFzcyBwbGF0ZS4gRW50ZXIgdGhlIGZvdXIgbnVtYmVycyBpbiB0aGUgb3JkZXIgb2YgdGhlIGNsdWVzIChBLCBCLCBDLCBEKS4iLCJDbHVlIEEgaXMgSm9obiBEZXdleSwgYW5kIENsdWUgQyBpcyBQYXVsbyBGcmVpcmUuIiwiQ2x1ZSBCIGlzIE1hcmlhIE1vbnRlc3NvcmksIGFuZCBDbHVlIEQgaXMgSG9yYWNlIE1hbm4uIl19LHsidHlwZSI6Im9yZGVyaW5nIiwidGl0bGUiOiJUaGUgSGlzdG9yeSBIYWxsIiwic3RvcnkiOiJBIGxvbmcgd29vZGVuIHRpbWVsaW5lIGNvdmVycyB0aGUgd2FsbCwgYnV0IHNvbWVvbmUgaGFzIGtub2NrZWQgdGhlIGV2ZW50IGNhcmRzIG91dCBvZiBvcmRlci4gQSBicmFzcyBsb2NrIGlzIHdpcmVkIHRvIHRoZSB0aW1lbGluZS4gSXQgd2lsbCBvcGVuIG9ubHkgd2hlbiBldmVyeSBjYXJkIGlzIGluICoqY2hyb25vbG9naWNhbCBvcmRlcioqLCBvbGRlc3QgYXQgdGhlIHRvcC4iLCJsb2NrTGFiZWwiOiLwn5SSIFRpbWVsaW5lIGxvY2siLCJzdWNjZXNzTWVzc2FnZSI6IvCflJMgVGhlIHRpbWVsaW5lIGxpZ2h0cyB1cCBhbmQgdGhlIGxvY2sgZHJvcHMgb3BlbiEiLCJyZWZlcmVuY2UiOiIiLCJpdGVtcyI6W3sidGV4dCI6IlBsYXRvIGRlc2NyaWJlcyB0aGUgZWR1Y2F0aW9uIG9mIHBoaWxvc29waGVyLWtpbmdzIGluICpUaGUgUmVwdWJsaWMqLiIsImxhYmVsIjoiYy4gMzc1IEJDRSIsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJ0ZXh0IjoiUm91c3NlYXUgcHVibGlzaGVzICrDiW1pbGUqLCBhcmd1aW5nIHRoYXQgY2hpbGRyZW4gbGVhcm4gYmVzdCB0aHJvdWdoIG5hdHVyZSBhbmQgZXhwZXJpZW5jZS4iLCJsYWJlbCI6IjE3NjIiLCJzb3VyY2UiOiIiLCJ2ZXJpZmllZCI6ZmFsc2V9LHsidGV4dCI6IkhvcmFjZSBNYW5uIGJlY29tZXMgdGhlIGZpcnN0IHNlY3JldGFyeSBvZiB0aGUgTWFzc2FjaHVzZXR0cyBCb2FyZCBvZiBFZHVjYXRpb24uIiwibGFiZWwiOiIxODM3Iiwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7InRleHQiOiJNYXJpYSBNb250ZXNzb3JpIG9wZW5zIHRoZSBmaXJzdCBDYXNhIGRlaSBCYW1iaW5pIChDaGlsZHJlbidzIEhvdXNlKSBpbiBSb21lLiIsImxhYmVsIjoiMTkwNyIsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJ0ZXh0IjoiSm9obiBEZXdleSBwdWJsaXNoZXMgKkRlbW9jcmFjeSBhbmQgRWR1Y2F0aW9uKi4iLCJsYWJlbCI6IjE5MTYiLCJzb3VyY2UiOiIiLCJ2ZXJpZmllZCI6ZmFsc2V9LHsidGV4dCI6IlBhdWxvIEZyZWlyZSB3cml0ZXMgKlBlZGFnb2d5IG9mIHRoZSBPcHByZXNzZWQqLiIsImxhYmVsIjoiMTk2OCIsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJ0ZXh0IjoiTW9ydGltZXIgQWRsZXIgcHVibGlzaGVzICpUaGUgUGFpZGVpYSBQcm9wb3NhbCosIGNhbGxpbmcgZm9yIG9uZSByaWdvcm91cyBjdXJyaWN1bHVtIGZvciBhbGwgc3R1ZGVudHMuIiwibGFiZWwiOiIxOTgyIiwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfV0sImhpbnRzIjpbIlVzZSB0aGUg4payIGFuZCDilrwgYnV0dG9ucyB0byBzb3J0IHRoZSBldmVudHMgZnJvbSBvbGRlc3QgKHRvcCkgdG8gbmV3ZXN0IChib3R0b20pLiBXaGVuIHlvdSBjaGVjaywgdGhlIGxvY2sgdGVsbHMgeW91IGhvdyBtYW55IGFyZSBpbiB0aGUgcmlnaHQgc3BvdC4iLCJQbGF0byBpcyB0aGUgb2xkZXN0IGJ5IG1vcmUgdGhhbiAyLDAwMCB5ZWFycy4gTmV4dCBjb21lcyB0aGUgRW5saWdodGVubWVudCAoUm91c3NlYXUsIDE3MDBzKSwgdGhlbiB0aGUgMTgwMHMgY29tbW9uIHNjaG9vbCBtb3ZlbWVudC4iLCJUd2VudGlldGgtY2VudHVyeSBvcmRlcjogTW9udGVzc29yaSAoMTkwNyksIHRoZW4gRGV3ZXkgKDE5MTYpLCB0aGVuIEZyZWlyZSAoMTk2OCksIHRoZW4gQWRsZXIgKDE5ODIpLiJdfSx7InR5cGUiOiJzb3J0aW5nIiwidGl0bGUiOiJUaGUgT2JzZXJ2YXRpb24gUm9vbSIsInN0b3J5IjoiQmVoaW5kIGEgb25lLXdheSBtaXJyb3IsIHlvdSB3YXRjaCBzY2VuZXMgZnJvbSBjbGFzc3Jvb21zIGFjcm9zcyB0aGUgZGVjYWRlcyBwbGF5IG91dCBvbiBvbGQgZmlsbSByZWVscy4gQW4gb2JzZXJ2ZXIncyBjbGlwYm9hcmQgaGFuZ3Mgb24gdGhlIGRvb3I6IGxhYmVsIGV2ZXJ5IG9ic2VydmF0aW9uIGFzICoqVHJhZGl0aW9uYWwgKGNsYXNzaWNhbCkqKiBvciAqKlByb2dyZXNzaXZlKiogdG8gdW5sb2NrIGl0LiIsImNhdGVnb3JpZXMiOlsiVHJhZGl0aW9uYWwiLCJQcm9ncmVzc2l2ZSJdLCJsb2NrTGFiZWwiOiLwn5OLIENsaXBib2FyZCBsb2NrIiwic3VjY2Vzc01lc3NhZ2UiOiLwn5STIFNoYXJwIGV5ZSEgVGhlIG9ic2VydmF0aW9uIHJvb20gZG9vciBvcGVucy4iLCJyZWZlcmVuY2UiOiIiLCJpdGVtcyI6W3sidGV4dCI6IkRlc2tzIHNpdCBpbiBzdHJhaWdodCByb3dzIGZhY2luZyB0aGUgdGVhY2hlcidzIGRlc2sgYW5kIGNoYWxrYm9hcmQuIiwiY2F0ZWdvcnkiOjAsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJ0ZXh0IjoiU3R1ZGVudHMgZGVzaWduIHRoZWlyIG93biBleHBlcmltZW50IHRvIGZpbmQgb3V0IHdoaWNoIGJyYW5kIG9mIHBhcGVyIHRvd2VsIGFic29yYnMgdGhlIG1vc3Qgd2F0ZXIuIiwiY2F0ZWdvcnkiOjEsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJ0ZXh0IjoiVGhlIHRlYWNoZXIgbGVjdHVyZXMgb24gdGhlIGNhdXNlcyBvZiB0aGUgQ2l2aWwgV2FyIHdoaWxlIHN0dWRlbnRzIGNvcHkgbm90ZXMgZnJvbSB0aGUgYm9hcmQuIiwiY2F0ZWdvcnkiOjAsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJ0ZXh0IjoiU21hbGwgZ3JvdXBzIHBsYW4gYW5kIHBsYW50IGEgY2xhc3MgZ2FyZGVuLCBtZWFzdXJpbmcgcGxvdHMgKG1hdGgpIGFuZCB0cmFja2luZyBwbGFudCBncm93dGggKHNjaWVuY2UpLiIsImNhdGVnb3J5IjoxLCJzb3VyY2UiOiIiLCJ2ZXJpZmllZCI6ZmFsc2V9LHsidGV4dCI6IlN0dWRlbnRzIHJlY2l0ZSBtdWx0aXBsaWNhdGlvbiB0YWJsZXMgdG9nZXRoZXIgaW4gdGltZWQgZHJpbGxzIHVudGlsIHRoZXkndmUgbWVtb3JpemVkIHRoZW0uIiwiY2F0ZWdvcnkiOjAsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJ0ZXh0IjoiRWFjaCBzdHVkZW50IGNob29zZXMgYSBsb2NhbCBpc3N1ZSB0byByZXNlYXJjaCBhbmQgcHJlc2VudHMgc29sdXRpb25zIHRvIGNvbW11bml0eSBtZW1iZXJzLiIsImNhdGVnb3J5IjoxLCJzb3VyY2UiOiIiLCJ2ZXJpZmllZCI6ZmFsc2V9LHsidGV4dCI6IlRoZSBjbGFzcyB3b3JrcyB0aHJvdWdoIHRoZSB0ZXh0Ym9vayBjaGFwdGVyIGJ5IGNoYXB0ZXIsIHdpdGggYSB1bml0IHRlc3QgYXQgdGhlIGVuZCBvZiBlYWNoIG9uZS4iLCJjYXRlZ29yeSI6MCwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7InRleHQiOiJUaGUgY2xhc3MgaG9sZHMgYSBtZWV0aW5nIHRvIGRpc2N1c3MgYSBwbGF5Z3JvdW5kIHByb2JsZW0gYW5kIHZvdGUgb24gbmV3IGNsYXNzcm9vbSBydWxlcy4iLCJjYXRlZ29yeSI6MSwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfV0sImhpbnRzIjpbIioqVHJhZGl0aW9uYWwvY2xhc3NpY2FsKio6IHRlYWNoZXItY2VudGVyZWQsIGEgc2V0IGJvZHkgb2YgY29udGVudCwgbWFzdGVyeSB0aHJvdWdoIGluc3RydWN0aW9uIGFuZCBwcmFjdGljZS4gKipQcm9ncmVzc2l2ZSoqOiBzdHVkZW50LWNlbnRlcmVkLCBpbnF1aXJ5LCByZWFsLXdvcmxkIHByb2JsZW1zLCBjb2xsYWJvcmF0aW9uLiIsIkV4YWN0bHkgaGFsZiBvZiB0aGUgb2JzZXJ2YXRpb25zIGFyZSB0cmFkaXRpb25hbCBhbmQgaGFsZiBhcmUgcHJvZ3Jlc3NpdmUuIiwiVGhlIGZvdXIgcHJvZ3Jlc3NpdmUgb25lczogdGhlIHBhcGVyIHRvd2VsIGV4cGVyaW1lbnQsIHRoZSBjbGFzcyBnYXJkZW4sIHRoZSBjb21tdW5pdHkgcHJvamVjdCwgYW5kIHRoZSBjbGFzcyBtZWV0aW5nLiJdfSx7InR5cGUiOiJyZWZsZWN0aW9uIiwidGl0bGUiOiJUaGUgTWlycm9yIiwic3RvcnkiOiJUaGUgbGFzdCBkb29yIGhhcyBubyBrZXlob2xlLCBvbmx5IGEgdGFsbCwgb2xkIG1pcnJvci4gV29yZHMgYXBwZWFyIGluIHRoZSBnbGFzczogKlwiWW91IGhhdmUgbGVhcm5lZCB0aGUgcGhpbG9zb3BoaWVzIG9mIG90aGVycy4gTm93IHNob3cgbWUgeW91ciBvd24uXCIqIiwiYnV0dG9uTGFiZWwiOiJMb29rIGludG8gdGhlIG1pcnJvciIsInN1Y2Nlc3NNZXNzYWdlIjoi4pyoIFRoZSBtaXJyb3Igc2hpbW1lcnMgYW5kIGJlY29tZXMgYSBkb29yd2F54oCmIiwicmVmZXJlbmNlIjoiIiwicmVzdWx0SGVhZGluZyI6IllvdXIgcmVmbGVjdGlvbiIsInJlc3VsdE5vdGUiOiJNb3N0IHRlYWNoZXJzIGJsZW5kIHBoaWxvc29waGllcy4gVXNlIHRoaXMgcmVzdWx0IGFzIGEgc3RhcnRpbmcgcG9pbnQsIG5vdCBhIGxhYmVsLiIsInByb2ZpbGVzIjpbeyJrZXkiOiJFU1MiLCJuYW1lIjoiRXNzZW50aWFsaXNtIiwid2hvIjoiV2lsbGlhbSBCYWdsZXksIEUuIEQuIEhpcnNjaCBKci4iLCJkZXNjIjoiWW91IGJlbGlldmUgZXZlcnkgc3R1ZGVudCBkZXNlcnZlcyBhIHN0cm9uZyBmb3VuZGF0aW9uIGluIGNvcmUga25vd2xlZGdlIGFuZCBza2lsbHMsIHRhdWdodCBjbGVhcmx5IGJ5IGEga25vd2xlZGdlYWJsZSB0ZWFjaGVyIGluIGFuIG9yZGVybHkgY2xhc3Nyb29tLiIsIm5leHQiOiJDb25zaWRlciBXaWxsaWFtIEJhZ2xleSBmb3IgeW91ciBQaGlsb3NvcGh5IFBvd2VyUG9pbnQsIGFuZCBsb29rIGludG8gaGlzIGNyaXRpcXVlIG9mIHByb2dyZXNzaXZlIGVkdWNhdGlvbiBpbiB0aGUgMTkzMHMuIiwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7ImtleSI6IlBFUiIsIm5hbWUiOiJQZXJlbm5pYWxpc20iLCJ3aG8iOiJSb2JlcnQgSHV0Y2hpbnMsIE1vcnRpbWVyIEFkbGVyICh3aXRoIHJvb3RzIGluIFBsYXRvIGFuZCBBcmlzdG90bGUpIiwiZGVzYyI6IllvdSB2YWx1ZSB0aW1lbGVzcyBpZGVhcywgZ3JlYXQgd29ya3MsIGFuZCB0aGUgc2FtZSByaWdvcm91cyBpbnRlbGxlY3R1YWwgZWR1Y2F0aW9uIGZvciBldmVyeSBzdHVkZW50LiIsIm5leHQiOiJDb25zaWRlciBNb3J0aW1lciBBZGxlciAoKlRoZSBQYWlkZWlhIFByb3Bvc2FsKikgb3IgUGxhdG8gZm9yIHlvdXIgUGhpbG9zb3BoeSBQb3dlclBvaW50LiIsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJrZXkiOiJQUk8iLCJuYW1lIjoiUHJvZ3Jlc3NpdmlzbSIsIndobyI6IkpvaG4gRGV3ZXkgKHdpdGggcm9vdHMgaW4gUm91c3NlYXUpIiwiZGVzYyI6IllvdSBzZWUgbGVhcm5pbmcgYXMgYWN0aXZlIGFuZCBleHBlcmllbnRpYWwuIEl0IHNob3VsZCBncm93IG91dCBvZiBzdHVkZW50cycgaW50ZXJlc3RzIGFuZCByZWFsIHByb2JsZW1zLCBhbmQgY2xhc3Nyb29tcyBzaG91bGQgYmUgc21hbGwgZGVtb2NyYWNpZXMuIiwibmV4dCI6IkNvbnNpZGVyIEpvaG4gRGV3ZXkgZm9yIHlvdXIgUGhpbG9zb3BoeSBQb3dlclBvaW50LCBhbmQgbG9vayBpbnRvIGhpcyBMYWJvcmF0b3J5IFNjaG9vbCBhdCB0aGUgVW5pdmVyc2l0eSBvZiBDaGljYWdvLiIsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJrZXkiOiJTT0MiLCJuYW1lIjoiU29jaWFsIFJlY29uc3RydWN0aW9uaXNtIiwid2hvIjoiR2VvcmdlIENvdW50cywgUGF1bG8gRnJlaXJlIiwiZGVzYyI6IllvdSBzZWUgc2Nob29scyBhcyBlbmdpbmVzIG9mIHNvY2lhbCBjaGFuZ2UsIHBsYWNlcyB3aGVyZSBzdHVkZW50cyBsZWFybiB0byBxdWVzdGlvbiBpbmp1c3RpY2UgYW5kIGFjdCB0byBpbXByb3ZlIHRoZWlyIGNvbW11bml0aWVzLiIsIm5leHQiOiJDb25zaWRlciBQYXVsbyBGcmVpcmUgKCpQZWRhZ29neSBvZiB0aGUgT3BwcmVzc2VkKikgb3IgR2VvcmdlIENvdW50cyBmb3IgeW91ciBQaGlsb3NvcGh5IFBvd2VyUG9pbnQuIiwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7ImtleSI6IkVYSSIsIm5hbWUiOiJFeGlzdGVudGlhbGlzbSIsIndobyI6IkplYW4tUGF1bCBTYXJ0cmUsIE1heGluZSBHcmVlbmUsIEEuIFMuIE5laWxsIiwiZGVzYyI6IllvdSBwdXQgdGhlIGluZGl2aWR1YWwgc3R1ZGVudCBhdCB0aGUgY2VudGVyLiBTY2hvb2wgc2hvdWxkIGhlbHAgZWFjaCBwZXJzb24gZGlzY292ZXIgd2hvIHRoZXkgYXJlIGFuZCB0YWtlIHJlc3BvbnNpYmlsaXR5IGZvciB0aGVpciBvd24gY2hvaWNlcy4iLCJuZXh0IjoiQ29uc2lkZXIgTWF4aW5lIEdyZWVuZSBvciBBLiBTLiBOZWlsbCAoU3VtbWVyaGlsbCBTY2hvb2wpIGZvciB5b3VyIFBoaWxvc29waHkgUG93ZXJQb2ludC4iLCJzb3VyY2UiOiIiLCJ2ZXJpZmllZCI6ZmFsc2V9LHsia2V5IjoiTU9OIiwibmFtZSI6IkNoaWxkLUNlbnRlcmVkIC8gTW9udGVzc29yaSIsIndobyI6Ik1hcmlhIE1vbnRlc3NvcmkiLCJkZXNjIjoiWW91IHRydXN0IGNoaWxkcmVuJ3MgbmF0dXJhbCBkcml2ZSB0byBsZWFybiB3aGVuIHRoZXkgaGF2ZSBhIGNhcmVmdWxseSBwcmVwYXJlZCBlbnZpcm9ubWVudCBhbmQgdGhlIGZyZWVkb20gdG8gY2hvb3NlIHRoZWlyIHdvcmsuIiwibmV4dCI6IkNvbnNpZGVyIE1hcmlhIE1vbnRlc3NvcmkgZm9yIHlvdXIgUGhpbG9zb3BoeSBQb3dlclBvaW50LiIsInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX1dLCJxdWVzdGlvbnMiOlt7InByb21wdCI6IlRoZSBtYWluIHB1cnBvc2Ugb2Ygc2Nob29sIGlzIHRv4oCmIiwib3B0aW9ucyI6W3sidGV4dCI6InBhc3Mgb24gdGhlIGVzc2VudGlhbCBrbm93bGVkZ2UgYW5kIHNraWxscyBldmVyeSBjaXRpemVuIG5lZWRzLiIsInByb2ZpbGUiOiJFU1MifSx7InRleHQiOiJkZXZlbG9wIHRoZSBtaW5kIHRocm91Z2ggaHVtYW5pdHkncyBncmVhdGVzdCBhbmQgbW9zdCBsYXN0aW5nIGlkZWFzLiIsInByb2ZpbGUiOiJQRVIifSx7InRleHQiOiJoZWxwIHN0dWRlbnRzIHNvbHZlIHJlYWwgcHJvYmxlbXMgYW5kIGxpdmUgaW4gYSBkZW1vY3JhY3kuIiwicHJvZmlsZSI6IlBSTyJ9LHsidGV4dCI6InByZXBhcmUgc3R1ZGVudHMgdG8gcmVjb2duaXplIGFuZCBmaXggaW5qdXN0aWNlIGluIHNvY2lldHkuIiwicHJvZmlsZSI6IlNPQyJ9LHsidGV4dCI6ImhlbHAgZWFjaCBzdHVkZW50IGRpc2NvdmVyIHdobyB0aGV5IGFyZSBhbmQgd2hhdCB0aGV5IHZhbHVlLiIsInByb2ZpbGUiOiJFWEkifV0sInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX0seyJwcm9tcHQiOiJJbiBteSBpZGVhbCBjbGFzc3Jvb20sIHRoZSB0ZWFjaGVyIGlzIG1haW5seeKApiIsIm9wdGlvbnMiOlt7InRleHQiOiJhbiBleHBlcnQgd2hvIGV4cGxhaW5zIGNvbnRlbnQgY2xlYXJseSBhbmQga2VlcHMgaGlnaCBzdGFuZGFyZHMuIiwicHJvZmlsZSI6IkVTUyJ9LHsidGV4dCI6ImEgZ3VpZGUgd2hvIGxlYWRzIHN0dWRlbnRzIHRocm91Z2ggdGhlIGdyZWF0IGJvb2tzIGJ5IGFza2luZyBxdWVzdGlvbnMuIiwicHJvZmlsZSI6IlBFUiJ9LHsidGV4dCI6ImEgZmFjaWxpdGF0b3Igd2hvIHNldHMgdXAgcHJvamVjdHMgYW5kIHN1cHBvcnRzIHN0dWRlbnRzJyBpbnF1aXJ5LiIsInByb2ZpbGUiOiJQUk8ifSx7InRleHQiOiJhIHBhcnRuZXIgaW4gZGlhbG9ndWUgd2hvIGxlYXJucyBhbG9uZ3NpZGUgc3R1ZGVudHMuIiwicHJvZmlsZSI6IlNPQyJ9LHsidGV4dCI6ImFuIG9ic2VydmVyIHdobyBwcmVwYXJlcyB0aGUgc3BhY2UgYW5kIHN0ZXBzIGJhY2suIiwicHJvZmlsZSI6Ik1PTiJ9XSwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7InByb21wdCI6IlRoZSBjdXJyaWN1bHVtIHNob3VsZCBiZSBiYXNlZCBvbuKApiIsIm9wdGlvbnMiOlt7InRleHQiOiJjb3JlIHN1YmplY3RzLCBpbmNsdWRpbmcgcmVhZGluZywgd3JpdGluZywgbWF0aCwgc2NpZW5jZSwgYW5kIGhpc3RvcnkuIiwicHJvZmlsZSI6IkVTUyJ9LHsidGV4dCI6ImNsYXNzaWMgd29ya3Mgb2YgbGl0ZXJhdHVyZSwgcGhpbG9zb3BoeSwgYW5kIHNjaWVuY2UuIiwicHJvZmlsZSI6IlBFUiJ9LHsidGV4dCI6InN0dWRlbnRzJyBpbnRlcmVzdHMgYW5kIHJlYWwtd29ybGQgZXhwZXJpZW5jZXMuIiwicHJvZmlsZSI6IlBSTyJ9LHsidGV4dCI6ImN1cnJlbnQgc29jaWFsIGlzc3VlcyBhbmQgc3R1ZGVudHMnIGNvbW11bml0aWVzLiIsInByb2ZpbGUiOiJTT0MifSx7InRleHQiOiJzdHVkZW50cycgb3duIGNob2ljZXMsIHRoZSBhcnRzLCBhbmQgcGVyc29uYWwgcmVmbGVjdGlvbi4iLCJwcm9maWxlIjoiRVhJIn1dLCJzb3VyY2UiOiIiLCJ2ZXJpZmllZCI6ZmFsc2V9LHsicHJvbXB0IjoiVGhlIGJlc3Qgd2F5IHRvIGtub3cgd2hldGhlciBhIHN0dWRlbnQgaGFzIGxlYXJuZWQgaXPigKYiLCJvcHRpb25zIjpbeyJ0ZXh0IjoidGVzdHMgdGhhdCBtZWFzdXJlIG1hc3Rlcnkgb2YgdGhlIHN0YW5kYXJkcy4iLCJwcm9maWxlIjoiRVNTIn0seyJ0ZXh0Ijoic2VtaW5hciBkaXNjdXNzaW9uIGFuZCB3cml0aW5nIGFib3V0IGJpZyBpZGVhcy4iLCJwcm9maWxlIjoiUEVSIn0seyJ0ZXh0IjoiYSBwcm9qZWN0IG9yIHByb2R1Y3QgdGhhdCBzb2x2ZXMgYSByZWFsIHByb2JsZW0uIiwicHJvZmlsZSI6IlBSTyJ9LHsidGV4dCI6ImFjdGlvbiB0aGUgc3R1ZGVudCB0YWtlcyBpbiB0aGUgY29tbXVuaXR5LiIsInByb2ZpbGUiOiJTT0MifSx7InRleHQiOiJ0aGUgc3R1ZGVudCdzIG93biBzZWxmLWFzc2Vzc21lbnQgYW5kIHBvcnRmb2xpby4iLCJwcm9maWxlIjoiRVhJIn1dLCJzb3VyY2UiOiIiLCJ2ZXJpZmllZCI6ZmFsc2V9LHsicHJvbXB0IjoiQSB5b3VuZyBjaGlsZCB3YWxrcyBpbnRvIG15IHJvb20uIEkgd2FudCB0aGVtIHRv4oCmIiwib3B0aW9ucyI6W3sidGV4dCI6ImxlYXJuIHRoZSByb3V0aW5lcyBhbmQgYmFzaWMgc2tpbGxzIHRoYXQgc2V0IHRoZW0gdXAgZm9yIHN1Y2Nlc3MuIiwicHJvZmlsZSI6IkVTUyJ9LHsidGV4dCI6ImhlYXIgZ3JlYXQgc3RvcmllcyBhbmQgc3RhcnQgYXNraW5nIGJpZyBxdWVzdGlvbnMuIiwicHJvZmlsZSI6IlBFUiJ9LHsidGV4dCI6ImV4cGxvcmUsIGJ1aWxkLCBhbmQgcGxheSB3aXRoIGNsYXNzbWF0ZXMuIiwicHJvZmlsZSI6IlBSTyJ9LHsidGV4dCI6ImNob29zZSB0aGVpciBvd24gYWN0aXZpdHkgZnJvbSBzaGVsdmVzIG9mIGhhbmRzLW9uIG1hdGVyaWFscy4iLCJwcm9maWxlIjoiTU9OIn0seyJ0ZXh0IjoiZmVlbCBmcmVlIHRvIGJlIHRoZW1zZWx2ZXMgYW5kIGV4cHJlc3MgdGhlaXIgZmVlbGluZ3MuIiwicHJvZmlsZSI6IkVYSSJ9XSwic291cmNlIjoiIiwidmVyaWZpZWQiOmZhbHNlfSx7InByb21wdCI6IlRoZSBlZHVjYXRvciBJJ2QgbW9zdCBsaWtlIHRvIGhhdmUgY29mZmVlIHdpdGggaXPigKYiLCJvcHRpb25zIjpbeyJ0ZXh0IjoiRS4gRC4gSGlyc2NoLCB0aGUgY3VsdHVyYWwgbGl0ZXJhY3kgYWR2b2NhdGUuIiwicHJvZmlsZSI6IkVTUyJ9LHsidGV4dCI6Ik1vcnRpbWVyIEFkbGVyLCB0aGUgR3JlYXQgQm9va3MgY2hhbXBpb24uIiwicHJvZmlsZSI6IlBFUiJ9LHsidGV4dCI6IkpvaG4gRGV3ZXksIHRoZSBmYXRoZXIgb2YgcHJvZ3Jlc3NpdmUgZWR1Y2F0aW9uLiIsInByb2ZpbGUiOiJQUk8ifSx7InRleHQiOiJQYXVsbyBGcmVpcmUsIHRoZSBjcml0aWNhbCBwZWRhZ29ndWUuIiwicHJvZmlsZSI6IlNPQyJ9LHsidGV4dCI6Ik1hcmlhIE1vbnRlc3NvcmksIHRoZSBwaHlzaWNpYW4gdHVybmVkIGVkdWNhdG9yLiIsInByb2ZpbGUiOiJNT04ifV0sInNvdXJjZSI6IiIsInZlcmlmaWVkIjpmYWxzZX1dLCJoaW50cyI6WyJUaGVyZSBhcmUgbm8gd3JvbmcgYW5zd2VycyBoZXJlLiBBbnN3ZXIgaG9uZXN0bHksIGFuZCB0aGUgbWlycm9yIHdpbGwgcmVmbGVjdCB5b3VyIG93biBwaGlsb3NvcGh5LiJdfV19</script>
+<script>
+/* Shared logic for the escape-room game and the teacher editor.
+ * Runs in browsers (inlined into both pages by scripts/build.js) and in Node (build + tests). */
+const ER = (() => {
+  // ---------- text ----------
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // Plain text with **bold** and *italic*; everything else is escaped.
+  const fmt = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>");
+  const paras = (s, cls = "") => String(s ?? "").split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
+    .map(p => `<p${cls ? ` class="${cls}"` : ""}>${fmt(p).replace(/\n/g, "<br>")}</p>`).join("");
+  // For comparing typed answers: case, accents, punctuation and extra spaces don't matter.
+  const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ").trim();
+  const accepted = a => String(a ?? "").split("|").map(norm).filter(Boolean);
 
+  // ---------- deterministic shuffle ----------
+  const hash = s => { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const rng = seed => () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  function scramble(n, seedText) {
+    const idx = [...Array(n).keys()]; if (n < 2) return idx;
+    const r = rng(hash(seedText));
+    for (let tries = 0; tries < 20; tries++) {
+      for (let i = n - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+      if (idx.some((v, i) => v !== i)) break;
+    }
+    return idx;
+  }
+
+  // ---------- matching rooms: which code is on each card, and what the lock wants ----------
+  const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", DIGITS = "123456789";
+  function matching(room) {
+    const cards = (room.cards || []).map((c, k) => ({ ...c, k }));
+    const answerCards = cards.filter(c => String(c.clue || "").trim());
+    const display = [...cards].sort((a, b) => String(a.term).localeCompare(String(b.term)));
+    const numbers = room.codeStyle === "numbers";
+    const code = {}; const used = new Set();
+    cards.forEach(c => { const v = String(c.code || "").trim().toUpperCase(); if (v) { code[c.k] = v; used.add(v); } });
+    const word = String(room.codeWord || "").replace(/\s+/g, "").toUpperCase();
+    if (!numbers && word && word.length === answerCards.length) {
+      answerCards.forEach((c, i) => { if (!code[c.k]) { code[c.k] = word[i]; used.add(word[i]); } });
+    }
+    const pool = [...(numbers ? DIGITS : LETTERS)].filter(ch => !used.has(ch));
+    display.forEach(c => { if (!code[c.k]) code[c.k] = pool.shift() || "?"; });
+    return { cards, display, answerCards, numbers, code, answer: answerCards.map(c => code[c.k]).join("") };
+  }
+
+  // ---------- review status ----------
+  // Every fact a student is graded on, so the teacher can check each one.
+  function reviewItems(cfg) {
+    const out = [];
+    (cfg.rooms || []).forEach((room, r) => {
+      const add = (list, label) => (list || []).forEach((it, i) => out.push({ room: r, list: label, i, item: it }));
+      if (room.type === "matching") add(room.cards, "cards");
+      if (room.type === "quiz") add(room.questions, "questions");
+      if (room.type === "ordering") add(room.items, "items");
+      if (room.type === "sorting") add(room.items, "items");
+      if (room.type === "reflection") { add(room.profiles, "profiles"); add(room.questions, "questions"); }
+    });
+    return out;
+  }
+  const reviewStatus = cfg => { const all = reviewItems(cfg); const done = all.filter(x => x.item.verified === true).length; return { total: all.length, verified: done, unverified: all.length - done }; };
+
+  // ---------- validation (problems that would make a room unsolvable) ----------
+  function validate(cfg) {
+    const errs = [];
+    if (!String(cfg.meta?.title || "").trim()) errs.push("Settings: the escape room needs a title.");
+    if (!(cfg.rooms || []).length) errs.push("Add at least one room.");
+    (cfg.rooms || []).forEach((room, r) => {
+      const where = `Room ${r + 1} (${room.title || "untitled"})`;
+      if (room.type === "matching") {
+        const m = matching(room);
+        if (!m.answerCards.length) errs.push(`${where}: at least one card needs a clue.`);
+        if ((room.cards || []).some(c => !String(c.term || "").trim())) errs.push(`${where}: every card needs a name.`);
+        if (m.answer.includes("?")) errs.push(`${where}: too many cards for ${m.numbers ? "number codes (max 9)" : "letter codes (max 26)"}.`);
+        const word = String(room.codeWord || "").replace(/\s+/g, "");
+        if (!m.numbers && word && word.length !== m.answerCards.length) errs.push(`${where}: the code word "${word}" has ${word.length} letters but there are ${m.answerCards.length} clues.`);
+      }
+      if (room.type === "quiz") {
+        if (!(room.questions || []).length) errs.push(`${where}: add at least one question.`);
+        (room.questions || []).forEach((q, i) => {
+          if (!String(q.prompt || "").trim()) errs.push(`${where}, question ${i + 1}: the question is empty.`);
+          if (q.kind === "choice") {
+            const ch = (q.choices || []).filter(c => String(c).trim());
+            if (ch.length < 2) errs.push(`${where}, question ${i + 1}: needs at least 2 choices.`);
+            if (!(q.correct >= 0 && q.correct < (q.choices || []).length && String(q.choices[q.correct]).trim())) errs.push(`${where}, question ${i + 1}: mark which choice is correct.`);
+          } else if (!accepted(q.answers).length) errs.push(`${where}, question ${i + 1}: needs at least one accepted answer.`);
+        });
+      }
+      if (room.type === "ordering" && (room.items || []).length < 2) errs.push(`${where}: needs at least 2 items to put in order.`);
+      if (room.type === "sorting") {
+        const cats = (room.categories || []).filter(c => String(c).trim());
+        if (cats.length < 2) errs.push(`${where}: needs at least 2 categories.`);
+        if (!(room.items || []).length) errs.push(`${where}: add at least one item to sort.`);
+        (room.items || []).forEach((it, i) => { if (!(it.category >= 0 && it.category < (room.categories || []).length)) errs.push(`${where}, item ${i + 1}: pick its correct category.`); });
+      }
+      if (room.type === "reflection") {
+        const keys = new Set((room.profiles || []).map(p => p.key));
+        if (!keys.size) errs.push(`${where}: add at least one result profile.`);
+        (room.questions || []).forEach((q, i) => (q.options || []).forEach((o, j) => {
+          if (!keys.has(o.profile)) errs.push(`${where}, question ${i + 1}, option ${j + 1}: pick which result it counts toward.`);
+        }));
+      }
+    });
+    return errs;
+  }
+
+  // ---------- packing content into the game file ----------
+  const encodeConfig = cfg => { const bytes = new TextEncoder().encode(JSON.stringify(cfg)); let s = ""; for (const b of bytes) s += String.fromCharCode(b); return btoa(s); };
+  const decodeConfig = b64 => JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(String(b64).trim()), c => c.charCodeAt(0))));
+  // Placeholders are built by concatenation so this code never matches itself once inlined into the game.
+  const P_TITLE = "__ESCAPE_" + "TITLE__", P_CONFIG = "__ESCAPE_" + "CONFIG__";
+  const buildGame = (template, cfg) => template.split(P_TITLE).join(esc(cfg.meta?.title || "Escape Room")).split(P_CONFIG).join(encodeConfig(cfg));
+  // Pull the content back out of an exported game file (so a teacher can reopen and edit it).
+  function configFromHtml(html) {
+    const m = String(html).match(/<script id="escape-config" type="text\/plain">([\s\S]*?)<\/script>/);
+    if (!m) throw new Error("This file isn't an escape room made with this editor.");
+    return decodeConfig(m[1]);
+  }
+
+  // ---------- zip (stored, no compression) for SCORM packages ----------
+  const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = d => { let c = 0xFFFFFFFF; for (let i = 0; i < d.length; i++) c = CRC[(c ^ d[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  function zip(files, date = new Date()) {
+    const enc = new TextEncoder();
+    const dosTime = (date.getHours() << 11) | (date.getMinutes() << 5) | (date.getSeconds() >> 1);
+    const dosDate = ((date.getFullYear() - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+    const parts = [], central = []; let offset = 0;
+    for (const f of files) {
+      const name = enc.encode(f.name), data = typeof f.data === "string" ? enc.encode(f.data) : f.data, crc = crc32(data);
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+      h.setUint16(10, dosTime, true); h.setUint16(12, dosDate, true); h.setUint32(14, crc, true);
+      h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+      parts.push(new Uint8Array(h.buffer), name, data);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true);
+      c.setUint16(12, dosTime, true); c.setUint16(14, dosDate, true); c.setUint32(16, crc, true);
+      c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true);
+      c.setUint32(42, offset, true);
+      central.push(new Uint8Array(c.buffer), name);
+      offset += 30 + name.length + data.length;
+    }
+    const cdSize = central.reduce((s, p) => s + p.length, 0);
+    const e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true);
+    e.setUint32(12, cdSize, true); e.setUint32(16, offset, true);
+    const all = [...parts, ...central, new Uint8Array(e.buffer)];
+    const out = new Uint8Array(all.reduce((s, p) => s + p.length, 0)); let p = 0;
+    for (const a of all) { out.set(a, p); p += a.length; }
+    return out;
+  }
+  const xml = s => esc(s);
+  function manifest(title) {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<manifest identifier="EscapeRoom_${hash(title)}" version="1.0"
+  xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2"
+  xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.imsglobal.org/xsd/imsmd_rootv1p2p1 imsmd_rootv1p2p1.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata><schema>ADL SCORM</schema><schemaversion>1.2</schemaversion></metadata>
+  <organizations default="ORG1">
+    <organization identifier="ORG1">
+      <title>${xml(title)}</title>
+      <item identifier="ITEM1" identifierref="RES1"><title>${xml(title)}</title></item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="RES1" type="webcontent" adlcp:scormtype="sco" href="index.html"><file href="index.html"/></resource>
+  </resources>
+</manifest>
+`;
+  }
+  const scorm = (gameHtml, title, date) => zip([{ name: "imsmanifest.xml", data: manifest(title) }, { name: "index.html", data: gameHtml }], date);
+  const fileSlug = s => String(s || "escape-room").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") || "escape-room";
+
+  return { esc, fmt, paras, norm, accepted, hash, scramble, matching, reviewItems, reviewStatus, validate,
+    encodeConfig, decodeConfig, buildGame, configFromHtml, zip, crc32, manifest, scorm, fileSlug };
+})();
+if (typeof module !== "undefined") module.exports = ER;
+
+</script>
 <script>
 /* ===================== SCORM 1.2 (optional — runs only inside an LMS) ===================== */
 const SCORM = (() => {
@@ -96,7 +277,7 @@ const SCORM = (() => {
   function find(w){ let n=0; while(w && !w.API && w.parent && w.parent!==w && n<10){ w=w.parent; n++; } return w && w.API ? w.API : null; }
   try { api = find(window) || (window.opener ? find(window.opener) : null); } catch(e){ api = null; }
   const ok = !!api;
-  if (ok) { try { api.LMSInitialize(""); 
+  if (ok) { try { api.LMSInitialize("");
     if (api.LMSGetValue("cmi.core.lesson_status") === "not attempted") api.LMSSetValue("cmi.core.lesson_status","incomplete");
     api.LMSCommit(""); } catch(e){} }
   return {
@@ -118,307 +299,239 @@ const SCORM = (() => {
 })();
 window.addEventListener("beforeunload", () => SCORM.finish());
 
+/* ===================== Content ===================== */
+const CFG = ER.decodeConfig(document.getElementById("escape-config").textContent);
+const ROOMS = CFG.rooms || [];
+const { esc, fmt, paras } = ER;
+
 /* ===================== State ===================== */
-const S = { room:0, start:null, hints:0, wrong:0, hintsShown:{}, philosophy:null };
+const S = { room:0, start:null, hints:0, wrong:0, hintsShown:{}, reflection:null };
 let tick = null;
 const $ = s => document.querySelector(s);
 const stage = $("#stage");
 const say = t => { $("#live").textContent = t; };
-const enc = s => btoa(s.trim().toUpperCase());   // light obfuscation of answers
 
-function fmt(sec){ return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0"); }
+function fmtTime(sec){ return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0"); }
 function elapsed(){ return S.start ? Math.floor((Date.now()-S.start)/1000) : 0; }
-function startTimer(){ if(!S.start){ S.start=Date.now(); tick=setInterval(()=>$("#timer").textContent=fmt(elapsed()),1000);} }
+function startTimer(){ if(!S.start){ S.start=Date.now(); tick=setInterval(()=>$("#timer").textContent=fmtTime(elapsed()),1000);} }
 
 function renderDoors(){
-  const labels=["1","2","3","4","5"];
-  $("#doors").innerHTML = labels.map((l,i)=>{
+  $("#doors").innerHTML = ROOMS.map((_,i)=>{
     const r=i+1; const cls = S.room>r ? "door open" : (S.room===r ? "door current" : "door");
-    return `<div class="${cls}" title="Room ${r}">${S.room>r?"🔓":l}</div>`;
+    return `<div class="${cls}" title="Room ${r}">${S.room>r?"🔓":r}</div>`;
   }).join("");
 }
 
-function hintBlock(id, hints){
-  return `<div class="row"><button class="ghost" onclick="showHint('${id}')" id="hb-${id}">💡 Get a hint</button></div>
-          <div id="h-${id}"></div>`;
+function hintBlock(room){
+  if (!(room.hints||[]).length) return "";
+  return `<div class="row"><button class="ghost" id="hint-btn">💡 Get a hint</button></div><div id="hints"></div>`;
 }
-const HINTS = {};
-function showHint(id){
-  const list = HINTS[id]; const n = S.hintsShown[id] || 0;
-  if (n >= list.length) return;
-  S.hintsShown[id] = n+1; S.hints++; $("#hintCount").textContent = S.hints;
-  $("#h-"+id).innerHTML = list.slice(0,n+1).map((h,i)=>`<div class="hint"><strong>Hint ${i+1}:</strong> ${h}</div>`).join("");
-  if (n+1 >= list.length) { const b=$("#hb-"+id); b.disabled=true; b.textContent="No more hints"; }
+function wireHints(room, r){
+  const btn = $("#hint-btn"); if (!btn) return;
+  const list = room.hints;
+  const show = () => {
+    const n = S.hintsShown[r] || 0;
+    $("#hints").innerHTML = list.slice(0,n).map((h,i)=>`<div class="hint"><strong>Hint ${i+1}:</strong> ${fmt(h)}</div>`).join("");
+    if (n >= list.length) { btn.disabled = true; btn.textContent = "No more hints"; }
+  };
+  btn.onclick = () => { const n = S.hintsShown[r] || 0; if (n >= list.length) return; S.hintsShown[r] = n+1; S.hints++; $("#hintCount").textContent = S.hints; show(); };
+  show();
 }
 
-function fail(msgEl, text){
-  S.wrong++; msgEl.className="msg bad"; msgEl.textContent=text; say(text);
+function fail(text){
+  S.wrong++; const m=$("#msg"); m.className="msg bad"; m.textContent=text; say(text);
   stage.classList.remove("shake"); void stage.offsetWidth; stage.classList.add("shake");
 }
-function pass(msgEl, text, next){
-  msgEl.className="msg good"; msgEl.textContent=text; say(text);
-  setTimeout(next, 1300);
+function pass(text){
+  const m=$("#msg"); m.className="msg good"; m.textContent=text; say(text);
+  stage.querySelectorAll(".lock button, #answer").forEach(el => el.disabled = true);
+  setTimeout(() => go(S.room+1), 1300);
 }
-function go(n){ S.room=n; renderDoors(); ROOMS[n](); stage.focus(); window.scrollTo(0,0); }
+function go(n){ S.room=n; renderDoors(); (n===0 ? intro : n>ROOMS.length ? finish : () => room(n))(); stage.focus(); window.scrollTo(0,0); }
 
-/* ===================== Rooms ===================== */
-const ROOMS = [];
+function roomHead(r, n){
+  return `<h2>Room ${n} · ${esc(r.title||"")}</h2>${paras(r.story,"story")}${r.reference?`<p class="ref">📖 ${fmt(r.reference)}</p>`:""}`;
+}
+const lockRow = (label, inner) => `<div class="lock">${label?`<span><strong>${fmt(label)}</strong></span>`:""}${inner}<span class="msg" id="msg" role="status"></span></div>`;
 
-/* ---- Intro ---- */
-ROOMS[0] = () => {
+/* ===================== Screens ===================== */
+function intro(){
+  const n = ROOMS.length;
   stage.innerHTML = `
-  <h2>The Door Clicks Shut Behind You…</h2>
-  <p class="story">You came to the old county schoolhouse, now a museum of education history, to research your Philosophy assignment.
-  You lost track of time in the archives. When you look up, the lights are dim, the caretaker has gone home, and every door is locked.</p>
-  <p class="story">A note is pinned to the chalkboard: <em>"Only someone who understands where our ideas about school came from may leave.
-  Five rooms. Five locks. Good luck, future educator."</em></p>
+  <h2>${esc(CFG.intro?.heading || CFG.meta?.title || "")}</h2>
+  ${paras(CFG.intro?.story, "story")}
   <div class="card">
     <strong>How to play</strong>
     <ul>
-      <li>Solve the puzzle in each room to open its lock. There are 5 rooms.</li>
-      <li>Wrong answers cost nothing, so keep trying.</li>
-      <li>Stuck? Each room has hints. They're counted, but they don't affect your grade.</li>
-      <li>At the end you'll get a <strong>completion code</strong> and a profile of your own educational philosophy.</li>
+      <li>Solve the puzzle in each room to open its lock. There ${n===1?"is 1 room":`are ${n} rooms`}.</li>
+      <li>Wrong answers ${CFG.scoring?.mode==="deductions" && CFG.scoring.wrongPenalty ? `cost ${CFG.scoring.wrongPenalty} points each, so think before you try` : "cost nothing, so keep trying"}.</li>
+      <li>Stuck? Most rooms have hints. ${CFG.scoring?.mode==="deductions" && CFG.scoring.hintPenalty ? `Each hint costs ${CFG.scoring.hintPenalty} points.` : "They're counted, but they don't affect your grade."}</li>
+      <li>At the end you'll get a <strong>certificate</strong>${CFG.finish?.exitPassword ? " with the exit password" : ""}.</li>
     </ul>
-    <p class="small">Learning Outcome: <em>Explore your own personal philosophy of education based on the historical and philosophical foundations of education.</em></p>
+    ${CFG.meta?.learningOutcome ? `<p class="small">Learning Outcome: <em>${fmt(CFG.meta.learningOutcome)}</em></p>` : ""}
   </div>
   <div class="row"><label for="pname"><strong>Your name:</strong></label>
-    <input id="pname" type="text" style="letter-spacing:normal;text-transform:none;width:16rem;font-size:1rem" value="${SCORM.name()}" autocomplete="name">
-    <button id="begin">Enter the schoolhouse →</button></div>`;
-  $("#begin").onclick = () => { S.player = ($("#pname").value||"").trim() || "Future Educator"; startTimer(); go(1); };
-};
+    <input id="pname" type="text" class="free" style="width:16rem" value="${esc(SCORM.name())}" autocomplete="name">
+    <button id="begin">Enter →</button></div>`;
+  $("#begin").onclick = () => { S.player = ($("#pname").value||"").trim() || "Student"; startTimer(); go(1); };
+}
 
-/* ---- Room 1: The Library (philosophies) ---- */
-HINTS.r1 = [
-  "Each numbered description matches one philosophy book. Write down the letter on that book's spine for descriptions 1 through 5, in order.",
-  "Description 1 (basics, core skills, discipline) is <strong>Essentialism</strong>, and description 5 (learning by doing) is <strong>Progressivism</strong>.",
-  "The answer is a five-letter word for what every student does in school."
-];
-ROOMS[1] = () => {
-  const books = [
-    ["Existentialism","#7b4fa0","E"],["Essentialism","#2f6fa3","L"],["Perennialism","#a3542f","A"],
-    ["Progressivism","#3f8a4a","N"],["Social Reconstructionism","#a32f5c","R"]
-  ];
-  stage.innerHTML = `
-  <h2>Room 1 · The Library</h2>
-  <p class="story">Five dusty books glow on the shelf, each with one letter painted on its spine. A librarian's card catalog lists five
-  descriptions, but the titles have been torn off. The lock on the library door takes a <strong>5-letter word</strong>.</p>
-  <div class="grid g2">${books.map(b=>`<div class="card book"><div class="spine" style="background:${b[1]}">${b[2]}</div><div><strong>${b[0]}</strong></div></div>`).join("")}</div>
-  <h3>Card Catalog</h3>
-  <ol class="clues">
-    <li>All students should master a common core of basic knowledge and skills (the "3 R's," history, science). Teachers are authorities, and the classroom is orderly and disciplined. <span class="small">(William Bagley, E. D. Hirsch)</span></li>
-    <li>Each student is a free individual who must make choices and create meaning in their own life. The curriculum emphasizes personal choice, the arts, and self-reflection. <span class="small">(Jean-Paul Sartre, Maxine Greene)</span></li>
-    <li>Truth is universal and unchanging, so every student should study the same enduring ideas found in the "Great Books" of Western civilization. <span class="small">(Robert Hutchins, Mortimer Adler)</span></li>
-    <li>Schools should be agents of change. Students study real social problems like poverty and injustice and work to build a fairer society. <span class="small">(George Counts, Paulo Freire)</span></li>
-    <li>Education should be child-centered and grow out of students' interests and experiences. Learning happens through hands-on problem solving and cooperation. <span class="small">(John Dewey)</span></li>
-  </ol>
-  <div class="lock"><label for="a1">🔒 Library lock:</label><input id="a1" type="text" maxlength="5" autocomplete="off">
-    <button id="t1">Try it</button><span class="msg" id="m1"></span></div>
-  ${hintBlock("r1")}`;
+function room(n){
+  const r = ROOMS[n-1];
+  ({ matching, quiz, ordering, sorting, reflection }[r.type] || unknown)(r, n);
+  wireHints(r, n);
+}
+function unknown(r, n){ stage.innerHTML = roomHead(r,n) + `<p>This room type isn't supported.</p><button onclick="go(${n+1})">Skip</button>`; }
+
+/* ---- Matching: cards with codes, numbered clues, enter the code ---- */
+function matching(r, n){
+  const m = ER.matching(r);
+  const clueStyle = m.numbers ? "A" : "1";
+  stage.innerHTML = roomHead(r,n) + `
+    <div class="grid">${m.display.map(c=>`<div class="card mcard"><div class="badge">${esc(m.code[c.k])}</div>
+      ${c.icon?`<span class="icon" aria-hidden="true">${esc(c.icon)}</span>`:""}<div><strong>${fmt(c.term)}</strong>${c.detail?`<div class="small">${fmt(c.detail)}</div>`:""}</div></div>`).join("")}</div>
+    <h3>${esc(r.cluesHeading || "Clues")}</h3>
+    <ol class="clues" type="${clueStyle}">${m.answerCards.map(c=>`<li>${fmt(c.clue)}</li>`).join("")}</ol>
+    ${lockRow("", `<label for="answer">${fmt(r.lockLabel || "🔒 Lock")}:</label>
+      <input id="answer" type="text" maxlength="${m.answer.length}" ${m.numbers?'inputmode="numeric"':""} autocomplete="off">
+      <button id="try">Try it</button>`)}
+    ${hintBlock(r)}`;
   const check = () => {
-    if (enc($("#a1").value) === "TEVBUk4=") pass($("#m1"),"🔓 Click! The library door swings open.",()=>go(2));
-    else fail($("#m1"),"The lock won't budge. Check which philosophy matches each description.");
+    if ($("#answer").value.replace(/\s+/g,"").toUpperCase() === m.answer) pass(r.successMessage || "🔓 The lock opens!");
+    else fail(r.failMessage || "The lock won't budge. Check each clue again.");
   };
-  $("#t1").onclick = check; $("#a1").onkeydown = e => { if(e.key==="Enter") check(); };
-};
+  $("#try").onclick = check; $("#answer").onkeydown = e => { if (e.key==="Enter") check(); };
+}
 
-/* ---- Room 2: Portrait Gallery (philosophers) ---- */
-HINTS.r2 = [
-  "Each clue describes one philosopher. Find their portrait, then read the number on its brass plate. Enter the four numbers in the order of the clues (A, B, C, D).",
-  "Clue A is John Dewey, and Clue C is Paulo Freire.",
-  "Clue B is Maria Montessori, and Clue D is Horace Mann."
-];
-ROOMS[2] = () => {
-  const people = [
-    ["🏛️","Plato","c. 428–348 BCE",7],["🌿","Jean-Jacques Rousseau","1712–1778",3],["🔔","Horace Mann","1796–1859",4],
-    ["🧸","Maria Montessori","1870–1952",1],["🔬","John Dewey","1859–1952",9],["⚖️","George Counts","1889–1974",2],
-    ["✊","Paulo Freire","1921–1997",5],["📚","Mortimer Adler","1902–2001",8]
-  ];
-  stage.innerHTML = `
-  <h2>Room 2 · The Portrait Gallery</h2>
-  <p class="story">Eight portraits line the hallway. Each has a numbered brass plate. A keypad by the far door asks for a <strong>4-digit code</strong>,
-  and someone has scratched four clues into the wall.</p>
-  <div class="grid g4">${people.map(p=>`<div class="card portrait"><div class="frame" aria-hidden="true">${p[0]}</div><strong>${p[1]}</strong><div class="small">${p[2]}</div><span class="plate">${p[3]}</span></div>`).join("")}</div>
-  <h3>Scratched on the wall</h3>
-  <ol class="clues" type="A">
-    <li>I believed school should be a small democratic community where children learn by doing. I wrote <em>Democracy and Education</em> (1916).</li>
-    <li>I was one of Italy's first women physicians. I designed a "prepared environment" with child-sized materials so young children could direct their own learning.</li>
-    <li>I criticized the "banking concept" of education, where teachers deposit facts into passive students. I called for dialogue and critical consciousness instead.</li>
-    <li>I led the "common school" movement, calling free, tax-supported public education "the great equalizer of the conditions of men."</li>
-  </ol>
-  <div class="lock"><label for="a2">🔢 Keypad:</label><input id="a2" type="text" maxlength="4" inputmode="numeric" autocomplete="off">
-    <button id="t2">Enter</button><span class="msg" id="m2"></span></div>
-  ${hintBlock("r2")}`;
-  const check = () => {
-    if (enc($("#a2").value) === "OTE1NA==") pass($("#m2"),"🔓 Beep-beep! The gallery door unlocks.",()=>go(3));
-    else fail($("#m2"),"ERROR. Check each clue against the portraits.");
+/* ---- Quiz: short-answer and multiple-choice questions; all must be right ---- */
+function quiz(r, n){
+  const qs = r.questions || [];
+  stage.innerHTML = roomHead(r,n) + `<form id="qf" novalidate>${qs.map((q,i)=>`
+    <fieldset><legend>${i+1}. ${fmt(q.prompt)}</legend>${
+      q.kind==="choice"
+        ? (q.choices||[]).map((c,j)=>String(c).trim()?`<label><input type="radio" name="q${i}" value="${j}"> ${fmt(c)}</label>`:"").join("")
+        : `<input type="text" class="free" name="q${i}" aria-label="Answer to question ${i+1}" autocomplete="off">`
+    }</fieldset>`).join("")}
+    ${lockRow(r.lockLabel || "🔒 Question lock", `<button id="try" type="submit">Check answers</button>`)}</form>
+    ${hintBlock(r)}`;
+  $("#qf").onsubmit = e => {
+    e.preventDefault();
+    let right = 0;
+    qs.forEach((q,i) => {
+      if (q.kind==="choice") { const v = document.querySelector(`input[name=q${i}]:checked`); if (v && +v.value === q.correct) right++; }
+      else { const v = ER.norm(document.querySelector(`input[name=q${i}]`).value); if (v && ER.accepted(q.answers).includes(v)) right++; }
+    });
+    if (right === qs.length) pass(r.successMessage || "🔓 Every answer is right. The lock opens!");
+    else fail(`${right} of ${qs.length} answers are correct.`);
   };
-  $("#t2").onclick = check; $("#a2").onkeydown = e => { if(e.key==="Enter") check(); };
-};
+}
 
-/* ---- Room 3: The Timeline ---- */
-HINTS.r3 = [
-  "Use the ▲ and ▼ buttons to sort the events from oldest (top) to newest (bottom). When you check, the lock tells you how many are in the right spot.",
-  "Plato is the oldest by more than 2,000 years. Next comes the Enlightenment (Rousseau, 1700s), then the 1800s common school movement.",
-  "Twentieth-century order: Montessori (1907), then Dewey (1916), then Freire (1968), then Adler (1982)."
-];
-ROOMS[3] = () => {
-  const correct = [
-    "Plato describes the education of philosopher-kings in <em>The Republic</em>.",
-    "Rousseau publishes <em>Émile</em>, arguing that children learn best through nature and experience.",
-    "Horace Mann becomes the first secretary of the Massachusetts Board of Education.",
-    "Maria Montessori opens the first Casa dei Bambini (Children's House) in Rome.",
-    "John Dewey publishes <em>Democracy and Education</em>.",
-    "Paulo Freire writes <em>Pedagogy of the Oppressed</em>.",
-    "Mortimer Adler publishes <em>The Paideia Proposal</em>, calling for one rigorous curriculum for all students."
-  ];
-  const years = ["c. 375 BCE","1762","1837","1907","1916","1968","1982"];
-  let order = [4,1,6,2,0,5,3];
+/* ---- Ordering: put items in the right order ---- */
+function ordering(r, n){
+  const items = r.items || [];
+  let order = ER.scramble(items.length, (r.title||"") + items.map(i=>i.text).join("|"));
   const draw = () => {
-    $("#tl").innerHTML = order.map((idx,i)=>`<li><span class="pos">${i+1}.</span><span>${correct[idx]}</span>
-      <button class="mv ghost" aria-label="Move up" ${i===0?"disabled":""} onclick="mv(${i},-1)">▲</button>
-      <button class="mv ghost" aria-label="Move down" ${i===order.length-1?"disabled":""} onclick="mv(${i},1)">▼</button></li>`).join("");
+    $("#order").innerHTML = order.map((idx,i)=>`<li><span class="pos">${i+1}.</span><span>${fmt(items[idx].text)}</span>
+      <button class="mv ghost" aria-label="Move up" ${i===0?"disabled":""} data-i="${i}" data-d="-1">▲</button>
+      <button class="mv ghost" aria-label="Move down" ${i===order.length-1?"disabled":""} data-i="${i}" data-d="1">▼</button></li>`).join("");
   };
-  window.mv = (i,d) => { const j=i+d; [order[i],order[j]]=[order[j],order[i]]; draw(); const b=$("#tl").children[j].querySelectorAll("button")[d<0?0:1]; if(b && !b.disabled) b.focus(); };
-  stage.innerHTML = `
-  <h2>Room 3 · The History Hall</h2>
-  <p class="story">A long wooden timeline covers the wall, but someone has knocked the event cards out of order. A brass lock is wired to the
-  timeline. It will open only when every card is in <strong>chronological order</strong>, oldest at the top.</p>
-  <ul class="timeline" id="tl"></ul>
-  <div class="lock"><span>🔒 Timeline lock</span><button id="t3">Check order</button><span class="msg" id="m3"></span></div>
-  ${hintBlock("r3")}`;
+  stage.innerHTML = roomHead(r,n) + `<ul class="list" id="order"></ul>
+    ${lockRow(r.lockLabel || "🔒 Order lock", `<button id="try">Check order</button>`)}${hintBlock(r)}`;
+  $("#order").onclick = e => {
+    const b = e.target.closest("button[data-i]"); if (!b) return;
+    const i = +b.dataset.i, d = +b.dataset.d, j = i + d;
+    [order[i], order[j]] = [order[j], order[i]]; draw();
+    const nb = $("#order").children[j].querySelectorAll("button")[d<0?0:1]; if (nb && !nb.disabled) nb.focus();
+  };
   draw();
-  $("#t3").onclick = () => {
+  $("#try").onclick = () => {
     const right = order.filter((v,i)=>v===i).length;
     if (right === order.length) {
-      $("#tl").innerHTML = order.map((idx,i)=>`<li><span class="pos">${i+1}.</span><span>${correct[idx]} <strong style="color:var(--gold)">(${years[idx]})</strong></span></li>`).join("");
-      pass($("#m3"),"🔓 The timeline lights up and the lock drops open!",()=>go(4));
-      setTimeout(()=>{}, 0);
-    } else fail($("#m3"),`${right} of ${order.length} cards are in the correct position.`);
+      $("#order").innerHTML = order.map((idx,i)=>`<li><span class="pos">${i+1}.</span><span>${fmt(items[idx].text)}${items[idx].label?` <strong style="color:var(--gold)">(${fmt(items[idx].label)})</strong>`:""}</span></li>`).join("");
+      pass(r.successMessage || "🔓 Everything is in order. The lock opens!");
+    } else fail(`${right} of ${order.length} are in the correct position.`);
   };
-};
+}
 
-/* ---- Room 4: Classroom Observation ---- */
-HINTS.r4 = [
-  "<strong>Traditional/classical</strong>: teacher-centered, a set body of content, mastery through instruction and practice. <strong>Progressive</strong>: student-centered, inquiry, real-world problems, collaboration.",
-  "Exactly half of the observations are traditional and half are progressive.",
-  "The four progressive ones: the paper towel experiment, the class garden, the community project, and the class meeting."
-];
-ROOMS[4] = () => {
-  const items = [
-    ["Desks sit in straight rows facing the teacher's desk and chalkboard.","T"],
-    ["Students design their own experiment to find out which brand of paper towel absorbs the most water.","P"],
-    ["The teacher lectures on the causes of the Civil War while students copy notes from the board.","T"],
-    ["Small groups plan and plant a class garden, measuring plots (math) and tracking plant growth (science).","P"],
-    ["Students recite multiplication tables together in timed drills until they've memorized them.","T"],
-    ["Each student chooses a local issue to research and presents solutions to community members.","P"],
-    ["The class works through the textbook chapter by chapter, with a unit test at the end of each one.","T"],
-    ["The class holds a meeting to discuss a playground problem and vote on new classroom rules.","P"]
-  ];
+/* ---- Sorting: put each item in a category ---- */
+function sorting(r, n){
+  const items = r.items || [], cats = r.categories || [];
   const pick = new Array(items.length).fill(null);
-  stage.innerHTML = `
-  <h2>Room 4 · The Observation Room</h2>
-  <p class="story">Behind a one-way mirror, you watch scenes from classrooms across the decades play out on old film reels.
-  An observer's clipboard hangs on the door: label every observation as <strong>Traditional (classical)</strong> or <strong>Progressive</strong> to unlock it.</p>
-  <div class="scene"><ul>${items.map((it,i)=>`<li><span style="flex:1;min-width:220px">🎞️ ${it[0]}</span>
-     <span class="seg" role="group" aria-label="Observation ${i+1}">
-       <button data-i="${i}" data-v="T" aria-pressed="false">Traditional</button>
-       <button data-i="${i}" data-v="P" aria-pressed="false">Progressive</button></span></li>`).join("")}</ul></div>
-  <div class="lock"><span>📋 Clipboard lock</span><button id="t4">Submit observations</button><span class="msg" id="m4"></span></div>
-  ${hintBlock("r4")}`;
+  stage.innerHTML = roomHead(r,n) + `<ul class="list scene">${items.map((it,i)=>`<li><span style="flex:1;min-width:220px">${fmt(it.text)}</span>
+     <span class="seg" role="group" aria-label="Item ${i+1}">${cats.map((c,j)=>`<button data-i="${i}" data-v="${j}" aria-pressed="false">${esc(c)}</button>`).join("")}</span></li>`).join("")}</ul>
+    ${lockRow(r.lockLabel || "📋 Sorting lock", `<button id="try">Submit</button>`)}${hintBlock(r)}`;
   stage.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
-    const i=+b.dataset.i; pick[i]=b.dataset.v;
-    b.parentElement.querySelectorAll("button").forEach(x=>{ const on=x.dataset.v===pick[i]; x.classList.toggle("on",on); x.setAttribute("aria-pressed",on); });
+    const i=+b.dataset.i; pick[i]=+b.dataset.v;
+    b.parentElement.querySelectorAll("button").forEach(x=>{ const on=+x.dataset.v===pick[i]; x.classList.toggle("on",on); x.setAttribute("aria-pressed",on); });
   });
-  $("#t4").onclick = () => {
-    if (pick.includes(null)) return fail($("#m4"),"Label every observation first.");
-    const right = pick.filter((p,i)=>p===items[i][1]).length;
-    if (right===items.length) pass($("#m4"),"🔓 Sharp eye! The observation room door opens.",()=>go(5));
-    else fail($("#m4"),`${right} of ${items.length} observations are labeled correctly.`);
+  $("#try").onclick = () => {
+    if (pick.includes(null)) return fail("Choose a category for every item first.");
+    const right = pick.filter((p,i)=>p===items[i].category).length;
+    if (right===items.length) pass(r.successMessage || "🔓 All sorted. The lock opens!");
+    else fail(`${right} of ${items.length} are in the correct category.`);
   };
-};
+}
 
-/* ---- Room 5: The Mirror (personal philosophy) ---- */
-const PHIL = {
-  ESS:{name:"Essentialism", who:"William Bagley, E. D. Hirsch Jr.", desc:"You believe every student deserves a strong foundation in core knowledge and skills, taught clearly by a knowledgeable teacher in an orderly classroom.", ppt:"Consider William Bagley for your Philosophy PowerPoint, and look into his critique of progressive education in the 1930s."},
-  PER:{name:"Perennialism", who:"Robert Hutchins, Mortimer Adler (with roots in Plato and Aristotle)", desc:"You value timeless ideas, great works, and the same rigorous intellectual education for every student.", ppt:"Consider Mortimer Adler (<em>The Paideia Proposal</em>) or Plato for your Philosophy PowerPoint."},
-  PRO:{name:"Progressivism", who:"John Dewey (with roots in Rousseau)", desc:"You see learning as active and experiential. It should grow out of students' interests and real problems, and classrooms should be small democracies.", ppt:"Consider John Dewey for your Philosophy PowerPoint, and look into his Laboratory School at the University of Chicago."},
-  SOC:{name:"Social Reconstructionism", who:"George Counts, Paulo Freire", desc:"You see schools as engines of social change, places where students learn to question injustice and act to improve their communities.", ppt:"Consider Paulo Freire (<em>Pedagogy of the Oppressed</em>) or George Counts for your Philosophy PowerPoint."},
-  EXI:{name:"Existentialism", who:"Jean-Paul Sartre, Maxine Greene, A. S. Neill", desc:"You put the individual student at the center. School should help each person discover who they are and take responsibility for their own choices.", ppt:"Consider Maxine Greene or A. S. Neill (Summerhill School) for your Philosophy PowerPoint."},
-  MON:{name:"Child-Centered / Montessori", who:"Maria Montessori", desc:"You trust children's natural drive to learn when they have a carefully prepared environment and the freedom to choose their work.", ppt:"Consider Maria Montessori for your Philosophy PowerPoint."}
-};
-const QS = [
-  ["The main purpose of school is to…",[
-    ["pass on the essential knowledge and skills every citizen needs.","ESS"],["develop the mind through humanity's greatest and most lasting ideas.","PER"],
-    ["help students solve real problems and live in a democracy.","PRO"],["prepare students to recognize and fix injustice in society.","SOC"],
-    ["help each student discover who they are and what they value.","EXI"]]],
-  ["In my ideal classroom, the teacher is mainly…",[
-    ["an expert who explains content clearly and keeps high standards.","ESS"],["a guide who leads students through the great books by asking questions.","PER"],
-    ["a facilitator who sets up projects and supports students' inquiry.","PRO"],["a partner in dialogue who learns alongside students.","SOC"],
-    ["an observer who prepares the space and steps back.","MON"]]],
-  ["The curriculum should be based on…",[
-    ["core subjects, including reading, writing, math, science, and history.","ESS"],["classic works of literature, philosophy, and science.","PER"],
-    ["students' interests and real-world experiences.","PRO"],["current social issues and students' communities.","SOC"],
-    ["students' own choices, the arts, and personal reflection.","EXI"]]],
-  ["The best way to know whether a student has learned is…",[
-    ["tests that measure mastery of the standards.","ESS"],["seminar discussion and writing about big ideas.","PER"],
-    ["a project or product that solves a real problem.","PRO"],["action the student takes in the community.","SOC"],
-    ["the student's own self-assessment and portfolio.","EXI"]]],
-  ["A young child walks into my room. I want them to…",[
-    ["learn the routines and basic skills that set them up for success.","ESS"],["hear great stories and start asking big questions.","PER"],
-    ["explore, build, and play with classmates.","PRO"],["choose their own activity from shelves of hands-on materials.","MON"],
-    ["feel free to be themselves and express their feelings.","EXI"]]],
-  ["The educator I'd most like to have coffee with is…",[
-    ["E. D. Hirsch, the cultural literacy advocate.","ESS"],["Mortimer Adler, the Great Books champion.","PER"],["John Dewey, the father of progressive education.","PRO"],
-    ["Paulo Freire, the critical pedagogue.","SOC"],["Maria Montessori, the physician turned educator.","MON"]]]
-];
-HINTS.r5 = ["There are no wrong answers here. Answer honestly, and the mirror will reflect your own philosophy."];
-ROOMS[5] = () => {
-  stage.innerHTML = `
-  <h2>Room 5 · The Mirror</h2>
-  <p class="story">The last door has no keyhole, only a tall, old mirror. Words appear in the glass:
-  <em>"You have learned the philosophies of others. Now show me your own."</em></p>
-  <form id="mf">${QS.map((q,qi)=>`<fieldset><legend>${qi+1}. ${q[0]}</legend>${q[1].map((o,oi)=>
-     `<label><input type="radio" name="q${qi}" value="${o[1]}" required> ${o[0]}</label>`).join("")}</fieldset>`).join("")}
-  <div class="lock"><span>🪞</span><button type="submit">Look into the mirror</button><span class="msg" id="m5"></span></div></form>`;
+/* ---- Reflection: no wrong answers; result profile shown on the certificate ---- */
+function reflection(r, n){
+  const qs = r.questions || [];
+  stage.innerHTML = roomHead(r,n) + `<form id="mf">${qs.map((q,qi)=>`<fieldset><legend>${qi+1}. ${fmt(q.prompt)}</legend>${(q.options||[]).map(o=>
+     `<label><input type="radio" name="q${qi}" value="${esc(o.profile)}" required> ${fmt(o.text)}</label>`).join("")}</fieldset>`).join("")}
+    ${lockRow("🪞", `<button id="try" type="submit">${esc(r.buttonLabel || "Continue")}</button>`)}</form>${hintBlock(r)}`;
   $("#mf").onsubmit = e => {
     e.preventDefault();
-    const tally={}; QS.forEach((q,qi)=>{ const v=document.querySelector(`input[name=q${qi}]:checked`).value; tally[v]=(tally[v]||0)+1; });
+    const tally = {}; qs.forEach((q,qi)=>{ const v=document.querySelector(`input[name=q${qi}]:checked`); if (v) tally[v.value]=(tally[v.value]||0)+1; });
     const ranked = Object.entries(tally).sort((a,b)=>b[1]-a[1]);
-    S.philosophy = ranked[0][0]; S.second = ranked[1] ? ranked[1][0] : null;
-    pass($("#m5"),"✨ The mirror shimmers and becomes a doorway…",()=>go(6));
+    const prof = k => (r.profiles||[]).find(p=>p.key===k);
+    S.reflection = { room:r, first: ranked[0] && prof(ranked[0][0]), second: ranked[1] && prof(ranked[1][0]) };
+    pass(r.successMessage || "✨ Done!");
   };
-};
+}
 
-/* ---- Escape! ---- */
-ROOMS[6] = () => {
+/* ---- Finish ---- */
+function score(){
+  const sc = CFG.scoring || {};
+  if (sc.mode !== "deductions") return 100;
+  return Math.max(+sc.minScore||0, Math.min(100, 100 - S.hints*(+sc.hintPenalty||0) - S.wrong*(+sc.wrongPenalty||0)));
+}
+function finish(){
   clearInterval(tick);
-  const secs = elapsed(); const p = PHIL[S.philosophy]; const p2 = S.second ? PHIL[S.second] : null;
-  const code = "EDU216-" + (["ESS","PER","PRO","SOC","EXI","MON"].indexOf(S.philosophy)+1) + S.hints + "-" + (((secs*7919)+S.hints*31)%9000+1000);
-  SCORM.complete(100, secs);
+  const secs = elapsed(), pts = score();
+  const prefix = String(CFG.meta?.codePrefix || "ESC").replace(/[^A-Za-z0-9]/g,"").toUpperCase() || "ESC";
+  const code = `${prefix}-${S.hints}${Math.min(S.wrong,9)}-${((secs*7919)+S.hints*31+S.wrong*17)%9000+1000}`;
+  SCORM.complete(pts, secs);
+  const f = CFG.finish || {}, R = S.reflection;
   stage.innerHTML = `
   <h2>🎉 You Escaped!</h2>
   <div class="cert">
     <div class="small">THIS CERTIFIES THAT</div>
-    <div style="font-size:1.6rem;margin:.3rem 0">${S.player.replace(/</g,"&lt;")}</div>
-    <div class="small">escaped the Old Schoolhouse by mastering the historical and philosophical foundations of education</div>
-    <p>Time: <strong>${fmt(secs)}</strong> · Hints used: <strong>${S.hints}</strong> · ${new Date().toLocaleDateString()}</p>
-    <div class="small">Exit password (enter this in your course quiz)</div><div class="code" style="font-size:1.9rem">${atob("REVXRVkxOTE2")}</div>
+    <div style="font-size:1.6rem;margin:.3rem 0">${esc(S.player)}</div>
+    <div class="small">${fmt(f.certificateLine || "escaped the room")}</div>
+    <p>Time: <strong>${fmtTime(secs)}</strong> · Hints used: <strong>${S.hints}</strong>${CFG.scoring?.mode==="deductions"?` · Score: <strong>${pts}%</strong>`:""} · ${new Date().toLocaleDateString()}</p>
+    ${f.exitPassword ? `<div class="small">Exit password (enter this in your course quiz)</div><div class="code" id="exit-password" style="font-size:1.9rem">${esc(f.exitPassword)}</div>` : ""}
     <div class="small" style="margin-top:.6rem">Personal completion code</div><div class="code" style="font-size:1.1rem">${code}</div>
   </div>
-  <div class="result" style="margin-top:1rem">
-    <h3>🪞 Your reflection: ${p.name}</h3>
-    <p>${p.desc}</p>
-    <p><strong>Thinkers to explore:</strong> ${p.who}</p>
-    ${p2 && p2!==p ? `<p><strong>Your second-strongest lean:</strong> ${p2.name} (${p2.who})</p>`:""}
-    <p><strong>Next step:</strong> ${p.ppt}</p>
-    <p class="small" style="color:#24402f">Most teachers blend philosophies. Use this result as a starting point, not a label.</p>
-  </div>
+  ${R && R.first ? `<div class="result" style="margin-top:1rem">
+    <h3>🪞 ${esc(R.room.resultHeading || "Your result")}: ${esc(R.first.name)}</h3>
+    ${paras(R.first.desc)}
+    ${R.first.who ? `<p><strong>Thinkers to explore:</strong> ${fmt(R.first.who)}</p>` : ""}
+    ${R.second && R.second !== R.first ? `<p><strong>Your second-strongest lean:</strong> ${esc(R.second.name)}${R.second.who?` (${fmt(R.second.who)})`:""}</p>` : ""}
+    ${R.first.next ? `<p><strong>Next step:</strong> ${fmt(R.first.next)}</p>` : ""}
+    ${R.room.resultNote ? `<p class="small" style="color:#24402f">${fmt(R.room.resultNote)}</p>` : ""}
+  </div>` : ""}
   <div class="row"><button onclick="window.print()">🖨️ Print / save as PDF</button>
     <button class="ghost" onclick="location.reload()">Play again</button></div>
-  <p class="small">Enter the <strong>exit password</strong> in your course quiz, or submit your completion code or a screenshot of this page, as your instructor directs.</p>`;
-};
+  ${f.instructions ? `<p class="small">${fmt(f.instructions)}</p>` : ""}`;
+}
 
+/* ===================== Start ===================== */
+document.title = CFG.meta?.title || document.title;
+$("#game-title").textContent = "🏫 " + (CFG.meta?.title || "Escape Room");
+const review = ER.reviewStatus(CFG);
+if (review.unverified) {
+  const d = $("#draft"); d.hidden = false;
+  d.textContent = `⚠️ Draft: ${review.unverified} of ${review.total} items haven't been checked by the instructor yet. Answers may contain errors.`;
+}
 renderDoors(); go(0);
 </script>
 </body>
