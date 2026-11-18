@@ -8,7 +8,7 @@ const ER = (() => {
   const paras = (s, cls = "") => String(s ?? "").split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
     .map(p => `<p${cls ? ` class="${cls}"` : ""}>${fmt(p).replace(/\n/g, "<br>")}</p>`).join("");
   // For comparing typed answers: case, accents, punctuation and extra spaces don't matter.
-  const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+  const norm = s => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
     .replace(/[^a-z0-9]+/g, " ").trim();
   const accepted = a => String(a ?? "").split("|").map(norm).filter(Boolean);
 
@@ -224,7 +224,7 @@ const ER = (() => {
 `;
   }
   const scorm = (gameHtml, title, date) => zip([{ name: "imsmanifest.xml", data: manifest(title) }, { name: "index.html", data: gameHtml }], date);
-  const fileSlug = s => String(s || "escape-room").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") || "escape-room";
+  const fileSlug = s => String(s || "escape-room").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") || "escape-room";
 
   return { esc, fmt, paras, norm, accepted, hash, scramble, matching, answerKey, HINT_ROOMS, hintRules, hintWarnings, reviewItems, reviewStatus, validate,
     encodeConfig, decodeConfig, buildGame, configFromHtml, zip, crc32, manifest, scorm, fileSlug };
