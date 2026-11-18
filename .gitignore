@@ -3,3 +3,4 @@ mac/build/
 node_modules/
 tests/screenshots/
 .playwright-mcp/
+.claude/worktrees/
