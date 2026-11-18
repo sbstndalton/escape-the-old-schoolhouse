@@ -1,0 +1,14 @@
+{
+  "name": "escape-the-old-schoolhouse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser-based education escape room (Moodle/Canvas, SCORM)",
+  "scripts": {
+    "serve": "node scripts/serve.js",
+    "test": "node scripts/build.js && node tests/shared.js && node tests/playthrough.js && node tests/editor.js",
+    "build": "node scripts/build.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}

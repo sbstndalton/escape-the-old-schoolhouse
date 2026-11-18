@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6a4325">
+<title>__ESCAPE_TITLE__</title>
+<style>
+  /* ---------- Tokens: one palette, one type scale, one spacing scale (4/8/12/16/24/32/48) ---------- */
+  :root{
+    --board:#22402e; --board2:#182d20; --board3:#0f1e15; --card:#2a4a37;
+    --chalk:#f4f0e3; --muted:#c7d1c1; --line:rgba(244,240,227,.16); --line2:rgba(244,240,227,.36);
+    --wood:#8c5b33; --wood2:#6a4325; --wood3:#3f2714; --wood-hi:#a9713f;
+    --gold:#e6b64c; --gold-hi:#f6d98a; --gold-lo:#8f6617; --ink:#2c1c0c;
+    --paper:#f7efda; --paper2:#fbf6e8; --paper-ink:#2b2416; --paper-muted:#5a4e36;
+    --red:#ffa291; --ok:#98dea5; --focus:#fffbe6;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s5:1.5rem; --s6:2rem; --s7:3rem;
+    --r-sm:8px; --r-md:10px; --r-lg:12px;
+    --ease:cubic-bezier(.2,.8,.2,1);
+    /* Textures are inline SVG noise, so nothing is fetched. */
+    --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='200'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .28' numOctaves='4' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .13  0 0 0 0 .06  0 0 0 0 .02  1.15 0 0 0 -.4'/%3E%3C/filter%3E%3Crect width='600' height='200' filter='url(%23g)'/%3E%3C/svg%3E");
+    --dust:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='d' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  .36 0 0 0 -.145'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23d)'/%3E%3C/svg%3E");
+    --smear:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='420'%3E%3Cfilter id='s' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004 .02' numOctaves='3' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  .36 0 0 0 -.15'/%3E%3C/filter%3E%3Crect width='700' height='420' filter='url(%23s)'/%3E%3C/svg%3E");
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;color-scheme:dark}
+  body{margin:0;font-family:var(--serif);font-size:1.0625rem;line-height:1.6;color:var(--chalk);min-height:100vh;min-height:100dvh;
+    background:var(--dust),
+      repeating-linear-gradient(90deg,transparent 0 118px,rgba(0,0,0,.2) 118px 119px,rgba(255,255,255,.022) 119px 120px),
+      radial-gradient(120% 70% at 50% 0,#2a4936 0,#172b1f 48%,#0c1811 100%) #0c1811;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+  /* ---------- Top rail: a wooden beam with the row of doors ---------- */
+  header{position:relative;z-index:2;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:var(--s2) var(--s4);
+    padding:.625rem max(1.25rem,env(safe-area-inset-right)) .625rem max(1.25rem,env(safe-area-inset-left));
+    background:var(--grain),linear-gradient(180deg,#9c6839 0,var(--wood) 42%,var(--wood2) 100%);
+    box-shadow:inset 0 1px 0 rgba(255,226,184,.32),inset 0 -1px 0 rgba(0,0,0,.4),0 3px 0 var(--wood3),0 4px 0 rgba(230,182,76,.6),0 12px 24px rgba(0,0,0,.45)}
+  header h1{margin:0;font-size:1.1875rem;line-height:1.25;font-weight:700;letter-spacing:.01em;text-shadow:0 1px 0 rgba(40,20,5,.6)}
+  .doors{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center}
+  /* Each room is a little arched door: dark while locked, lit when you're in it, brass once opened. */
+  .door{position:relative;width:2rem;height:2.5rem;border-radius:1rem 1rem 3px 3px;display:grid;place-items:center;padding-top:.2rem;
+    font-size:.875rem;font-weight:700;font-variant-numeric:tabular-nums;color:#c9ac8d;
+    background:linear-gradient(180deg,#4a2f1a,#2f1c0e);border:1px solid #1f1208;
+    box-shadow:inset 0 1px 0 rgba(255,220,170,.16),inset 0 0 0 2px rgba(0,0,0,.18),0 1px 2px rgba(0,0,0,.4);
+    transition:background-color .2s,color .2s}
+  .door.current{color:var(--chalk);border-color:var(--chalk);background:linear-gradient(180deg,#2f5540,#1d3829);
+    box-shadow:0 0 0 2px rgba(244,240,227,.28),0 0 14px rgba(246,217,138,.4)}
+  .door.open{color:var(--ink);border-color:var(--gold-lo);background:linear-gradient(160deg,var(--gold-hi),var(--gold) 50%,#cb9a31);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 1px 2px rgba(0,0,0,.45)}
+  .stats{justify-self:end;display:flex;gap:var(--s3);font-family:var(--mono);font-size:.9375rem;font-variant-numeric:tabular-nums;
+    padding:.3rem .75rem;border-radius:999px;background:rgba(30,15,4,.42);border:1px solid rgba(0,0,0,.35);
+    box-shadow:inset 0 1px 3px rgba(0,0,0,.5),0 1px 0 rgba(255,226,184,.18)}
+  .stats>span{white-space:nowrap}
+  /* Draft notice: a manila label that can't be missed */
+  .draft{position:relative;z-index:1;padding:.6rem 1rem .5rem;text-align:center;font-size:.9375rem;font-weight:700;line-height:1.4;color:#3a2606;
+    background:linear-gradient(180deg,#f5e2ad,#ebcf87);border-bottom:1px solid #7d5912;
+    box-shadow:inset 0 -3px 0 -2px rgba(125,89,18,.35),0 4px 12px rgba(0,0,0,.35)}
+
+  /* ---------- The chalkboard ---------- */
+  main{max-width:55rem;margin:var(--s6) auto 4.5rem;padding:0 var(--s4)}
+  .panel{position:relative;border:14px solid transparent;border-radius:var(--r-lg);padding:var(--s6) 2.25rem 2.25rem;
+    background:var(--dust) padding-box,var(--smear) center/cover padding-box,
+      radial-gradient(110% 70% at 18% 0,rgba(255,255,255,.07),transparent 62%) padding-box,
+      linear-gradient(165deg,#284b36,var(--board) 48%,#1b3425) padding-box,
+      var(--grain) border-box,linear-gradient(180deg,#a36d3d,var(--wood) 28%,var(--wood2)) border-box;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),inset 0 4px 14px rgba(0,0,0,.5),inset 0 -1px 0 1px rgba(255,255,255,.04),
+      0 0 0 1px var(--wood3),0 22px 44px rgba(3,10,6,.6);
+    transition:box-shadow .6s var(--ease)}
+  .panel:focus{outline:none}
+  /* bevel on the wooden frame */
+  .panel::before{content:"";position:absolute;inset:-14px;border-radius:inherit;pointer-events:none;
+    box-shadow:inset 0 1px 0 rgba(255,226,184,.42),inset 1px 0 0 rgba(255,226,184,.14),inset -1px 0 0 rgba(0,0,0,.25),inset 0 -2px 0 rgba(0,0,0,.4)}
+  /* chalk tray with two sticks of chalk */
+  .panel::after{content:"";position:absolute;left:-20px;right:-20px;bottom:-27px;height:22px;pointer-events:none;border-radius:0 0 6px 6px;
+    background:
+      linear-gradient(#f6f2e6,#d9d4c6) 14% 2px/38px 7px no-repeat,
+      linear-gradient(#f2c2b4,#d79f90) calc(14% + 50px) 2px/26px 7px no-repeat,
+      linear-gradient(180deg,rgba(255,226,184,.5) 0 1px,transparent 1px) 0 9px/100% 13px no-repeat,
+      var(--grain) 0 9px/600px 200px,
+      linear-gradient(180deg,#a9713f,var(--wood2)) 0 9px/100% 13px no-repeat;
+    filter:drop-shadow(0 8px 8px rgba(3,10,6,.6))}
+  /* a warm glow across the board while a lock is opening */
+  .panel:has(.msg.good){box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),inset 0 4px 14px rgba(0,0,0,.5),inset 0 0 90px rgba(246,217,138,.13),
+      0 0 0 1px var(--wood3),0 22px 44px rgba(3,10,6,.6)}
+
+  h2{margin:0 0 var(--s4);padding-bottom:var(--s3);font-size:clamp(1.75rem,1.35rem + 1.7vw,2.375rem);line-height:1.1;font-weight:700;letter-spacing:-.012em;text-wrap:balance;
+    background:linear-gradient(90deg,rgba(244,240,227,.6),rgba(244,240,227,.14) 70%,transparent) left bottom/100% 2px no-repeat;
+    text-shadow:0 0 1px rgba(244,240,227,.35)}
+  h2 .rn{display:block;margin-bottom:.3rem;font-size:1.0625rem;line-height:1.2;font-style:italic;font-weight:400;letter-spacing:.01em;color:var(--gold);text-shadow:none}
+  h2 .sep{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  h3{margin:var(--s6) 0 var(--s3);font-size:1.25rem;line-height:1.25}
+  p{margin:0 0 var(--s4)}
+  .story{font-style:italic;font-size:1.0938rem;color:var(--muted)}
+  .story strong{color:var(--chalk)}
+  .ref{font-size:.9375rem;color:var(--muted);border-left:3px solid var(--gold);padding:.15rem 0 .15rem .75rem}
+  .small{font-size:.9rem;color:var(--muted)}
+
+  /* ---------- Cards ---------- */
+  .grid{display:grid;gap:var(--s3);grid-template-columns:repeat(auto-fit,minmax(13.5rem,1fr))}
+  .card{border-radius:var(--r-md);padding:var(--s3) var(--s4);border:1px solid var(--line);
+    background:linear-gradient(180deg,#30533e,#284736);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 1px 2px rgba(0,0,0,.28)}
+  .card>strong:first-child{display:block;margin-bottom:var(--s1);font-size:1.125rem;color:var(--gold-hi)}
+  .card ul{margin:var(--s2) 0 0;padding-left:1.25rem}
+  .card li{margin:.35rem 0}
+  .card li::marker{color:var(--gold)}
+  .card .small{margin:var(--s3) 0 0;padding-top:var(--s3);border-top:1px solid var(--line)}
+  .mcard{display:flex;gap:var(--s3);align-items:center;min-height:4.5rem;line-height:1.3}
+  /* the code on each card is a stamped brass plate */
+  .badge{flex:none;min-width:2.75rem;height:3rem;padding:0 .5rem;border-radius:6px;display:grid;place-items:center;
+    font-family:var(--mono);font-weight:700;font-size:1.375rem;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.4);
+    background:linear-gradient(160deg,var(--gold-hi),var(--gold) 48%,#c9972f);border:1px solid var(--gold-lo);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -2px 0 rgba(0,0,0,.16),0 2px 3px rgba(0,0,0,.4)}
+  .icon{font-size:1.5rem;line-height:1}
+  ol.clues{margin:0;padding-left:1.9rem}
+  ol.clues li{margin:.65rem 0;padding-left:.3rem}
+  ol.clues li::marker{color:var(--gold);font-family:var(--mono);font-weight:700}
+
+  /* ---------- The lock plate ---------- */
+  .lock{position:relative;margin-top:var(--s5);padding:var(--s4) 1.25rem;display:flex;flex-wrap:wrap;gap:var(--s3);align-items:center;
+    border-radius:var(--r-lg);border:1px solid rgba(230,182,76,.5);
+    background:linear-gradient(180deg,#15281c,#0d1a12);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 0 3px rgba(0,0,0,.28),0 3px 8px rgba(0,0,0,.35);
+    transition:border-color .3s var(--ease),box-shadow .6s var(--ease)}
+  .lock label{font-weight:700}
+  .lock:has(.msg.bad){border-color:rgba(255,162,145,.7)}
+  .lock:has(.msg.good){border-color:var(--gold-hi);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 0 3px rgba(0,0,0,.28),0 0 0 3px rgba(230,182,76,.25),0 0 36px rgba(246,217,138,.32)}
+  /* brass keyhole: turns when the answer is right */
+  .latch{position:relative;flex:none;width:2.5rem;height:2.5rem;border-radius:50%;display:grid;place-items:center;
+    background:radial-gradient(circle at 35% 28%,var(--gold-hi),var(--gold) 52%,#b98a2a);border:1px solid var(--gold-lo);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6),inset 0 -2px 2px rgba(0,0,0,.2),0 2px 4px rgba(0,0,0,.5)}
+  .latch svg{display:block;width:100%;height:100%;fill:#22150a;transition:transform .55s var(--ease)}
+  .latch::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:2px solid var(--gold-hi);opacity:0;pointer-events:none}
+  .lock:has(.msg.good) .latch svg{transform:rotate(90deg)}
+  .lock:has(.msg.good) .latch::after{animation:ring .9s var(--ease) .15s both}
+  .msg{flex:1 1 100%;font-weight:700;line-height:1.4}
+  .msg:empty{display:none}
+  .msg.bad{color:var(--red)} .msg.good{color:var(--ok);font-size:1.125rem}
+
+  /* ---------- Controls ---------- */
+  input[type=text]{font-family:var(--mono);font-size:1.375rem;letter-spacing:.32em;width:11.5rem;max-width:100%;min-height:2.75rem;
+    padding:.35rem .5rem .35rem .8rem;border-radius:var(--r-sm);border:1.5px solid var(--gold);background:#09130d;color:var(--chalk);caret-color:var(--gold);
+    text-transform:uppercase;box-shadow:inset 0 2px 6px rgba(0,0,0,.65);transition:border-color .15s,box-shadow .15s}
+  input[type=text]:hover{border-color:var(--gold-hi)}
+  input[type=text]:focus{box-shadow:inset 0 2px 6px rgba(0,0,0,.65),0 0 0 4px rgba(230,182,76,.22)}
+  input[type=text]:disabled{opacity:.7}
+  input.free{letter-spacing:normal;text-transform:none;font-family:inherit;font-size:1.0625rem;width:100%;max-width:26rem;padding-left:.75rem}
+  button{font:inherit;font-weight:700;font-size:1rem;line-height:1.2;min-height:2.75rem;padding:.5rem 1.15rem;border-radius:var(--r-sm);cursor:pointer;
+    color:var(--ink);border:1px solid var(--gold-lo);background:linear-gradient(180deg,var(--gold-hi),var(--gold) 55%,#d2a139);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 2px 0 #7d5912,0 5px 10px rgba(0,0,0,.3);
+    transition:transform .15s var(--ease),box-shadow .15s var(--ease),filter .15s,background-color .15s,border-color .15s;
+    -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  button.ghost{color:var(--chalk);font-weight:600;border-color:var(--line2);background:rgba(244,240,227,.05);box-shadow:none}
+  @media (hover:hover){
+    button:hover:not(:disabled){filter:brightness(1.07);transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 3px 0 #7d5912,0 9px 16px rgba(0,0,0,.32)}
+    button.ghost:hover:not(:disabled),.seg button:hover:not(:disabled){filter:none;box-shadow:none;background:rgba(244,240,227,.14);border-color:rgba(244,240,227,.7)}
+    .seg button:hover:not(:disabled){transform:none}
+    .seg button.on:hover:not(:disabled){background:linear-gradient(180deg,var(--gold-hi),var(--gold));border-color:var(--gold-lo)}
+    fieldset label:hover{background:rgba(244,240,227,.07)}
+  }
+  button:active:not(:disabled){transform:translateY(2px);filter:brightness(.97);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 0 #7d5912,0 1px 3px rgba(0,0,0,.3);transition-duration:.09s}
+  button.ghost:active:not(:disabled),.seg button:active:not(:disabled){transform:translateY(1px);box-shadow:none}
+  button:disabled{opacity:.5;cursor:not-allowed;filter:saturate(.7)}
+  button:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+  .row{display:flex;gap:var(--s3);flex-wrap:wrap;align-items:center;margin-top:1.25rem}
+  .row+.small{margin-top:var(--s4)}
+  .hint-btn-wrap .lockednote{font-size:.9rem;color:var(--muted)}
+  .hint{margin-top:var(--s3);padding:.7rem 1rem;border-left:4px solid var(--gold);border-radius:0 var(--r-sm) var(--r-sm) 0;
+    background:linear-gradient(90deg,rgba(230,182,76,.18),rgba(230,182,76,.06))}
+  .hint strong{color:var(--gold-hi)}
+  .teacher-key{margin-top:var(--s5);border:2px dashed var(--ok);border-radius:var(--r-md);background:rgba(152,222,165,.09);padding:var(--s3) var(--s4)}
+  .teacher-key h3{margin:.1rem 0 var(--s2);font-size:.9375rem;color:var(--ok);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.01em}
+  .teacher-key ol,.teacher-key ul{margin:.2rem 0 .2rem 1.2rem;padding:0}
+  .teacher-key li{margin:.2rem 0}
+  .teacher-key li::marker{color:var(--ok)}
+
+  /* ---------- Lists: ordering and sorting ---------- */
+  .list{list-style:none;padding:0;margin:0}
+  .list>li{display:flex;align-items:center;gap:var(--s3);margin:var(--s2) 0;padding:.55rem .65rem .55rem 1rem;border-radius:var(--r-md);border:1px solid var(--line);
+    background:linear-gradient(180deg,#30533e,#284736);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 1px 2px rgba(0,0,0,.28);line-height:1.4}
+  .list>li>span{flex:1}
+  .list .pos{font-family:var(--mono);font-weight:700;font-variant-numeric:tabular-nums;color:var(--gold);flex:0 0 1.75rem}
+  .mv{min-height:2.5rem;width:2.5rem;padding:0;font-size:.8125rem}
+  .scene>li{flex-wrap:wrap;justify-content:space-between;padding:var(--s3) var(--s3) var(--s3) var(--s4)}
+  /* two-way toggle, joined like a switch plate */
+  .seg{display:flex;flex-wrap:wrap;gap:0;border-radius:var(--r-sm);background:#12231a;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+  .list>li>span.seg{flex:0 0 auto}
+  .seg button{min-height:2.5rem;padding:.35rem .9rem;font-size:.9375rem;font-weight:600;color:var(--chalk);background:transparent;
+    border:1px solid var(--line2);border-radius:0;box-shadow:none;margin-left:-1px}
+  .seg button:first-child{border-radius:var(--r-sm) 0 0 var(--r-sm);margin-left:0}
+  .seg button:last-child{border-radius:0 var(--r-sm) var(--r-sm) 0}
+  .seg button.on{position:relative;color:var(--ink);font-weight:700;border-color:var(--gold-lo);
+    background:linear-gradient(180deg,var(--gold-hi),var(--gold) 60%,#d2a139);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+  .seg button:focus-visible{position:relative;z-index:1}
+
+  /* ---------- Questions ---------- */
+  fieldset{min-width:0;border:1px solid var(--line);border-radius:var(--r-lg);margin:0 0 var(--s4);padding:var(--s2) var(--s4) var(--s4);background:rgba(0,0,0,.14)}
+  legend{max-width:100%;padding:0 var(--s2);margin-left:-.25rem;font-weight:700;font-size:1.0938rem;line-height:1.35}
+  fieldset label{display:block;position:relative;margin:.3rem 0 0;padding:.55rem .75rem .55rem 2.65rem;border:1px solid transparent;border-radius:var(--r-sm);
+    cursor:pointer;line-height:1.45;transition:background-color .15s,border-color .15s}
+  fieldset label:has(input:checked){background:rgba(230,182,76,.14);border-color:rgba(230,182,76,.65)}
+  fieldset label:has(input:focus-visible){outline:3px solid var(--focus);outline-offset:1px}
+  input[type=radio]{appearance:none;-webkit-appearance:none;position:absolute;left:.8rem;top:.7rem;width:1.2rem;height:1.2rem;margin:0;border-radius:50%;
+    border:2px solid rgba(244,240,227,.75);background:#0e1c14;cursor:pointer;transition:border-color .15s,background-color .15s}
+  input[type=radio]:checked{border-color:var(--gold);background:radial-gradient(circle,var(--gold) 0 40%,#0e1c14 46%)}
+  input[type=radio]:focus-visible{outline:none}
+  fieldset input.free{display:block;margin-top:var(--s2)}
+
+  /* ---------- Certificate ---------- */
+  .cert{position:relative;text-align:center;color:var(--paper-ink);padding:1.75rem var(--s5) var(--s6);border:6px double #9a7527;border-radius:6px;
+    background:radial-gradient(120% 90% at 50% 0,#fffaf0,transparent 60%),linear-gradient(180deg,var(--paper),#efe3c4);
+    outline:1px solid rgba(154,117,39,.55);outline-offset:-14px;
+    box-shadow:0 0 0 1px #5d4515,0 12px 28px rgba(0,0,0,.45)}
+  .cert::before{content:"★";display:grid;place-items:center;width:3.25rem;height:3.25rem;margin:0 auto var(--s3);border-radius:50%;
+    font-size:1.375rem;line-height:1;color:#6b4a10;text-shadow:0 1px 0 rgba(255,255,255,.5);
+    background:radial-gradient(circle at 35% 28%,var(--gold-hi),var(--gold) 55%,#b98a2a);
+    box-shadow:inset 0 0 0 3px rgba(255,255,255,.28),inset 0 0 0 4px rgba(107,74,16,.55),0 0 0 1px var(--gold-lo),0 2px 5px rgba(60,40,5,.4)}
+  .cert .small{color:var(--paper-muted);font-size:.9375rem}
+  .cert .kicker{font-size:.8125rem;letter-spacing:.2em}
+  .cert .name{display:inline-block;min-width:min(18rem,100%);margin:var(--s2) 0 var(--s3);padding:0 var(--s5) .3rem;border-bottom:1px solid #9a7527;
+    font-size:clamp(1.75rem,1.3rem + 2vw,2.5rem);line-height:1.15;font-style:italic;overflow-wrap:anywhere}
+  .cert p{margin:var(--s4) 0 var(--s5)}
+  .code{font-family:var(--mono);font-size:1.5rem;color:var(--gold);letter-spacing:.1em;overflow-wrap:anywhere}
+  .cert .code{color:#1d3a29;font-weight:700;font-size:1.125rem}
+  .cert .code.pass{display:inline-block;margin:var(--s2) 0 var(--s1);padding:.35rem 1.1rem;font-size:clamp(1.5rem,1.2rem + 1.4vw,2rem);letter-spacing:.14em;
+    border:1.5px dashed #9a7527;border-radius:6px;background:rgba(255,255,255,.55)}
+  .cert .gap{margin-top:var(--s4)}
+  .result{margin-top:var(--s5);color:#22382b;border-radius:var(--r-md);padding:1.25rem var(--s5) var(--s2);
+    background:linear-gradient(180deg,var(--paper2),#f3ebd6);border:1px solid #cdbd95;border-top:4px solid var(--gold);box-shadow:0 8px 20px rgba(0,0,0,.35)}
+  .result h3{margin:0 0 var(--s3);font-size:1.3125rem}
+  .result .small{color:#3d4a3f}
+
+  .sr{position:absolute;left:-9999px}
+
+  /* ---------- Motion (all of it switches off under reduced motion) ---------- */
+  @keyframes shake{0%,100%{transform:translateX(0)}18%{transform:translateX(-9px)}38%{transform:translateX(8px)}58%{transform:translateX(-5px)}78%{transform:translateX(3px)}}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}}
+  @keyframes ring{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.4)}}
+  @keyframes unlock{0%{transform:translateY(5px) scale(.7);filter:brightness(1.7)}55%{transform:translateY(-3px) scale(1.12);filter:brightness(1.25)}100%{transform:none;filter:none}}
+  @keyframes good{from{opacity:0;transform:translateY(4px)}}
+  .shake{animation:shake .45s var(--ease)}
+  .panel>*{animation:rise .4s var(--ease) both}
+  .panel>:nth-child(2){animation-delay:.04s} .panel>:nth-child(3){animation-delay:.08s}
+  .panel>:nth-child(4){animation-delay:.12s} .panel>:nth-child(n+5){animation-delay:.16s}
+  .msg.good{animation:good .35s var(--ease) both}
+  /* the door you just opened swings into its brass state */
+  .door.open:has(+ .door.current),.door.open:last-child{animation:unlock .6s var(--ease) both}
+  @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+  @media (forced-colors: active){input[type=radio]{appearance:auto;-webkit-appearance:radio}.latch,.panel::after{display:none}}
+
+  /* ---------- Phone ---------- */
+  @media (max-width:640px){
+    body{font-size:1rem}
+    header{grid-template-columns:1fr auto;padding:.5rem .75rem .625rem}
+    header h1{grid-column:1/-1;font-size:1.0625rem}
+    .doors{justify-content:flex-start;gap:.3rem}
+    .door{width:1.75rem;height:2.25rem}
+    .stats{padding:.25rem .6rem;gap:var(--s2)}
+    main{margin-top:var(--s4);padding:0 .625rem}
+    .panel{border-width:9px;padding:1.25rem var(--s4) var(--s5)}
+    .panel::before{inset:-9px}
+    .panel::after{left:-13px;right:-13px;bottom:-22px}
+    .lock{padding:var(--s3)}
+    .lock input[type=text]:not(.free){flex:1 1 8rem;width:auto}
+    .scene>li>span.seg{flex:1 1 100%}
+    .seg button{flex:1}
+    .cert{padding:1.25rem var(--s3) var(--s5);outline-offset:-11px}
+    .result{padding:var(--s4) var(--s4) var(--s1)}
+  }
+
+  /* ---------- Print: just the certificate and result, ink-friendly ---------- */
+  @media print{
+    :root{color-scheme:light}
+    header,.draft,.row button{display:none}
+    body{background:#fff;color:#000}
+    main{max-width:none;margin:0;padding:0}
+    .panel,.panel:has(.msg.good){border:0;padding:0;background:none;box-shadow:none}
+    .panel::before,.panel::after{display:none}
+    .panel>*{animation:none}
+    h2{background:none;text-shadow:none;border-bottom:1px solid #999}
+    .cert{background:#fff;color:#000;box-shadow:none;break-inside:avoid}
+    .cert .small,.small{color:#333}
+    .cert .code{color:#000}
+    .cert .code.pass{background:none}
+    .result{background:#fff;color:#000;box-shadow:none;border:1px solid #999;break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="game-title"></h1>
+  <div class="doors" id="doors" aria-label="Progress"></div>
+  <div class="stats"><span>⏱ <span id="timer">00:00</span></span><span>💡 <span id="hintCount">0</span></span></div>
+</header>
+<div id="draft" class="draft" hidden></div>
+<main><div class="panel" id="stage" tabindex="-1"></div></main>
+<div class="sr" aria-live="polite" id="live"></div>
+<!-- The escape room's content (questions, answers, story). Edit it with editor.html, not by hand. -->
+<script id="escape-config" type="text/plain">__ESCAPE_CONFIG__</script>
+<script>
+/*__SHARED__*/
+</script>
+<script>
+/* ===================== SCORM 1.2 (optional — runs only inside an LMS) ===================== */
+const SCORM = (() => {
+  let api = null;
+  function find(w){ let n=0; while(w && !w.API && w.parent && w.parent!==w && n<10){ w=w.parent; n++; } return w && w.API ? w.API : null; }
+  try { api = find(window) || (window.opener ? find(window.opener) : null); } catch(e){ api = null; }
+  const ok = !!api;
+  if (ok) { try { api.LMSInitialize("");
+    if (api.LMSGetValue("cmi.core.lesson_status") === "not attempted") api.LMSSetValue("cmi.core.lesson_status","incomplete");
+    api.LMSCommit(""); } catch(e){} }
+  return {
+    ok,
+    name(){ if(!ok) return ""; try{ const n=api.LMSGetValue("cmi.core.student_name")||""; const p=n.split(","); return p.length===2? (p[1].trim()+" "+p[0].trim()):n; }catch(e){return ""} },
+    complete(score, seconds){
+      if(!ok) return;
+      try{
+        api.LMSSetValue("cmi.core.score.min","0"); api.LMSSetValue("cmi.core.score.max","100");
+        api.LMSSetValue("cmi.core.score.raw", String(score));
+        const h=String(Math.floor(seconds/3600)).padStart(4,"0"), m=String(Math.floor(seconds%3600/60)).padStart(2,"0"), s=String(seconds%60).padStart(2,"0");
+        api.LMSSetValue("cmi.core.session_time", `${h}:${m}:${s}`);
+        api.LMSSetValue("cmi.core.lesson_status","completed");
+        api.LMSCommit("");
+      }catch(e){}
+    },
+    finish(){ if(ok){ try{ api.LMSFinish(""); }catch(e){} } }
+  };
+})();
+window.addEventListener("beforeunload", () => SCORM.finish());
+
+/* ===================== Content ===================== */
+const CFG = ER.decodeConfig(document.getElementById("escape-config").textContent);
+const ROOMS = CFG.rooms || [];
+const { esc, fmt, paras } = ER;
+
+/* ===================== State ===================== */
+const S = { room:0, start:null, hints:0, wrong:0, hintsShown:{}, wrongIn:{}, reflection:null, showKey:false };
+const PREVIEW = CFG.__preview === true;   // set only by the editor's preview, never in exported games
+let tick = null;
+const $ = s => document.querySelector(s);
+const stage = $("#stage");
+const say = t => { $("#live").textContent = t; };
+
+function fmtTime(sec){ return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0"); }
+function elapsed(){ return S.start ? Math.floor((Date.now()-S.start)/1000) : 0; }
+function startTimer(){ if(!S.start){ S.start=Date.now(); tick=setInterval(()=>$("#timer").textContent=fmtTime(elapsed()),1000);} }
+
+function renderDoors(){
+  $("#doors").innerHTML = ROOMS.map((_,i)=>{
+    const r=i+1; const cls = S.room>r ? "door open" : (S.room===r ? "door current" : "door");
+    return `<div class="${cls}" title="Room ${r}">${S.room>r?"🔓":r}</div>`;
+  }).join("");
+}
+
+const roomHints = room => (room.hintsEnabled && ER.HINT_ROOMS.includes(room.type)) ? (room.hints||[]).slice(0,2).filter(h => String(h||"").trim()) : [];
+function hintBlock(room){
+  if (!roomHints(room).length) return "";
+  return `<div class="row hint-btn-wrap"><button class="ghost" id="hint-btn">💡 Get a hint</button><span class="lockednote" id="hint-note"></span></div><div id="hints"></div>`;
+}
+/* Hints unlock only after wrong tries in this room (teacher sets how many), so a student can't
+   open the room and read the hint straight away. */
+function updateHints(){
+  const r = ROOMS[S.room-1]; const btn = $("#hint-btn"); if (!r || !btn) return;
+  const list = roomHints(r), rules = ER.hintRules(CFG);
+  const shown = S.hintsShown[S.room] || 0, wrong = S.wrongIn[S.room] || 0;
+  $("#hints").innerHTML = list.slice(0,shown).map((h,i)=>`<div class="hint"><strong>Hint ${i+1}:</strong> ${fmt(h)}</div>`).join("");
+  const note = $("#hint-note");
+  if (shown >= list.length) { btn.disabled = true; btn.textContent = "No more hints"; note.textContent = ""; return; }
+  const need = shown === 0 ? rules.first : Math.max(rules.second, rules.first);
+  const left = need - wrong;
+  btn.disabled = left > 0;
+  btn.textContent = `💡 Get hint ${shown+1}`;
+  note.textContent = left > 0 ? `Unlocks after ${left} more wrong ${left===1?"try":"tries"}.` : "";
+}
+function wireHints(room){
+  const btn = $("#hint-btn"); if (!btn) return;
+  btn.onclick = () => { const n = S.hintsShown[S.room] || 0; if (n >= roomHints(room).length || btn.disabled) return; S.hintsShown[S.room] = n+1; S.hints++; $("#hintCount").textContent = S.hints; updateHints(); };
+  updateHints();
+}
+
+function fail(text){
+  S.wrong++; S.wrongIn[S.room] = (S.wrongIn[S.room]||0) + 1; updateHints(); const m=$("#msg"); m.className="msg bad"; m.textContent=text; say(text);
+  stage.classList.remove("shake"); void stage.offsetWidth; stage.classList.add("shake");
+}
+// Incomplete answer: tell the student, but don't count a wrong try (no penalty, no hint unlock).
+function notYet(text){ const m=$("#msg"); m.className="msg bad"; m.textContent=text; say(text); }
+function pass(text){
+  const m=$("#msg"); m.className="msg good"; m.textContent=text; say(text);
+  stage.querySelectorAll(".lock button, #answer").forEach(el => el.disabled = true);
+  setTimeout(() => go(S.room+1), 1300);
+}
+function go(n){
+  S.room=n; renderDoors(); (n===0 ? intro : n>ROOMS.length ? finish : () => room(n))();
+  if (PREVIEW) { teacherKey(); parent.postMessage({ er: "room", room: n }, "*"); }
+  stage.focus(); window.scrollTo(0,0);
+}
+
+function roomHead(r, n){
+  return `<h2><span class="rn">Room ${n}</span><span class="sep"> · </span>${esc(r.title||"")}</h2>${paras(r.story,"story")}${r.reference?`<p class="ref">📖 ${fmt(r.reference)}</p>`:""}`;
+}
+/* The brass keyhole is decoration only: CSS turns it when #msg reports success. */
+const LATCH = '<span class="latch" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><circle cx="20" cy="16" r="4.6"/><path d="M17.5 18h5l1.7 10.5h-8.4z"/></svg></span>';
+const lockRow = (label, inner) => `<div class="lock">${LATCH}${label?`<span><strong>${fmt(label)}</strong></span>`:""}${inner}<span class="msg" id="msg" role="status"></span></div>`;
+
+/* ===================== Screens ===================== */
+function intro(){
+  const n = ROOMS.length;
+  stage.innerHTML = `
+  <h2>${esc(CFG.intro?.heading || CFG.meta?.title || "")}</h2>
+  ${paras(CFG.intro?.story, "story")}
+  <div class="card">
+    <strong>How to play</strong>
+    <ul>
+      <li>Solve the puzzle in each room to open its lock. There ${n===1?"is 1 room":`are ${n} rooms`}.</li>
+      <li>Wrong answers ${CFG.scoring?.mode==="deductions" && CFG.scoring.wrongPenalty ? `cost ${CFG.scoring.wrongPenalty} points each, so think before you try` : "cost nothing, so keep trying"}.</li>
+      ${ROOMS.some(r => roomHints(r).length) ? `<li>Stuck? Some rooms have hints that unlock after a wrong try. ${CFG.scoring?.mode==="deductions" && CFG.scoring.hintPenalty ? `Each hint costs ${CFG.scoring.hintPenalty} points.` : "They're counted, but they don't affect your grade."}</li>` : ""}
+      <li>At the end you'll get a <strong>certificate</strong>${CFG.finish?.exitPassword ? " with the exit password" : ""}.</li>
+    </ul>
+    ${CFG.meta?.learningOutcome ? `<p class="small">Learning Outcome: <em>${fmt(CFG.meta.learningOutcome)}</em></p>` : ""}
+  </div>
+  <div class="row"><label for="pname"><strong>Your name:</strong></label>
+    <input id="pname" name="name" type="text" class="free" style="width:16rem" value="${esc(SCORM.name())}" autocomplete="name">
+    <button id="begin">Enter →</button></div>`;
+  $("#begin").onclick = () => { S.player = ($("#pname").value||"").trim() || "Student"; startTimer(); go(1); };
+}
+
+function room(n){
+  const r = ROOMS[n-1];
+  ({ matching, quiz, ordering, sorting, reflection }[r.type] || unknown)(r, n);
+  wireHints(r);
+}
+function unknown(r, n){ stage.innerHTML = roomHead(r,n) + `<p>This room type isn't supported.</p><button onclick="go(${n+1})">Skip</button>`; }
+
+/* ---- Matching: cards with codes, numbered clues, enter the code ---- */
+function matching(r, n){
+  const m = ER.matching(r);
+  const clueStyle = m.numbers ? "A" : "1";
+  stage.innerHTML = roomHead(r,n) + `
+    <div class="grid">${m.display.map(c=>`<div class="card mcard"><div class="badge">${esc(m.code[c.k])}</div>
+      ${c.icon?`<span class="icon" aria-hidden="true">${esc(c.icon)}</span>`:""}<div><strong>${fmt(c.term)}</strong>${c.detail?`<div class="small">${fmt(c.detail)}</div>`:""}</div></div>`).join("")}</div>
+    <h3>${esc(r.cluesHeading || "Clues")}</h3>
+    <ol class="clues" type="${clueStyle}">${m.answerCards.map(c=>`<li>${fmt(c.clue)}</li>`).join("")}</ol>
+    ${lockRow("", `<label for="answer">${fmt(r.lockLabel || "🔒 Lock")}:</label>
+      <input id="answer" type="text" maxlength="${m.answer.length}" ${m.numbers?'inputmode="numeric"':""} autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button id="try">Try it</button>`)}
+    ${hintBlock(r)}`;
+  const check = () => {
+    const typed = $("#answer").value.replace(/\s+/g,"").toUpperCase();
+    if (!typed) return notYet("Type the code first.");
+    if (typed === m.answer) pass(r.successMessage || "🔓 The lock opens!");
+    else fail(r.failMessage || "The lock won't budge. Check each clue again.");
+  };
+  $("#try").onclick = check; $("#answer").onkeydown = e => { if (e.key==="Enter") check(); };
+}
+
+/* ---- Quiz: short-answer and multiple-choice questions; all must be right ---- */
+function quiz(r, n){
+  const qs = r.questions || [];
+  stage.innerHTML = roomHead(r,n) + `<form id="qf" novalidate>${qs.map((q,i)=>`
+    <fieldset><legend>${i+1}. ${fmt(q.prompt)}</legend>${
+      q.kind==="choice"
+        ? (q.choices||[]).map((c,j)=>String(c).trim()?`<label><input type="radio" name="q${i}" value="${j}"> ${fmt(c)}</label>`:"").join("")
+        : `<input type="text" class="free" name="q${i}" aria-label="Answer to question ${i+1}" autocomplete="off" spellcheck="false">`
+    }</fieldset>`).join("")}
+    ${lockRow(r.lockLabel || "🔒 Question lock", `<button id="try" type="submit">Check answers</button>`)}</form>
+    ${hintBlock(r)}`;
+  $("#qf").onsubmit = e => {
+    e.preventDefault();
+    const blank = qs.some((q,i) => q.kind==="choice" ? !document.querySelector(`input[name=q${i}]:checked`) : !ER.norm(document.querySelector(`input[name=q${i}]`).value));
+    if (blank) return notYet("Answer every question first.");
+    let right = 0;
+    qs.forEach((q,i) => {
+      if (q.kind==="choice") { const v = document.querySelector(`input[name=q${i}]:checked`); if (v && +v.value === q.correct) right++; }
+      else { const v = ER.norm(document.querySelector(`input[name=q${i}]`).value); if (v && ER.accepted(q.answers).includes(v)) right++; }
+    });
+    if (right === qs.length) pass(r.successMessage || "🔓 Every answer is right. The lock opens!");
+    else fail(`${right} of ${qs.length} answers are correct.`);
+  };
+}
+
+/* ---- Ordering: put items in the right order ---- */
+function ordering(r, n){
+  const items = r.items || [];
+  let order = ER.scramble(items.length, (r.title||"") + items.map(i=>i.text).join("|"));
+  const draw = () => {
+    $("#order").innerHTML = order.map((idx,i)=>`<li><span class="pos">${i+1}.</span><span>${fmt(items[idx].text)}</span>
+      <button class="mv ghost" aria-label="Move up" ${i===0?"disabled":""} data-i="${i}" data-d="-1">▲</button>
+      <button class="mv ghost" aria-label="Move down" ${i===order.length-1?"disabled":""} data-i="${i}" data-d="1">▼</button></li>`).join("");
+  };
+  stage.innerHTML = roomHead(r,n) + `<ul class="list" id="order"></ul>
+    ${lockRow(r.lockLabel || "🔒 Order lock", `<button id="try">Check order</button>`)}${hintBlock(r)}`;
+  $("#order").onclick = e => {
+    const b = e.target.closest("button[data-i]"); if (!b) return;
+    const i = +b.dataset.i, d = +b.dataset.d, j = i + d;
+    [order[i], order[j]] = [order[j], order[i]]; draw();
+    const nb = $("#order").children[j].querySelectorAll("button")[d<0?0:1]; if (nb && !nb.disabled) nb.focus();
+  };
+  draw();
+  $("#try").onclick = () => {
+    const right = order.filter((v,i)=>v===i).length;
+    if (right === order.length) {
+      $("#order").innerHTML = order.map((idx,i)=>`<li><span class="pos">${i+1}.</span><span>${fmt(items[idx].text)}${items[idx].label?` <strong style="color:var(--gold)">(${fmt(items[idx].label)})</strong>`:""}</span></li>`).join("");
+      pass(r.successMessage || "🔓 Everything is in order. The lock opens!");
+    } else fail(`${right} of ${order.length} are in the correct position.`);
+  };
+}
+
+/* ---- Sorting: put each item in a category ---- */
+function sorting(r, n){
+  const items = r.items || [], cats = r.categories || [];
+  const pick = new Array(items.length).fill(null);
+  stage.innerHTML = roomHead(r,n) + `<ul class="list scene">${items.map((it,i)=>`<li><span style="flex:1;min-width:220px">${fmt(it.text)}</span>
+     <span class="seg" role="group" aria-label="Item ${i+1}">${cats.map((c,j)=>`<button data-i="${i}" data-v="${j}" aria-pressed="false">${esc(c)}</button>`).join("")}</span></li>`).join("")}</ul>
+    ${lockRow(r.lockLabel || "📋 Sorting lock", `<button id="try">Submit</button>`)}${hintBlock(r)}`;
+  stage.querySelectorAll(".seg button").forEach(b => b.onclick = () => {
+    const i=+b.dataset.i; pick[i]=+b.dataset.v;
+    b.parentElement.querySelectorAll("button").forEach(x=>{ const on=+x.dataset.v===pick[i]; x.classList.toggle("on",on); x.setAttribute("aria-pressed",on); });
+  });
+  $("#try").onclick = () => {
+    if (pick.includes(null)) return notYet("Choose a category for every item first.");
+    const right = pick.filter((p,i)=>p===items[i].category).length;
+    if (right===items.length) pass(r.successMessage || "🔓 All sorted. The lock opens!");
+    else fail(`${right} of ${items.length} are in the correct category.`);
+  };
+}
+
+/* ---- Reflection: no wrong answers; result profile shown on the certificate ---- */
+function reflection(r, n){
+  const qs = r.questions || [];
+  stage.innerHTML = roomHead(r,n) + `<form id="mf">${qs.map((q,qi)=>`<fieldset><legend>${qi+1}. ${fmt(q.prompt)}</legend>${(q.options||[]).map(o=>
+     `<label><input type="radio" name="q${qi}" value="${esc(o.profile)}" required> ${fmt(o.text)}</label>`).join("")}</fieldset>`).join("")}
+    ${lockRow("🪞", `<button id="try" type="submit">${esc(r.buttonLabel || "Continue")}</button>`)}</form>${hintBlock(r)}`;
+  $("#mf").onsubmit = e => {
+    e.preventDefault();
+    const tally = {}; qs.forEach((q,qi)=>{ const v=document.querySelector(`input[name=q${qi}]:checked`); if (v) tally[v.value]=(tally[v.value]||0)+1; });
+    const ranked = Object.entries(tally).sort((a,b)=>b[1]-a[1]);
+    const prof = k => (r.profiles||[]).find(p=>p.key===k);
+    S.reflection = { room:r, first: ranked[0] && prof(ranked[0][0]), second: ranked[1] && prof(ranked[1][0]) };
+    pass(r.successMessage || "✨ Done!");
+  };
+}
+
+/* ---- Finish ---- */
+function score(){
+  const sc = CFG.scoring || {};
+  if (sc.mode !== "deductions") return 100;
+  return Math.max(+sc.minScore||0, Math.min(100, 100 - S.hints*(+sc.hintPenalty||0) - S.wrong*(+sc.wrongPenalty||0)));
+}
+function finish(){
+  clearInterval(tick);
+  const secs = elapsed(), pts = score();
+  const prefix = String(CFG.meta?.codePrefix || "ESC").replace(/[^A-Za-z0-9]/g,"").toUpperCase() || "ESC";
+  const code = `${prefix}-${S.hints}${Math.min(S.wrong,9)}-${((secs*7919)+S.hints*31+S.wrong*17)%9000+1000}`;
+  SCORM.complete(pts, secs);
+  const f = CFG.finish || {}, R = S.reflection;
+  stage.innerHTML = `
+  <h2>🎉 You Escaped!</h2>
+  <div class="cert">
+    <div class="small kicker">THIS CERTIFIES THAT</div>
+    <div class="name">${esc(S.player)}</div>
+    <div class="small">${fmt(f.certificateLine || "escaped the room")}</div>
+    <p>Time: <strong>${fmtTime(secs)}</strong> · Hints used: <strong>${S.hints}</strong>${CFG.scoring?.mode==="deductions"?` · Score: <strong>${pts}%</strong>`:""} · ${new Date().toLocaleDateString()}</p>
+    ${f.exitPassword ? `<div class="small">Exit password (enter this in your course quiz)</div><div class="code pass" id="exit-password" translate="no">${esc(f.exitPassword)}</div>` : ""}
+    <div class="small gap">Personal completion code</div><div class="code" translate="no">${code}</div>
+  </div>
+  ${R && R.first ? `<div class="result">
+    <h3>🪞 ${esc(R.room.resultHeading || "Your result")}: ${esc(R.first.name)}</h3>
+    ${paras(R.first.desc)}
+    ${R.first.who ? `<p><strong>Thinkers to explore:</strong> ${fmt(R.first.who)}</p>` : ""}
+    ${R.second && R.second !== R.first ? `<p><strong>Your second-strongest lean:</strong> ${esc(R.second.name)}${R.second.who?` (${fmt(R.second.who)})`:""}</p>` : ""}
+    ${R.first.next ? `<p><strong>Next step:</strong> ${fmt(R.first.next)}</p>` : ""}
+    ${R.room.resultNote ? `<p class="small" style="color:#24402f">${fmt(R.room.resultNote)}</p>` : ""}
+  </div>` : ""}
+  <div class="row"><button onclick="window.print()">🖨️ Print / save as PDF</button>
+    <button class="ghost" onclick="location.reload()">Play again</button></div>
+  ${f.instructions ? `<p class="small">${fmt(f.instructions)}</p>` : ""}`;
+}
+
+/* ===================== Teacher preview (editor only) ===================== */
+function teacherKey(){
+  document.getElementById("teacher-key")?.remove();
+  const r = ROOMS[S.room-1];
+  if (!PREVIEW || !S.showKey || !r) return;
+  const hints = roomHints(r);
+  const box = document.createElement("div"); box.id = "teacher-key"; box.className = "teacher-key";
+  box.innerHTML = `<h3>👩‍🏫 Answer (only you can see this in preview)</h3><ul>${ER.answerKey(r).map(l=>`<li>${fmt(l)}</li>`).join("")}</ul>`
+    + (hints.length ? `<p class="small" style="margin:.5rem 0 .2rem">Hints (students unlock them after wrong tries):</p><ol>${hints.map(h=>`<li>${fmt(h)}</li>`).join("")}</ol>` : "");
+  stage.append(box);
+}
+// Esc inside the preview frame should still close the editor's preview.
+if (PREVIEW) document.addEventListener("keydown", e => { if (e.key === "Escape") parent.postMessage({ er: "escape" }, "*"); });
+if (PREVIEW) window.addEventListener("message", e => {
+  const d = e.data || {};
+  if (d.er === "goto") { if (!S.player) S.player = "Preview Student"; startTimer(); go(Math.max(0, Math.min(ROOMS.length+1, d.room|0))); }
+  if (d.er === "key") { S.showKey = !!d.on; teacherKey(); }
+});
+
+/* ===================== Start ===================== */
+document.title = CFG.meta?.title || document.title;
+$("#game-title").textContent = "🏫 " + (CFG.meta?.title || "Escape Room");
+const review = ER.reviewStatus(CFG);
+if (review.unverified) {
+  const d = $("#draft"); d.hidden = false;
+  d.textContent = `⚠️ Draft: ${review.unverified} of ${review.total} items haven't been checked by the instructor yet. Answers may contain errors.`;
+}
+renderDoors(); go(0);
+</script>
+</body>
+</html>
