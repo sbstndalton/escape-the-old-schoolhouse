@@ -35,11 +35,11 @@ Download **`editor.html`** and double-click it. Everything happens in the browse
 - **Add, remove, or reorder rooms.** There are five kinds of rooms:
   - **Question lock**: short-answer or multiple-choice questions. All must be right to open the lock. *This one works like a chapter quiz.*
   - **Matching code**: match clues to cards and enter the codes on the cards.
-    - Choose a **Look of the cards** for each matching room: *Plain cards*, *Books on a shelf* (the code is the gilt letter on each spine), or *Framed portraits* (the code is on a brass plate; the frame shows the card's icon, or initials if it has none). The look changes the picture only, never the puzzle or the answer. Books suit short names. A name over 48 characters makes that room fall back to plain cards.
+    - Choose a **Look of the cards** for each matching room: *Plain cards* (index cards in a catalogue drawer), *Books on a shelf* (the code is the gilt letter on each spine), or *Framed portraits* (the code is on a brass plate; each painting is signed with the card's initials, and the card's icon appears as a small emblem). The look changes the picture only, never the puzzle or the answer. Books suit short names. A name over 48 characters makes that room fall back to plain cards.
   - **Put in order**: timelines or steps in a process.
   - **Sort into groups**: for example traditional vs. progressive.
   - **Reflection survey**: no wrong answers; shows a result profile on the certificate.
-- **Animation is optional for students.** Locks spring open, rooms change with a door swing, and the certificate gets a stamped seal and a short burst of confetti. Students can switch all of it off with the **Motion** button at the top of the game. It is off automatically on devices set to "reduce motion", and the game works the same either way.
+- **Animation and sound are optional for students.** Dials click, locks spring open, doors part between rooms, and the certificate gets a wax seal. Students can switch animation off with **Motion** in the notebook (click the pocket watch or press **Esc**), and sound off with the bell at the top right. Motion is off automatically on devices set to "reduce motion", and the game works the same either way.
 - **Type a whole quiz as text.** In a Question lock room, click **Edit all questions as text** and write:
   ```text
   Q: Who wrote Democracy and Education (1916)?
@@ -79,6 +79,19 @@ The counter at the top shows how many items are checked, and the room list shows
 3. If you see code instead, right-click the file → **Open with** → choose your browser.
 
 > Phones and iPads often show the code instead of running the game. Test on a laptop or desktop.
+
+### How it plays
+The game is one night-time scene per room. Everything is an object you handle:
+
+- **Papers** (clue cards, books, portraits, the story note): click one to read it up close. **Esc** or a click outside puts it back.
+- **Combination padlock:** turn each dial with a click, a drag, the scroll wheel or the arrow keys, or just type the code. Then pull the shackle (or press **Enter**).
+- **Other locks:** turn the handle on the door. A small counter shows how many you got right.
+- **Sorting slips:** click a slip, then press a rubber stamp. Each slip also has its own boxes to stamp.
+- **Timeline cards:** move them with the round studs, or drag a card by its number.
+- **Key ring** (top left): one key per room. A key turns brass when you escape its room.
+- **Pocket watch** (top right): shows your time. Click it, or press **Esc**, for the notebook: sound, motion, start over.
+
+Everything also works from the keyboard (**Tab**, **Enter**, **Space**, arrow keys).
 
 ---
 

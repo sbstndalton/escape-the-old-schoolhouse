@@ -64,13 +64,12 @@ svg{display:block}
   -webkit-mask-image:linear-gradient(180deg,transparent,#000 14%,#000 60%,transparent);mask-image:linear-gradient(180deg,transparent,#000 14%,#000 60%,transparent)}
 .exit{right:2.2rem;top:8%;bottom:4.6%;width:23rem;transform:translate(calc(var(--px)*-3px),0);padding:1rem 1rem 0;border-radius:.3rem .3rem 0 0;
   background:var(--wood) 0 0/15rem 100%,linear-gradient(180deg,#3a2414,#22140a);box-shadow:inset 0 0 0 1px #080503,inset 0 .2rem 0 rgba(255,220,160,.08),0 0 2.5rem rgba(0,0,0,.85)}
-.exit::before{content:"";position:absolute;inset:1rem 1rem 0;
+.exit .void{position:absolute;inset:1rem 1rem 0;background:linear-gradient(90deg,#000 55%,#1a0f06 86%,#3a2410);box-shadow:inset 0 0 0 2px #080503}
+.exit .slab{position:absolute;inset:1rem 1rem 0;transform-origin:100% 50%;
   background:linear-gradient(90deg,rgba(0,0,0,.5),transparent 14%,transparent 86%,rgba(0,0,0,.55)),var(--wood) 0 0/13rem 100%,linear-gradient(180deg,#5a3419,#3d2311 60%,#27160b);box-shadow:inset 0 0 0 2px #080503,inset 0 0 2rem rgba(0,0,0,.5)}
-.exit::after{content:"";position:absolute;left:3.4rem;right:3.4rem;top:3.6rem;height:23%;
-  box-shadow:inset 0 0 0 2px rgba(0,0,0,.6),inset .25rem .3rem .5rem rgba(0,0,0,.55),inset -1px -1px 0 2px rgba(255,220,160,.07),0 0 0 1px rgba(255,220,160,.06),
-    0 calc(100% + 16rem) 0 -2px rgba(0,0,0,.0)}
-.exit i{position:absolute;left:3.4rem;right:3.4rem;bottom:2.4rem;height:22%;box-shadow:inset 0 0 0 2px rgba(0,0,0,.6),inset .25rem .3rem .5rem rgba(0,0,0,.55),inset -1px -1px 0 2px rgba(255,220,160,.07),0 0 0 1px rgba(255,220,160,.06)}
-.exit b{position:absolute;right:1.25rem;width:.8rem;height:2.6rem;border-radius:.2rem;background:linear-gradient(90deg,#f1d38a,#8f6d2b 60%,#3b2a0c);box-shadow:0 .15rem .3rem #000}
+.exit i{position:absolute;left:2.4rem;right:2.4rem;box-shadow:inset 0 0 0 2px rgba(0,0,0,.6),inset .25rem .3rem .5rem rgba(0,0,0,.55),inset -1px -1px 0 2px rgba(255,220,160,.07),0 0 0 1px rgba(255,220,160,.06)}
+.exit i:nth-of-type(1){top:2.6rem;height:23%}.exit i:nth-of-type(2){bottom:2.4rem;height:22%}
+.exit b{position:absolute;right:.25rem;width:.8rem;height:2.6rem;border-radius:.2rem;background:linear-gradient(90deg,#f1d38a,#8f6d2b 60%,#3b2a0c);box-shadow:0 .15rem .3rem #000}
 .exit b:nth-of-type(1){top:12%}.exit b:nth-of-type(2){bottom:14%}
 [data-screen=title] .exit,[data-screen=end] .exit,[data-shape=tall] .exit,[data-type=reflection] .exit{display:none}
 .lantern{right:25.3rem;top:0;width:4.4rem;transform:translate(calc(var(--px)*7px),0);transform-origin:50% 0;filter:drop-shadow(0 0 1.2rem rgba(255,200,120,.55))}
@@ -140,11 +139,14 @@ h2.bplate::before,h2.bplate::after{content:"";position:absolute;top:50%;width:.4
   background:radial-gradient(circle at 35% 30%,#fff3cf,#7a5c22 65%,#3b2a0c);box-shadow:0 0 0 1px rgba(50,30,5,.5)}
 h2.bplate::before{left:.5rem}h2.bplate::after{right:.5rem}
 h2.bplate .rn{font-size:.82em;letter-spacing:.16em}
-.story{display:block;max-width:44rem;font-size:.95rem;line-height:1.5;color:var(--parch2);text-align:left;text-shadow:0 1px 2px #000}
-.story p{margin:0}.story p+p{margin-top:.5em}
+.story{position:relative;display:block;max-width:41rem;margin-left:.5rem;padding:.75rem 1rem .6rem 1.05rem;font-size:.9rem;line-height:1.45;color:var(--ink);text-align:left;transform:rotate(-.7deg);transform-origin:0 0;
+  background:var(--stain),var(--grain),linear-gradient(175deg,#efe3c8,#e0d0ac);box-shadow:.12rem .3rem .1rem rgba(0,0,0,.5),.3rem .9rem 1.2rem rgba(0,0,0,.5);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - .8rem),calc(100% - .9rem) 100%,0 100%);transition:transform .2s cubic-bezier(.3,1.7,.5,1)}
+.story::before{content:"";position:absolute;left:1.4rem;top:-.1rem;width:1.5rem;height:.5rem;background:rgba(214,200,160,.55);box-shadow:0 1px 1px rgba(0,0,0,.3);transform:rotate(-3deg)}
+.story:hover,.story:focus-visible{transform:rotate(0deg) translateY(-.2rem)}
 .story .clip{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
-.story .go{display:inline-block;margin-top:.25rem;font:400 .8rem/1 var(--f-d);letter-spacing:.14em;color:#e9cf8e;border-bottom:1px solid rgba(233,207,142,.5)}
-.story:hover .go{color:#fff0c4}
+.story .go{display:block;margin-top:.3rem;font:400 .68rem/1 var(--f-d);letter-spacing:.16em;color:#7a2018}
+.story:focus-visible{outline-color:#ffe7ae}
 .cap{margin:0;font:400 .8rem/1 var(--f-d);letter-spacing:.2em;color:rgba(232,217,181,.78);display:flex;align-items:center;gap:.6rem}
 .cap::after{content:"";flex:0 0 3rem;height:1px;background:linear-gradient(90deg,rgba(232,217,181,.5),transparent)}
 
@@ -229,7 +231,7 @@ h2.bplate .rn{font-size:.82em;letter-spacing:.16em}
 .shackle svg{width:100%;height:auto;overflow:visible;filter:drop-shadow(0 .3rem .3rem rgba(0,0,0,.6))}
 .shackle:not(:disabled):hover,.shackle:not(:disabled):focus-visible{transform:translateY(-.22rem)}
 .shackle:focus-visible{outline-offset:-2px}
-.lock.unlocked .shackle{transform:translateY(-1.1rem)}
+.lock.unlocked .shackle{transform:translateY(-1.55rem)}
 .lbody{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:.5rem;padding:1rem 1.1rem 1.1rem;min-width:11.5rem;
   background:radial-gradient(ellipse 70% 50% at 28% 6%,rgba(255,246,214,.55),transparent 70%),var(--grain),var(--brassy);background-blend-mode:normal,soft-light,normal;
   border-radius:.9rem .9rem 2.2rem 2.2rem/.9rem .9rem 1.7rem 1.7rem;
@@ -530,9 +532,14 @@ h2.said{margin:0;font:400 1.25rem/1.2 var(--f-d);letter-spacing:.12em;color:#f0d
 
 /* ---------- Room change: the lantern dims and two door leaves part ---------- */
 #doorfx{position:absolute;inset:0;z-index:50;pointer-events:none;display:none}
-#doorfx i{position:absolute;top:0;bottom:0;width:50.2%;background:linear-gradient(90deg,rgba(0,0,0,.65),rgba(0,0,0,.2) 30%,rgba(0,0,0,.55)),var(--wood) 0 0/22rem 100%,#22130a}
-#doorfx i:first-child{left:0;transform-origin:0 50%;box-shadow:inset -.5rem 0 0 #0c0704}
-#doorfx i:last-child{right:0;transform-origin:100% 50%;box-shadow:inset .5rem 0 0 #0c0704}
+#doorfx i{position:absolute;top:0;bottom:0;width:50.2%;background:var(--wood) 0 0/22rem 100%,linear-gradient(180deg,#4a2b15,#2c190c 70%,#1a0e06)}
+#doorfx i::before{content:"";position:absolute;left:14%;right:14%;top:9%;height:36%;box-shadow:inset 0 0 0 3px rgba(0,0,0,.65),inset .4rem .5rem .8rem rgba(0,0,0,.55),inset -2px -2px 0 3px rgba(255,220,160,.07),0 0 0 1px rgba(255,220,160,.08),
+  0 calc(34vh + 4rem) 0 0 rgba(0,0,0,.18),0 calc(34vh + 4rem) 0 3px rgba(0,0,0,.45)}
+#doorfx i::after{content:"";position:absolute;top:50%;width:2.6rem;height:2.6rem;margin-top:-1.3rem;border-radius:50%;background:radial-gradient(circle at 35% 28%,#fff3cf,#d2ae5e 30%,#8f6d2b 70%,#3b2a0c);box-shadow:.25rem .5rem .5rem rgba(0,0,0,.7),0 0 0 .35rem rgba(60,40,10,.5)}
+#doorfx i:first-child{left:0;transform-origin:0 50%;box-shadow:inset -.5rem 0 0 #0c0704,inset -12rem 0 9rem -6rem rgba(255,190,110,.16),inset 14rem 0 10rem -6rem rgba(0,0,0,.7)}
+#doorfx i:first-child::after{right:2.2rem}
+#doorfx i:last-child{right:0;transform-origin:100% 50%;box-shadow:inset .5rem 0 0 #0c0704,inset 12rem 0 9rem -6rem rgba(255,190,110,.16),inset -14rem 0 10rem -6rem rgba(0,0,0,.7)}
+#doorfx i:last-child::after{left:2.2rem}
 #confetti{position:fixed;inset:0;z-index:55;pointer-events:none;width:100%;height:100%}
 
 /* ---------- Idle life (only with motion on) ---------- */
@@ -553,14 +560,16 @@ h2.said{margin:0;font:400 1.25rem/1.2 var(--f-d);letter-spacing:.12em;color:#f0d
 [data-shape=tall] #light{--lx:50%;--ly:80%}
 [data-shape=tall] .lantern{display:none}
 [data-shape=tall] h2.bplate{font-size:1.08rem;padding:.42rem 1.3rem .34rem}
-[data-shape=tall] .story{font-size:.86rem}
+[data-shape=tall] .story{font-size:.8rem;padding:.55rem .7rem .45rem .8rem;margin-left:.2rem}
 [data-shape=tall] .story .clip{-webkit-line-clamp:2}
+[data-shape=tall][data-screen=room] .obj{overflow:hidden auto;scrollbar-width:none}
 [data-shape=tall] .mech{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:.4rem .9rem;padding-bottom:0}
 [data-shape=tall] .mech .msg{flex:1 1 9rem;min-height:0;text-align:left;font-size:.8rem}
 [data-shape=tall] .mech .msg:not(:empty)::before{display:none}
 [data-shape=tall] .hintbox{flex:1 1 100%;max-width:none;flex-direction:row;flex-wrap:wrap;justify-content:center}
-[data-shape=tall] .dlock{--dw:min(2.5rem,calc(13.4rem/var(--n,5)))}
-[data-shape=tall] .shackle{max-width:8.5rem;margin-bottom:-1.3rem}
+[data-shape=tall] .dlock{--dw:min(2.3rem,calc(13.4rem/var(--n,5)))}
+[data-shape=tall] .shackle{max-width:7rem;margin-bottom:-1.2rem}
+[data-shape=tall] .pull{display:none}
 [data-shape=tall] .lbody{padding:.7rem .8rem .8rem;gap:.35rem}
 [data-shape=tall] .tag{margin-top:.5rem}
 [data-shape=tall] .shelf{flex:1 1 12rem;min-height:11.5rem;padding:0 .7rem .8rem}
@@ -611,7 +620,7 @@ h2.said{margin:0;font:400 1.25rem/1.2 var(--f-d);letter-spacing:.12em;color:#f0d
 @media print{
   html,body{height:auto;overflow:visible;background:#fff}
   #scene{position:static;width:auto;transform:none;background:#fff;overflow:visible}
-  #bg,#hud,#draft,#grainfx,#doorfx,#examine,#pause,#teacher-key,.dawn,.noprint,#confetti{display:none!important}
+  #bg,#hud,#light,#grainfx,#doorfx,#examine,#pause,#teacher-key,.dawn,.noprint,#confetti{display:none!important}
   #stage{position:static;display:block;padding:0;overflow:visible}
   .head{display:none}
   .endrow{display:block}
@@ -627,7 +636,7 @@ h2.said{margin:0;font:400 1.25rem/1.2 var(--f-d);letter-spacing:.12em;color:#f0d
   <div id="bg" aria-hidden="true">
     <div class="wall"></div><div class="floor"></div><div class="win"></div><div class="beam"></div>
     <svg class="lantern" viewBox="0 0 34 92" focusable="false"><path d="M17 0v40" stroke="#6d5220" stroke-width="1.6" stroke-dasharray="3 2"/><path d="M9 44h16l-3-6h-10z" fill="#3b2a0c"/><rect x="8" y="44" width="18" height="30" rx="2" fill="#ffd28a"/><rect x="8" y="44" width="18" height="30" rx="2" fill="none" stroke="#3b2a0c" stroke-width="2.4"/><path d="M17 44v30M8 59h18" stroke="#3b2a0c" stroke-width="1.6"/><ellipse cx="17" cy="60" rx="4" ry="7" fill="#fff6dc"/><path d="M6 74h22l-3 7H9z" fill="#3b2a0c"/><circle cx="17" cy="86" r="3" fill="none" stroke="#6d5220" stroke-width="1.6"/></svg>
-    <div class="exit"><i></i><b></b><b></b></div><div class="dust"></div>
+    <div class="exit"><span class="void"></span><span class="slab"><i></i><i></i><b></b><b></b></span></div><div class="dust"></div>
   </div>
   <header id="hud">
     <h1 id="game-title" class="sr"></h1>
@@ -728,7 +737,8 @@ function renderMotion(){
   b.querySelector("span").textContent = off ? "Motion: off" : "Motion: on";
   b.disabled = RM.matches;
   b.title = RM.matches ? "Your device is set to reduce motion, so animations stay off." : "Turn animations on or off";
-  if (off) { document.getElementById("confetti")?.remove(); [bg, light].forEach(el => { el.style.removeProperty("--px"); el.style.removeProperty("--py"); }); }
+  if (off) { document.getElementById("confetti")?.remove();
+    try { document.getAnimations().forEach(a => a.cancel()); } catch(e){}      /* stop anything already in flight */ [bg, light].forEach(el => { el.style.removeProperty("--px"); el.style.removeProperty("--py"); }); }
 }
 $("#motion-toggle").onclick = () => {
   motionOff = !motionOff; store.set(MOTION_KEY, motionOff ? "off" : "on");
@@ -802,8 +812,8 @@ const ICON = {
 };
 const HUDKEY = svg("0 0 20 48", `<path class="kb" d="M10 0a2.300 2.300 0 0 1 2 3.400A8.200 8.200 0 0 1 11.700 19.800V38h5.300v3h-5.300v2.200h3.800v3h-3.800V48H8.300V19.800A8.200 8.200 0 0 1 8 3.400 2.300 2.300 0 0 1 10 0z"/><path d="M4.500 8.500a6 6 0 0 1 4-3" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="1.200" stroke-linecap="round"/>`);
 const SHACKLE = svg("0 0 100 74", `<defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4a545e"/><stop offset=".3" stop-color="#e6ebef"/><stop offset=".55" stop-color="#8a949e"/><stop offset="1" stop-color="#262d35"/></linearGradient></defs>
-  <path d="M19 74V40a31 31 0 0 1 62 0v34" fill="none" stroke="#14181d" stroke-width="15" /><path d="M19 74V40a31 31 0 0 1 62 0v34" fill="none" stroke="url(#sg)" stroke-width="12.500"/>
-  <path d="M15.500 72V40a34.500 34.500 0 0 1 24-33" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>`);
+  <path d="M19 63V40a31 31 0 0 1 62 0v34" fill="none" stroke="#14181d" stroke-width="15" /><path d="M19 62.200V40a31 31 0 0 1 62 0v34" fill="none" stroke="url(#sg)" stroke-width="12.500"/>
+  <path d="M15.500 60V40a34.500 34.500 0 0 1 24-33" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>`);
 const BIGKEY = svg("0 0 64 64", `<defs><linearGradient id="kg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset=".35" stop-color="#aab3bb"/><stop offset=".62" stop-color="#6d7780"/><stop offset="1" stop-color="#2b3440"/></linearGradient>
   <radialGradient id="kb" cx=".36" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#b3bcc4"/><stop offset="1" stop-color="#2b3440"/></radialGradient></defs>
   <rect x="5" y="27" width="54" height="10" rx="5" fill="url(#kg)" stroke="#11151a" stroke-width="1"/>
@@ -983,8 +993,11 @@ function pass(text, right){
       const hd = l.querySelector(".key");          // a handle is wound back a touch, thrown past its stop, and settles
       if (hd) hd.animate(R(-38, -50, 66, 46, 52), { duration: 460, easing: "ease-out" });
       const sh = l.querySelector(".shackle");      // the shackle springs (a dip first, then past its rest), then the whole padlock drops away
-      if (sh) { sh.animate([{ transform: "translateY(0)" }, { transform: "translateY(.16rem) scaleY(.96)", offset: .18 }, { transform: "translateY(-1.5rem) scaleY(1.05)", offset: .55 }, { transform: "translateY(-.95rem)", offset: .8 }, { transform: "translateY(-1.1rem)" }], { duration: 420, easing: "ease-out" });
+      if (sh) { sh.animate([{ transform: "translateY(0)" }, { transform: "translateY(.16rem) scaleY(.96)", offset: .18 }, { transform: "translateY(-2rem) scaleY(1.05)", offset: .55 }, { transform: "translateY(-1.4rem)", offset: .8 }, { transform: "translateY(-1.55rem)" }], { duration: 420, easing: "ease-out" });
         l.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(-.5rem) rotate(-3deg)", opacity: 1, offset: .2 }, { transform: "translateY(55vh) rotate(16deg)", opacity: 0 }], { duration: 560, delay: 520, easing: "cubic-bezier(.5,0,.9,.5)", fill: "forwards" }); }
+      if (root.dataset.shape === "wide") { const ajar = [{ transform: "none" }, { transform: "scaleX(1.012) skewY(.3deg)", offset: .18 }, { transform: "scaleX(.8) skewY(-2.4deg)" }], o = { duration: 520, delay: l.classList.contains("dlock") ? 640 : 520, easing: "cubic-bezier(.5,0,.3,1)", fill: "forwards" };
+        const slab = bg.querySelector(".slab"), mc = stage.querySelector(".mech");
+        if (slab && getComputedStyle(slab.parentElement).display !== "none") { ajarFx.push(slab.animate(ajar, o)); if (mc) { mc.style.transformOrigin = "100% 50%"; mc.animate(ajar, o); } setTimeout(() => SND.play("creak"), o.delay); } }
       const fl = $(".flare"); fl.animate([{ opacity: 0 }, { opacity: 1, offset: .25 }, { opacity: .25 }], { duration: 1100, easing: "ease-out" });
     }
   }
@@ -1069,10 +1082,11 @@ function wireDials(m, onTry){
    next room as it rises into the light (all 2D: opacity, scaleX and a little skew). With motion off the next
    screen simply appears. Whichever path runs, show() does all the work, so focus, hints, SCORM and the
    preview behave the same. The game never waits on an animation: show() runs within 150 ms regardless. */
-let shown = false, fx = [];
+let shown = false, fx = [], ajarFx = [];
 function go(n){
   const show = () => {
     S.room=n; EX = []; unexamine();
+    ajarFx.forEach(a => { try { a.cancel(); } catch(e){} }); ajarFx = [];
     renderDoors(); (n===0 ? intro : n>ROOMS.length ? finish : () => room(n))();
     fit();
     if (PREVIEW) { teacherKey(); parent.postMessage({ er: "room", room: n }, "*"); }
@@ -1100,7 +1114,7 @@ const roomHead = (r, n) => `<div class="head"><h2 class="bplate"><span class="rn
 function storyBtn(story, reference){
   if (!String(story||"").trim() && !String(reference||"").trim()) return "";
   const full = paras(story) + (reference ? `<p class="ref">${fmt(deco(reference))}</p>` : "");
-  return `<button type="button" class="story" ${ex(full, { label: "The note" })}><span class="clip">${inline(story || reference)}</span><span class="go">Read the note</span></button>`;
+  return `<button type="button" class="story" ${ex(full, { label: "The note" })}><span class="clip">${inline(story || reference)}</span><span class="go" aria-hidden="true">pick up to read</span></button>`;
 }
 
 /* ===================== Screens ===================== */
@@ -1459,11 +1473,12 @@ function fit(){
   const px = tall ? Math.min(w / 26, h / 44) : Math.min(sw / 80, h / 46);
   root.style.fontSize = Math.max(12.5, Math.min(20, px)).toFixed(2) + "px";
   stage.querySelectorAll(".vol .title").forEach(t => { let f = parseFloat(t.parentElement.style.getPropertyValue("--fs")) || 1; t.style.fontSize = "";
-    for (let i = 0; i < 8 && f > .6 && (t.scrollHeight > t.clientHeight + 1 || t.scrollWidth > t.clientWidth + 1); i++) { f -= .06; t.style.fontSize = f.toFixed(2) + "rem"; } });
+    for (let i = 0; i < 10 && f > .56 && (t.scrollHeight > t.clientHeight + 1 || t.scrollWidth > t.clientWidth + 1); i++) { f -= .06; t.style.fontSize = f.toFixed(2) + "rem"; } });
   const b = $("#begin");          // the Begin plate is on the door in the wide scene and docked under the ledger in the tall one
   if (b) { const home = tall ? stage.querySelector(".obj") : stage.querySelector(".doorway"); if (home && b.parentElement !== home) home.append(b); }
 }
 window.addEventListener("resize", fit);
+try { document.fonts.ready.then(fit); } catch(e){}      /* spine titles are measured again once the embedded fonts are in */
 
 /* Parallax: the wall, window, lamp glow and dust drift a few pixels against each other as the pointer moves. */
 let pend = false, px = 0, py = 0;
