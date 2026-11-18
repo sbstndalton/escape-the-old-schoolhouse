@@ -57,6 +57,8 @@ async function makeQuizRoom(page) {
   await page.click("text=Edit all questions as text");
   await page.fill("textarea[aria-label='Questions as text']", QUIZ_TEXT);
   await page.click("text=Use this text");
+  // New questions come back un-checked; tick them the way the teacher would.
+  for (const box of await page.locator(".entry .verify label.chk").all()) await box.click();
 }
 
 (async () => {
@@ -298,6 +300,93 @@ async function makeQuizRoom(page) {
     assert.match(key, /John Dewey \/ Dewey/); assert.match(key, /Perennialism/);
     await page.locator("text=Accepted answers >> xpath=.. >> input").first().fill("J. Dewey");
     assert.match(await page.textContent("#answer-key"), /J\. Dewey/);
+    await page.close();
+  });
+
+  await test("questions changed in text mode come back un-checked", async () => {
+    const page = await openEditor(browser, base);
+    await makeQuizRoom(page);
+    assert.match(await page.textContent("#meter"), /2 of 2 checked/);
+    await page.click("text=Edit all questions as text");
+    const ta = page.locator("textarea[aria-label='Questions as text']");
+    await ta.fill((await ta.inputValue()).replace("A: John Dewey | Dewey", "A: Horace Mann"));
+    await page.click("text=Use this text");
+    assert.match(await page.textContent("#meter"), /1 of 2 checked/, "the edited question is un-checked, the untouched one stays checked");
+    await page.close();
+  });
+
+  await test("deleting a choice keeps the same correct answer and un-checks the question", async () => {
+    const page = await openEditor(browser, base);
+    await makeQuizRoom(page);                       // Q2 choices: Essentialism, *Perennialism, Existentialism
+    await page.click("button[aria-label='Delete choice 1'] >> nth=0");
+    assert.match(await page.textContent("#answer-key"), /Perennialism/);
+    assert.doesNotMatch(await page.textContent("#answer-key"), /→\s*Existentialism/);
+    assert.match(await page.textContent("#meter"), /1 of 2 checked/);
+    await page.click("button[aria-label='Delete choice 1'] >> nth=0");   // delete the correct one itself
+    await page.click("#btn-preview");
+    assert.match(await page.textContent(".overlay"), /mark which choice is correct/);
+    await page.close();
+  });
+
+  await test("text view marks the right choice when a blank choice comes first", async () => {
+    const page = await openEditor(browser, base);
+    await makeQuizRoom(page);
+    await page.locator("input[aria-label='Choice 1']").first().fill("");          // blank before the correct choice
+    await page.click("text=Edit all questions as text");
+    const text = await page.inputValue("textarea[aria-label='Questions as text']");
+    assert.match(text, /\* Perennialism/); assert.match(text, /- Existentialism/);
+    await page.close();
+  });
+
+  await test("removing a sorting category makes its items pick a new answer", async () => {
+    const page = await openEditor(browser, base);
+    await page.click("#nav .item:has-text('4.')");
+    await page.click("text=+ Add category");
+    await page.locator("text=Category 3 >> xpath=.. >> input").fill("Mixed");
+    await page.locator(".entry").first().locator("select").selectOption("2");      // the new 3rd category
+    await page.locator(".entry").first().locator("label.chk").click();
+    await page.click("button:has-text('Remove') >> nth=2");                       // remove "Mixed"
+    await page.click("#btn-preview");
+    assert.match(await page.textContent(".overlay"), /item 1: pick its correct category/);
+    await page.close();
+  });
+
+  await test("moving another room above keeps you on the room you're editing", async () => {
+    const page = await openEditor(browser, base);
+    await page.click("#nav .item:has-text('2.')");
+    await page.click("button[aria-label='Move room 3 up']");
+    assert.match(await page.textContent("main h2"), /The Portrait Gallery/);
+    await page.close();
+  });
+
+  await test("empty or incomplete answers don't count as wrong tries", async () => {
+    const page = await openEditor(browser, base);
+    await page.click("#nav .item:has-text('1.')");
+    await page.click("label.switch:has(#hints-toggle)");
+    await page.click("#nav .item:has-text('Finish & grading')");
+    await page.selectOption("text=Grading >> xpath=.. >> select", "deductions");
+    await page.click("#btn-export");
+    const file = await download(page, "#export-html");
+    const game = await browser.newPage();
+    await game.addInitScript(() => { window.__scorm = {}; window.API = { LMSInitialize: () => "true", LMSCommit: () => "true", LMSFinish: () => "true",
+      LMSGetValue: () => "", LMSSetValue: (k, v) => { window.__scorm[k] = v; return "true"; } }; });
+    await game.goto("file://" + file);
+    await game.click("#begin");
+    await game.click("#try");                                                     // nothing typed
+    assert.match(await game.textContent("#msg"), /Type the code first/);
+    assert.equal(await game.isDisabled("#hint-btn"), true, "an empty try doesn't unlock a hint");
+    await game.fill("#answer", "xxxxx"); await game.click("#try");
+    assert.equal(await game.isDisabled("#hint-btn"), false, "a real wrong try does unlock it");
+    await game.close();
+
+    await page.keyboard.press("Escape");                                         // close the export window
+    await page.click("#nav .item:has-text('4.')");
+    await page.click("#preview-room");
+    const f = page.frameLocator(".preview iframe");
+    await f.locator("#stage h2:has-text('Room 4')").waitFor();
+    await f.locator("#try").click();
+    assert.match(await f.locator("#msg").textContent(), /Choose a category for every item first/);
+    assert.equal(await f.locator("#stage.shake").count(), 0, "no wrong-try shake for an incomplete answer");
     await page.close();
   });
 

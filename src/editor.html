@@ -175,7 +175,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
 /* ===================== State ===================== */
 let cfg = load() || clone(SAMPLE);
 let sel = "settings";      // "settings" | "intro" | "finish" | room index (number)
-let quizText = {};         // room index -> true when editing a quiz as plain text
+const quizText = new WeakSet();   // quiz rooms currently edited as plain text (keyed by room, so moving/deleting rooms can't mix them up)
 
 function load(){ try { const s = localStorage.getItem(STORE); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
 let saveTimer = null;
@@ -204,7 +204,7 @@ function field(label, obj, key, opts = {}){
     value: obj[key] ?? "", min: opts.min, max: opts.max,
     oninput: e => {
       obj[key] = opts.type === "number" ? Number(e.target.value) : e.target.value;
-      if (opts.item && opts.item.verified) { opts.item.verified = false; const box = e.target.closest(".entry"); if (box) { box.classList.remove("verified"); const c = box.querySelector(".verify input[type=checkbox]"); if (c) c.checked = false; } }
+      if (opts.item) unverify(opts.item, e.target);
       opts.onChange && opts.onChange(e);
       changed();
     }});
@@ -218,6 +218,11 @@ function select(label, obj, key, options, opts = {}){
     options.map(([v, t]) => h("option", { value: v }, t)));
   s.value = obj[key] ?? "";
   return h("label", { class: "field", for: id }, h("span", {}, label, opts.help ? h("small", {}, " — " + opts.help) : null), s);
+}
+/* Mark an item unchecked and update its checkbox without re-rendering (keeps typing focus). */
+function unverify(item, el){
+  if (!item.verified) return; item.verified = false;
+  const box = el.closest(".entry"); if (box) { box.classList.remove("verified"); const c = box.querySelector(".verify input[type=checkbox]"); if (c) c.checked = false; }
 }
 /* Source + "I checked this" row shown on every gradable item. */
 function verifyRow(item){
@@ -308,7 +313,7 @@ function editMatching(room){
       h("p", { class: "help" }, "Each card is a term or person. Give it a clue to make it part of the answer. A card with no clue is a decoy."),
       listEditor(room.cards, c => [
         h("div", { class: "row" }, field("Name on card", c, "term", { item: c, onChange: refreshAnswerKey }), field("Small detail", c, "detail", { help: "e.g. dates", item: c }),
-          field("Icon", c, "icon", { help: "emoji, optional" }), field("Fixed code", c, "code", { help: "optional", onChange: refreshAnswerKey })),
+          field("Icon", c, "icon", { help: "emoji, optional" }), field("Fixed code", c, "code", { help: "optional", item: c, onChange: refreshAnswerKey })),
         field("Clue (blank = decoy card)", c, "clue", { type: "textarea", rows: 2, item: c, onChange: refreshAnswerKey })
       ], { noun: "Card", blank: blankCard })),
     hintsEditor(room)
@@ -316,7 +321,7 @@ function editMatching(room){
 }
 
 function editQuiz(room, r){
-  const asText = !!quizText[r];
+  const asText = quizText.has(room);
   const body = asText ? quizTextEditor(room, r) : listEditor(room.questions, q => [
     field("Question", q, "prompt", { type: "textarea", rows: 2, item: q }),
     select("Answer type", q, "kind", [["short", "Short answer (typed)"], ["choice", "Multiple choice"]], { rerender: true, item: q }),
@@ -328,7 +333,7 @@ function editQuiz(room, r){
     h("div", { class: "box" }, h("h3", {}, "Questions"),
       h("p", { class: "help" }, "Students must get every question right to open the lock. They're told how many are right, not which ones."),
       h("div", { class: "row", style: "margin-bottom:.4rem" },
-        h("button", { onclick: () => { quizText[r] = !asText; render(); } }, asText ? "← Back to form view" : "✎ Edit all questions as text")),
+        h("button", { onclick: () => { asText ? quizText.delete(room) : quizText.add(room); render(); } }, asText ? "← Back to form view" : "✎ Edit all questions as text")),
       body),
     hintsEditor(room)
   ];
@@ -339,8 +344,8 @@ function choicesEditor(q){
   return h("div", { class: "field choices" }, h("span", {}, "Choices ", h("small", {}, "— select the correct one")),
     q.choices.map((c, j) => h("div", { class: "choice" },
       h("input", { type: "radio", name, checked: q.correct === j, "aria-label": `Choice ${j+1} is correct`, onchange: () => { q.correct = j; q.verified = false; changed(); render(); } }),
-      h("input", { type: "text", value: c, "aria-label": `Choice ${j+1}`, oninput: e => { q.choices[j] = e.target.value; q.verified = false; changed(); } }),
-      h("button", { class: "small danger", onclick: () => { q.choices.splice(j, 1); if (q.correct >= q.choices.length) q.correct = 0; changed(); render(); } }, "✕"))),
+      h("input", { type: "text", value: c, "aria-label": `Choice ${j+1}`, oninput: e => { q.choices[j] = e.target.value; unverify(q, e.target); changed(); } }),
+      h("button", { class: "small danger", "aria-label": `Delete choice ${j+1}`, onclick: () => { q.choices.splice(j, 1); if (j < q.correct) q.correct--; else if (j === q.correct) q.correct = -1; q.verified = false; changed(); render(); } }, "✕"))),
     h("div", {}, h("button", { class: "small", onclick: () => { q.choices.push(""); changed(); render(); } }, "+ Add choice")));
 }
 /* Plain-text quiz format:
@@ -349,7 +354,7 @@ function choicesEditor(q){
    Source: …              Verified: yes          (blank line between questions) */
 function quizToText(qs){
   return qs.map(q => [ `Q: ${q.prompt}`,
-    ...(q.kind === "choice" ? (q.choices || []).filter(c => String(c).trim()).map((c, j) => `${j === q.correct ? "*" : "-"} ${c}`) : [`A: ${q.answers}`]),
+    ...(q.kind === "choice" ? (q.choices || []).map((c, j) => [c, j]).filter(([c]) => String(c).trim()).map(([c, j]) => `${j === q.correct ? "*" : "-"} ${c}`) : [`A: ${q.answers}`]),
     q.source ? `Source: ${q.source}` : null, q.verified ? "Verified: yes" : null ].filter(x => x != null).join("\n")).join("\n\n");
 }
 function textToQuiz(text){
@@ -358,9 +363,9 @@ function textToQuiz(text){
     const q = blankQuestion(); q.choices = []; let hasA = false;
     block.split("\n").forEach(line => {
       const l = line.trim(); let m;
-      if ((m = l.match(/^q\s*[:.)]\s*(.*)$/i))) q.prompt = m[1];
-      else if ((m = l.match(/^a\s*[:.)]\s*(.*)$/i))) { q.answers = m[1]; hasA = true; }
-      else if ((m = l.match(/^([*-])\s*(.*)$/))) { if (m[1] === "*") q.correct = q.choices.length; q.choices.push(m[2]); }
+      if ((m = l.match(/^q\s*[:)]\s*(.*)$/i))) q.prompt = m[1];
+      else if ((m = l.match(/^a\s*[:)]\s*(.*)$/i))) { q.answers = m[1]; hasA = true; }
+      else if ((m = l.match(/^([*-])\s+(.*)$/))) { if (m[1] === "*") q.correct = q.choices.length; q.choices.push(m[2]); }
       else if ((m = l.match(/^source\s*:\s*(.*)$/i))) q.source = m[1];
       else if (/^verified\s*:\s*(yes|y|true|✔|✓)\s*$/i.test(l)) q.verified = true;
       else if (l) q.prompt = q.prompt ? q.prompt + " " + l : l;
@@ -378,16 +383,20 @@ function quizTextEditor(room, r){
   const ta = h("textarea", { class: "mono", rows: 18, "aria-label": "Questions as text", value: quizToText(room.questions) });
   const msg = h("div", {});
   return h("div", {},
-    h("div", { class: "notice" }, h("strong", {}, "Format: "), "one question per paragraph (leave a blank line between questions).",
+    h("div", { class: "notice" }, h("strong", {}, "Format: "), "one question per paragraph (leave a blank line between questions). Questions you add or change here come back un-checked; tick ✔ I checked this is correct in the form view after checking them.",
       h("pre", { class: "mono", style: "margin:.4rem 0 0;white-space:pre-wrap" },
         "Q: Who wrote Democracy and Education (1916)?\nA: John Dewey | Dewey\nSource: Ch. 3, p. 45\n\nQ: Which philosophy focuses on the \"Great Books\"?\n- Essentialism\n* Perennialism\n- Existentialism\nVerified: yes")),
     ta, msg,
     h("div", { class: "row", style: "margin-top:.5rem" },
       h("button", { onclick: () => {
         const { questions, problems } = textToQuiz(ta.value);
+        const same = (a, b) => a.prompt === b.prompt && a.kind === b.kind && (a.kind === "choice"
+          ? a.correct === b.correct && JSON.stringify(a.choices.filter(c => String(c).trim())) === JSON.stringify((b.choices || []).filter(c => String(c).trim()))
+          : a.answers === b.answers);
+        questions.forEach(q => { if (q.verified) q.verified = room.questions.some(old => old.verified && same(q, old)); });
         msg.replaceChildren(problems.length ? h("div", { class: "errors" }, h("strong", {}, "Please fix:"), h("ul", {}, problems.map(p => h("li", {}, p)))) : "");
         if (problems.length) return;
-        room.questions = questions; changed(); toast(`Saved ${questions.length} questions.`); quizText[r] = false; render();
+        room.questions = questions; changed(); toast(`Saved ${questions.length} questions.`); quizText.delete(room); render();
       } }, "Use this text")));
 }
 
@@ -407,7 +416,7 @@ function editSorting(room){
   return [ commonRoomFields(room),
     h("div", { class: "box" }, h("h3", {}, "Categories"),
       room.categories.map((c, j) => h("div", { class: "row" }, field(`Category ${j+1}`, room.categories, j, { onChange: () => {} }),
-        room.categories.length > 2 ? h("button", { class: "small danger", onclick: () => { room.categories.splice(j, 1); room.items.forEach(it => { if (it.category === j) it.category = 0; else if (it.category > j) it.category--; }); changed(); render(); } }, "Remove") : null)),
+        room.categories.length > 2 ? h("button", { class: "small danger", onclick: () => { room.categories.splice(j, 1); room.items.forEach(it => { if (it.category === j) { it.category = -1; it.verified = false; } else if (it.category > j) it.category--; }); changed(); render(); } }, "Remove") : null)),
       h("button", { onclick: () => { room.categories.push(""); changed(); render(); } }, "+ Add category")),
     h("div", { class: "box" }, h("h3", {}, "Items to sort"),
       listEditor(room.items, it => h("div", { class: "row" },
@@ -521,7 +530,7 @@ function renderNav(){
       const pill = st.total ? h("span", { class: "pill" + (st.left ? "" : " ok"), title: `${st.total - st.left} of ${st.total} checked` }, st.left ? `${st.left} to check` : "✔ checked") : null;
       const el = item(r, TYPES[room.type]?.icon || "🚪", `${r+1}. ${room.title || "Untitled"}`, pill);
       el.append(h("span", { class: "acts" },
-        h("button", { class: "small", title: "Move up", "aria-label": `Move room ${r+1} up`, disabled: r === 0, onclick: e => { e.stopPropagation(); [cfg.rooms[r-1], cfg.rooms[r]] = [cfg.rooms[r], cfg.rooms[r-1]]; if (sel === r) sel = r - 1; changed(); render(); } }, "▲"),
+        h("button", { class: "small", title: "Move up", "aria-label": `Move room ${r+1} up`, disabled: r === 0, onclick: e => { e.stopPropagation(); [cfg.rooms[r-1], cfg.rooms[r]] = [cfg.rooms[r], cfg.rooms[r-1]]; if (sel === r) sel = r - 1; else if (sel === r - 1) sel = r; changed(); render(); } }, "▲"),
         h("button", { class: "small danger", title: "Delete room", "aria-label": `Delete room ${r+1}`, onclick: e => { e.stopPropagation(); if (confirm(`Delete room ${r+1} "${room.title}"? This can't be undone.`)) { cfg.rooms.splice(r, 1); sel = "settings"; changed(); render(); } } }, "✕")));
       return el;
     }),

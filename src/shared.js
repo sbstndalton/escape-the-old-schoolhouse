@@ -8,7 +8,10 @@ const ER = (() => {
   const paras = (s, cls = "") => String(s ?? "").split(/\n\s*\n/).map(p => p.trim()).filter(Boolean)
     .map(p => `<p${cls ? ` class="${cls}"` : ""}>${fmt(p).replace(/\n/g, "<br>")}</p>`).join("");
   // For comparing typed answers: case, accents, punctuation and extra spaces don't matter.
+  // Letters that don't decompose into base letter + accent, so "Søren" matches "Soren".
+  const FOLD = { "ø": "o", "æ": "ae", "œ": "oe", "ß": "ss", "ł": "l", "đ": "d", "ð": "d", "þ": "th", "ı": "i" };
   const norm = s => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/[øæœßłđðþı]/g, c => FOLD[c]).replace(/['\u2018\u2019`]/g, "")   // "Plato's" = "Platos"
     .replace(/[^a-z0-9]+/g, " ").trim();
   const accepted = a => String(a ?? "").split("|").map(norm).filter(Boolean);
 
@@ -34,7 +37,7 @@ const ER = (() => {
     const display = [...cards].sort((a, b) => String(a.term).localeCompare(String(b.term)));
     const numbers = room.codeStyle === "numbers";
     const code = {}; const used = new Set();
-    cards.forEach(c => { const v = String(c.code || "").trim().toUpperCase(); if (v) { code[c.k] = v; used.add(v); } });
+    cards.forEach(c => { const v = String(c.code || "").replace(/\s+/g, "").toUpperCase(); if (v) { code[c.k] = v; used.add(v); } });
     const word = String(room.codeWord || "").replace(/\s+/g, "").toUpperCase();
     if (!numbers && word && word.length === answerCards.length) {
       answerCards.forEach((c, i) => { if (!code[c.k]) { code[c.k] = word[i]; used.add(word[i]); } });
