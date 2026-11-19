@@ -102,6 +102,8 @@ footer a{font-weight:700;text-underline-offset:.2em}
 #display-toggles{display:flex;flex-wrap:wrap;gap:.8rem}
 .switch{display:inline-flex;flex-wrap:wrap;max-width:100%;text-align:left;align-items:center;gap:.6rem;min-height:2.75rem;padding:.35rem .9rem;font:400 1rem/1.2 var(--f-r);color:var(--parch);background:#1c140d;border:2px solid #a08850;border-radius:3px;cursor:pointer}
 .switch .st{font-weight:700;min-width:1.8em}
+.switch .a11y-ico{width:1.3rem;height:1.3rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.switch .a11y-ico circle{fill:currentColor;stroke:none}
 .switch .track{position:relative;width:2.4rem;height:1.3rem;border:2px solid currentColor;border-radius:1rem;flex:none}
 .switch .track::after{content:"";position:absolute;top:.12rem;left:.15rem;width:.8rem;height:.8rem;border-radius:50%;background:currentColor}
 .switch[aria-checked=true] .track::after{left:auto;right:.15rem}
@@ -209,6 +211,7 @@ html[data-contrast=more] footer :focus-visible,html[data-contrast=more] .door h2
   <div id="display-toggles" role="group" aria-label="Display">
     <button type="button" class="switch" id="contrast-toggle" role="switch" aria-checked="false"><span class="track" aria-hidden="true"></span><span class="lbl">High contrast</span><span class="st" aria-hidden="true">off</span></button>
     <button type="button" class="switch" id="readable-toggle" role="switch" aria-checked="false"><span class="track" aria-hidden="true"></span><span class="lbl">Readable text</span><span class="st" aria-hidden="true">off</span></button>
+    <button type="button" class="switch" id="a11y-options" aria-haspopup="dialog"><svg class="a11y-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="4.5" r="2"/><path d="M4.5 8.5 12 10l7.5-1.5M12 10v4.5l-3.5 6.5M12 14.5l3.5 6.5"/></svg><span class="lbl">Accessibility options</span></button>
   </div>
 </footer>
 </div>
@@ -251,6 +254,12 @@ function prefOn(p){ const v = store.get(p.key); return v === "on" ? true : v ===
 function paint(p){ const on = prefOn(p), b = $(p.btn); root.dataset[p.attr] = on ? p.on : p.off; b.setAttribute("aria-checked", on ? "true" : "false"); b.querySelector(".st").textContent = on ? "on" : "off"; }
 Object.values(PREF).forEach(p => { paint(p);
   $(p.btn).onclick = () => { const on = !prefOn(p); store.set(p.key, on ? "on" : "off"); paint(p); say(`${$(p.btn).querySelector(".lbl").textContent} is ${on ? "on" : "off"}.`); }; });
+/* The first-visit accessibility prompt, shared with the game and the maker (ER.a11yAskOpen in shared.js): asked once
+   per browser, and always reachable again from "Accessibility options" at the foot of the page. */
+const askA11y = opener => ER.a11yAskOpen({ where: "front", opener,
+  set: (id, on) => { ER.a11yStore.set(ER.A11Y_OPTIONS.find(o => o.id === id).key, on ? "on" : "off"); if (PREF[id]) paint(PREF[id]); } });
+$("#a11y-options").onclick = e => askA11y(e.currentTarget);
+if (!ER.a11yAsked()) askA11y();
 /* A class link opened straight on this page (an old bookmark) goes on to the game (see the script at the top). */
 addEventListener("hashchange", () => { if (/^#play=/.test(location.hash)) location.replace("play.html" + location.hash); });
 </script>

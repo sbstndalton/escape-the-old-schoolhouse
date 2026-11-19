@@ -1437,6 +1437,21 @@ READ.pick();
 $("#read-toggle").onclick = READ.toggle; $("#read-rate").onclick = READ.speed;
 document.addEventListener("click", e => { const b = e.target.closest && e.target.closest(".listen"); if (b) { e.stopPropagation(); READ.press(b); } }, true);
 
+/* ===================== The first-visit accessibility prompt ===================== */
+/* Shared with the front page and the maker (ER.a11yAskOpen in shared.js; one flag, escape-room-a11y-asked). Here it
+   opens first thing on the title screen of a first visit (never in the editor's preview), and "Accessibility options"
+   on the title screen opens it again. Its switches drive the notebook's own switches, so every setting is stored,
+   applied and announced exactly as it is from the notebook, and shows at once behind the dialog. */
+const ASK_SW = { readable: "#readable-toggle", contrast: "#contrast-toggle", motion: "#motion-toggle", sound: "#sound-toggle-2", read: "#read-toggle", clock: "#clock-toggle" };
+function askA11y(opener){
+  READ.stop();
+  return ER.a11yAskOpen({ where: "game", opener,
+    later: "You can change them at any time with “Accessibility options” on the first screen, or in the notebook (the pocket watch).",
+    get: id => $(ASK_SW[id]).getAttribute("aria-checked") === "true",
+    set: (id, on) => { const b = $(ASK_SW[id]); if ((b.getAttribute("aria-checked") === "true") !== on) b.onclick(); },
+    locked: id => id === "motion" && RM.matches ? "Your device asks for less motion, so it stays off." : "" });
+}
+
 /* ===================== Clock (the pocket watch) ===================== */
 function fmtTime(sec){ return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0"); }
 function elapsed(){ if (!S.start) return 0; const now = S.end || S.pausedAt || Date.now(); return Math.max(0, Math.floor((now - S.start - S.pausedMs)/1000)); }
@@ -1792,6 +1807,7 @@ function intro(){
     <p class="placard"><span aria-hidden="true">${esc(title)}</span>${CFG.meta?.course ? `<small>${esc(CFG.meta.course)}</small>` : ""}</p>
     <h2 class="said" tabindex="-1">${esc(CFG.intro?.heading || title)}</h2>
     ${storyBtn(CFG.intro?.story)}
+    <button type="button" class="desc" id="a11y-options" aria-haspopup="dialog">${svg("0 0 16 16", `<circle cx="8" cy="2.600" r="1.500" fill="currentColor"/><path d="M2.500 5.500 8 6.600l5.500-1.100M8 6.600v3.400l-2.600 4.600M8 10l2.600 4.600" ${line}/>`)}<span>Accessibility options</span></button>
   </div>
   <div class="obj"><div class="titlerow deskrow">
     <div class="ledger"><label for="pname">Sign the guest ledger <span class="opt">(your name, for the certificate)</span></label>
@@ -1803,6 +1819,7 @@ function intro(){
   <button type="button" id="begin" class="pushplate">Begin<small>push to enter</small></button>`;
   const begin = () => { S.player = ($("#pname").value||"").trim() || "Student"; startTimer(); SND.play("press"); go(1); };
   $("#begin").onclick = begin;
+  $("#a11y-options").onclick = e => askA11y(e.currentTarget);
   $("#pname").onkeydown = e => { if (e.key === "Enter") begin(); };
   $("#pname").oninput = () => SND.play("key");
 }
@@ -2210,6 +2227,7 @@ function start(){
     d.onclick = () => { const open = d.getAttribute("aria-expanded") !== "true"; d.setAttribute("aria-expanded", open); more.hidden = !open; SND.play("rustle"); };
   }
   fit(); renderDoors(); go(0);
+  if (!PREVIEW && !ER.a11yAsked()) askA11y(stage.querySelector("h2"));     // first visit: the accessibility prompt, first thing
 }
 /* A class link carries its own escape room in the address (#play=…), which is played instead of the one in this
    file. Anyone can make a link, so its content is untrusted: ER.fromLink limits its size, keeps only the shapes the

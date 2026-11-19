@@ -1639,6 +1639,168 @@ ER.qrSvg = (text, { label = "QR code" } = {}) => {
   const n = q.size + 8;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" role="img" aria-label="${ER.esc(label)}" shape-rendering="crispEdges"><rect width="${n}" height="${n}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
 };
+/* ---------- the first-visit accessibility prompt (ER.a11yAsk…) ----------
+ * One dialog, used by the front page, the game's title screen and the maker's Welcome step: "Before you start: make
+ * it easier to use?" with big switches for the settings all three share (the same localStorage keys), "Continue"
+ * and "Continue without changes". It is asked once per browser: escape-room-a11y-asked, shared by all three pages.
+ * Each switch applies at once (the page's set() hook), so the change shows behind the dialog. "Continue without
+ * changes" and Esc put back what the person had when it opened. Every page also has a visible "Accessibility
+ * options" control that opens it again. Only the dialog's own markup, CSS and keyboard handling live here; the page
+ * says how to read and apply each setting. */
+ER.A11Y_ASKED = "escape-room-a11y-asked";
+ER.A11Y_OPTIONS = [
+  { id: "readable", key: "escape-room-readable", label: "Readable text", line: "Bigger, clearer letters, with more space between lines and words." },
+  { id: "contrast", key: "escape-room-contrast", label: "High contrast", line: "Solid backgrounds and strong black-and-white text, with no textures or lamplight." },
+  { id: "motion", key: "escape-room-motion", label: "Motion", line: "Doors swing, dials slide and stamps thump in the game. Off: everything stays still.", game: true },
+  { id: "sound", key: "escape-room-sound", label: "Sound", line: "Small sound effects in the game. Every sound also comes with words on screen.", game: true },
+  { id: "read", key: "escape-room-read", label: "Listen buttons (read aloud)", line: "A Listen button on each paper in the game reads it aloud with a voice on this device.", game: true },
+  { id: "clock", key: "escape-room-clock", label: "Hide the clock", line: "Hides the game’s timer. There is no time limit either way.", game: true },
+];
+(() => {
+  const mem = {};                 // used where the browser blocks storage (often inside an LMS frame)
+  const store = {
+    get(k) { try { const v = localStorage.getItem(k); if (v != null) return v; } catch (e) {} return mem[k] == null ? null : mem[k]; },
+    set(k, v) { mem[k] = v; try { localStorage.setItem(k, v); } catch (e) {} },
+  };
+  ER.a11yStore = store;
+  const mq = q => { try { return !!(typeof matchMedia === "function" && matchMedia(q).matches); } catch (e) { return false; } };
+  /* What a setting is now, the way the game reads it: a choice that was saved, else the device's wish, else the default. */
+  ER.a11yPref = id => {
+    const o = ER.A11Y_OPTIONS.find(x => x.id === id); if (!o) return false;
+    const v = store.get(o.key);
+    if (id === "motion") return !mq("(prefers-reduced-motion: reduce)") && v !== "off";
+    if (id === "contrast") return v === "on" ? true : v === "off" ? false : mq("(prefers-contrast: more)");
+    if (id === "sound" || id === "read") return v !== "off";
+    return v === "on";
+  };
+  /* Asked already? Where the browser can't keep anything (storage blocked, as in some LMS frames) the answer couldn't
+     be remembered, so it would open on every visit: there it counts as asked, and the Accessibility options button
+     still opens it. */
+  ER.a11yAsked = () => {
+    try { localStorage.setItem("escape-room-probe", "1"); localStorage.removeItem("escape-room-probe"); } catch (e) { return true; }
+    return store.get(ER.A11Y_ASKED) != null;
+  };
+  const CSS = `
+.a11yq{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;padding:1rem;overflow:hidden auto;
+  background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(120,78,30,.55),rgba(24,15,7,.9) 60%,rgba(4,3,2,.97))}
+.a11yq-sheet{position:relative;flex:none;width:min(36rem,100%);min-width:0;max-width:100%;margin:auto;overflow-wrap:break-word;padding:1.6rem 1.7rem 1.4rem;color:#2a1d14;text-align:left;
+  font:400 1.0625rem/1.5 "Atkinson Hyperlegible",Verdana,"Segoe UI",Arial,sans-serif;letter-spacing:normal;
+  background:linear-gradient(175deg,#f3e8cf,#e6d7b5);border-radius:.25rem;box-shadow:inset 0 0 0 1px rgba(42,29,20,.45),inset 0 0 0 .4rem #efe3c8,inset 0 0 0 .46rem rgba(42,29,20,.35),.4rem 1.2rem 2.2rem rgba(0,0,0,.7)}
+.a11yq-sheet h2{margin:0 0 .4rem;font:400 1.5rem/1.25 "IM Fell English SC","IM Fell English",Georgia,serif;letter-spacing:.04em;color:#5e140d}
+#a11y-ask h2:focus{outline:none!important;box-shadow:none!important}   /* focus lands on the heading so it is read; it is not a control */
+.a11yq-lead{margin:0 0 .9rem}
+.a11yq-list{list-style:none;margin:0;padding:0;border-top:1px solid rgba(42,29,20,.45)}
+.a11yq-list li{margin:0;padding:.35rem 0 .5rem;border-bottom:1px solid rgba(42,29,20,.45)}
+.a11yq-sw{display:flex;align-items:center;gap:.8rem;width:100%;min-height:2.9rem;padding:.3rem .25rem;margin:0;border:0;background:none;color:inherit;font-family:inherit;font-size:1.125rem;font-weight:700;line-height:1.3;letter-spacing:normal;text-align:left;cursor:pointer}
+.a11yq-track{position:relative;flex:none;width:3.3rem;height:1.85rem;border-radius:1rem;background:#fffaf0;border:2px solid #2a1d14}
+.a11yq-track::after{content:"";position:absolute;top:.17rem;left:.2rem;width:1.25rem;height:1.25rem;border-radius:50%;background:#2a1d14}
+.a11yq-sw[aria-checked=true] .a11yq-track{background:#2a1d14}
+.a11yq-sw[aria-checked=true] .a11yq-track::after{left:auto;right:.2rem;background:#f6dfa0}
+.a11yq-sw[aria-disabled=true]{cursor:default}
+.a11yq-sw[aria-disabled=true] .a11yq-track{border-style:dashed}
+.a11yq-lbl{flex:1;min-width:0}
+.a11yq-st{flex:none;min-width:2.2rem;text-align:right}
+.a11yq-sw[aria-checked=true] .a11yq-st{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.2em}
+.a11yq-d{margin:0 0 0 4.35rem;font-size:1rem;line-height:1.5;color:#3a2c1c}
+.a11yq-d em{font-style:normal;font-weight:700}
+.a11yq-sr{margin:1rem 0 1.1rem;padding:.6rem .8rem;font-size:1rem;border-left:4px solid #6e1a12;background:rgba(255,250,240,.6)}
+.a11yq-btns{display:flex;flex-wrap:wrap;gap:.7rem 1rem;align-items:center}
+.a11yq-btns button{min-height:2.9rem;padding:.6rem 1.3rem;margin:0;font-family:inherit;font-size:1.0625rem;font-weight:700;line-height:1.2;letter-spacing:normal;border-radius:.25rem;cursor:pointer;color:#1d1205}
+.a11yq-ok{background:linear-gradient(170deg,#f8e4a8,#dcbb69 60%,#cba858);border:2px solid #4a360f;box-shadow:0 .2rem .4rem rgba(0,0,0,.35)}
+.a11yq-skip{background:transparent;border:2px solid #2a1d14}
+.a11yq button:focus{outline:none}
+.a11yq button:focus-visible,.a11yq button.kf:focus{outline:3px solid #120d09!important;outline-offset:3px!important;box-shadow:0 0 0 3px #ffe7ae!important}
+.a11yq-sw:hover .a11yq-lbl,.a11yq-skip:hover{text-decoration:underline}
+.a11yq-ok:hover{filter:brightness(1.07)}
+html[data-readable=on] .a11yq-sheet{font-size:1.15rem;line-height:1.6;word-spacing:.08em}
+html[data-readable=on] .a11yq-sheet h2{font-family:"Atkinson Hyperlegible",Verdana,Arial,sans-serif;font-weight:700;letter-spacing:0}
+html[data-contrast=more] .a11yq{background:rgba(0,0,0,.94)}
+html[data-contrast=more] .a11yq-sheet{background:#fffaf0;color:#000;border:3px solid #fff;box-shadow:none}
+html[data-contrast=more] .a11yq-sheet h2,html[data-contrast=more] .a11yq-d{color:#000}
+html[data-contrast=more] .a11yq-sr{background:#fff;border-color:#000}
+html[data-contrast=more] .a11yq-ok{background:#f6dfa0;border-color:#000;box-shadow:none}
+html[data-contrast=more] .a11yq-track{border-color:#000}
+html[data-contrast=more] .a11yq-sw{border:2px solid #000;margin:.15rem 0}
+@media (forced-colors: active){
+  .a11yq{background:Canvas}
+  .a11yq-sheet{background:Canvas;color:CanvasText;border:2px solid CanvasText}
+  .a11yq-btns button,.a11yq-sw{border:1px solid ButtonText;color:ButtonText;background:ButtonFace}
+  .a11yq-track{border-color:ButtonText;background:ButtonFace}
+  .a11yq-track::after{background:ButtonText}
+  .a11yq-sw[aria-checked=true] .a11yq-track{background:Highlight}
+  .a11yq-sw[aria-checked=true] .a11yq-track::after{background:HighlightText}
+  .a11yq-sr{border-color:CanvasText}
+  .a11yq button:focus-visible{outline-color:Highlight!important}
+}
+@media (prefers-reduced-motion: no-preference){ html:not([data-motion=off]) .a11yq-sheet{animation:a11yq-in .22s ease-out} }
+@keyframes a11yq-in{from{opacity:0;transform:translateY(.6rem)}to{opacity:1;transform:none}}
+@media (min-width:62em){ .a11yq-sheet{width:min(56rem,100%)} .a11yq-list{display:grid;grid-template-columns:1fr 1fr;column-gap:2rem} }
+@media (max-width:30em){ .a11yq{padding:.5rem} .a11yq-sheet{padding:1.2rem 1.1rem 1.1rem} .a11yq-d{margin-left:0} }`;
+  let open = null;
+  /* ER.a11yAskOpen({ get(id), set(id, on), locked(id) -> reason or "", where: "game"|"front"|"maker", later, opener, modal, onClose(kept) })
+     get/set default to the shared storage; modal is { open(el, onEsc, opener) -> handle, close(handle) } (the
+     maker's own modal layer, which then makes the page inert, loops Tab and handles Esc); without it the dialog
+     does those itself. Returns the dialog element. */
+  ER.a11yAskOpen = (opts = {}) => {
+    if (open) return open.el;
+    const doc = document, esc = ER.esc;
+    const get = opts.get || (id => ER.a11yPref(id));
+    const set = opts.set || ((id, on) => { const o = ER.A11Y_OPTIONS.find(x => x.id === id); store.set(o.key, on ? "on" : "off"); });
+    const locked = opts.locked || (id => id === "motion" && mq("(prefers-reduced-motion: reduce)") ? "Your device asks for less motion, so it stays off." : "");
+    if (!doc.getElementById("a11yq-style")) { const st = doc.createElement("style"); st.id = "a11yq-style"; st.textContent = CSS; doc.head.appendChild(st); }
+    const before = {}; ER.A11Y_OPTIONS.forEach(o => { before[o.id] = !!get(o.id); });
+    const later = opts.later || "You can change them at any time with “Accessibility options”.";
+    const el = doc.createElement("div");
+    el.className = "a11yq"; el.id = "a11y-ask"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "a11y-ask-h"); el.setAttribute("aria-describedby", "a11y-ask-lead");
+    el.innerHTML = `<div class="a11yq-sheet"><h2 id="a11y-ask-h" tabindex="-1">Before you start: make it easier to use?</h2>
+      <p class="a11yq-lead" id="a11y-ask-lead">Turn on anything that helps. Each switch works straight away. ${esc(later)}</p>
+      <ul class="a11yq-list" role="list">${ER.A11Y_OPTIONS.map(o => `<li><button type="button" class="a11yq-sw" role="switch" id="a11y-ask-${o.id}" aria-checked="false" aria-describedby="a11y-ask-${o.id}-d"><span class="a11yq-track" aria-hidden="true"></span><span class="a11yq-lbl">${esc(o.label)}</span><span class="a11yq-st" aria-hidden="true">off</span></button>
+        <p class="a11yq-d" id="a11y-ask-${o.id}-d">${esc(o.line)}${o.game && opts.where !== "game" ? " <em>(In the game.)</em>" : ""}<span class="a11yq-why"></span></p></li>`).join("")}</ul>
+      <p class="a11yq-sr">Using a screen reader, switch control or keyboard? Everything works with them; there’s nothing to turn on.</p>
+      <div class="a11yq-btns"><button type="button" class="a11yq-ok" id="a11y-ask-ok">Continue</button><button type="button" class="a11yq-skip" id="a11y-ask-skip">Continue without changes</button></div></div>`;
+    const paint = () => ER.A11Y_OPTIONS.forEach(o => {
+      const b = el.querySelector("#a11y-ask-" + o.id), on = !!get(o.id), why = locked(o.id);
+      b.setAttribute("aria-checked", on ? "true" : "false"); b.querySelector(".a11yq-st").textContent = on ? "on" : "off";
+      if (why) b.setAttribute("aria-disabled", "true"); else b.removeAttribute("aria-disabled");
+      el.querySelector(`#a11y-ask-${o.id}-d .a11yq-why`).textContent = why ? " " + why : "";
+    });
+    const behind = [], back = opts.opener || doc.activeElement;
+    let handle = null;
+    const keys = e => {
+      if (opts.modal) return;              // the maker's modal layer loops Tab and calls onEsc
+      if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); close(false); return; }
+      if (e.key !== "Tab") return;
+      const f = [...el.querySelectorAll("button")].filter(b => b.getClientRects().length);
+      const i = f.indexOf(doc.activeElement), j = e.shiftKey ? (i <= 0 ? f.length - 1 : i - 1) : (i === f.length - 1 || i < 0 ? 0 : i + 1);
+      e.preventDefault(); e.stopImmediatePropagation(); f[j].focus();
+    };
+    function close(keep) {
+      if (!open) return; open = null;
+      if (!keep) ER.A11Y_OPTIONS.forEach(o => { if (!locked(o.id) && !!get(o.id) !== before[o.id]) set(o.id, before[o.id]); });
+      store.set(ER.A11Y_ASKED, keep ? "continue" : "skip");
+      window.removeEventListener("keydown", keys, true);
+      el.remove();
+      if (opts.modal && handle) opts.modal.close(handle);
+      else { behind.forEach(n => { n.inert = false; }); if (back && back.isConnected && back.focus) back.focus(); }
+      if (opts.onClose) opts.onClose(keep);
+    }
+    el.addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.id === "a11y-ask-ok") return close(true);
+      if (b.id === "a11y-ask-skip") return close(false);
+      const o = ER.A11Y_OPTIONS.find(x => "a11y-ask-" + x.id === b.id); if (!o || locked(o.id)) return;
+      set(o.id, !get(o.id)); paint();
+    });
+    doc.body.appendChild(el); paint();
+    if (opts.modal) handle = opts.modal.open(el, () => close(false), back);
+    else [...doc.body.children].forEach(n => { if (n !== el && !n.inert && n.tagName !== "SCRIPT" && n.tagName !== "STYLE" && !n.hasAttribute("aria-live") /* the live region stays live */) { n.inert = true; behind.push(n); } });
+    window.addEventListener("keydown", keys, true);
+    open = { el, close };
+    el.querySelector("h2").focus();
+    return el;
+  };
+  ER.a11yAskClose = keep => { if (open) open.close(!!keep); };
+})();
 if (typeof module !== "undefined") module.exports = ER;
 
 </script>
@@ -2006,6 +2168,21 @@ READ.pick();
 $("#read-toggle").onclick = READ.toggle; $("#read-rate").onclick = READ.speed;
 document.addEventListener("click", e => { const b = e.target.closest && e.target.closest(".listen"); if (b) { e.stopPropagation(); READ.press(b); } }, true);
 
+/* ===================== The first-visit accessibility prompt ===================== */
+/* Shared with the front page and the maker (ER.a11yAskOpen in shared.js; one flag, escape-room-a11y-asked). Here it
+   opens first thing on the title screen of a first visit (never in the editor's preview), and "Accessibility options"
+   on the title screen opens it again. Its switches drive the notebook's own switches, so every setting is stored,
+   applied and announced exactly as it is from the notebook, and shows at once behind the dialog. */
+const ASK_SW = { readable: "#readable-toggle", contrast: "#contrast-toggle", motion: "#motion-toggle", sound: "#sound-toggle-2", read: "#read-toggle", clock: "#clock-toggle" };
+function askA11y(opener){
+  READ.stop();
+  return ER.a11yAskOpen({ where: "game", opener,
+    later: "You can change them at any time with “Accessibility options” on the first screen, or in the notebook (the pocket watch).",
+    get: id => $(ASK_SW[id]).getAttribute("aria-checked") === "true",
+    set: (id, on) => { const b = $(ASK_SW[id]); if ((b.getAttribute("aria-checked") === "true") !== on) b.onclick(); },
+    locked: id => id === "motion" && RM.matches ? "Your device asks for less motion, so it stays off." : "" });
+}
+
 /* ===================== Clock (the pocket watch) ===================== */
 function fmtTime(sec){ return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0"); }
 function elapsed(){ if (!S.start) return 0; const now = S.end || S.pausedAt || Date.now(); return Math.max(0, Math.floor((now - S.start - S.pausedMs)/1000)); }
@@ -2361,6 +2538,7 @@ function intro(){
     <p class="placard"><span aria-hidden="true">${esc(title)}</span>${CFG.meta?.course ? `<small>${esc(CFG.meta.course)}</small>` : ""}</p>
     <h2 class="said" tabindex="-1">${esc(CFG.intro?.heading || title)}</h2>
     ${storyBtn(CFG.intro?.story)}
+    <button type="button" class="desc" id="a11y-options" aria-haspopup="dialog">${svg("0 0 16 16", `<circle cx="8" cy="2.600" r="1.500" fill="currentColor"/><path d="M2.500 5.500 8 6.600l5.500-1.100M8 6.600v3.400l-2.600 4.600M8 10l2.600 4.600" ${line}/>`)}<span>Accessibility options</span></button>
   </div>
   <div class="obj"><div class="titlerow deskrow">
     <div class="ledger"><label for="pname">Sign the guest ledger <span class="opt">(your name, for the certificate)</span></label>
@@ -2372,6 +2550,7 @@ function intro(){
   <button type="button" id="begin" class="pushplate">Begin<small>push to enter</small></button>`;
   const begin = () => { S.player = ($("#pname").value||"").trim() || "Student"; startTimer(); SND.play("press"); go(1); };
   $("#begin").onclick = begin;
+  $("#a11y-options").onclick = e => askA11y(e.currentTarget);
   $("#pname").onkeydown = e => { if (e.key === "Enter") begin(); };
   $("#pname").oninput = () => SND.play("key");
 }
@@ -2779,6 +2958,7 @@ function start(){
     d.onclick = () => { const open = d.getAttribute("aria-expanded") !== "true"; d.setAttribute("aria-expanded", open); more.hidden = !open; SND.play("rustle"); };
   }
   fit(); renderDoors(); go(0);
+  if (!PREVIEW && !ER.a11yAsked()) askA11y(stage.querySelector("h2"));     // first visit: the accessibility prompt, first thing
 }
 /* A class link carries its own escape room in the address (#play=…), which is played instead of the one in this
    file. Anyone can make a link, so its content is untrusted: ER.fromLink limits its size, keeps only the shapes the

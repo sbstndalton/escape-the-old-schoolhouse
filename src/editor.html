@@ -849,6 +849,7 @@
   <div class="wtop" role="banner">
     <p class="brand">Escape room maker</p>
     <a class="cut" id="wiz-home" href="index.html">Front page</a>
+    <button type="button" class="cut" id="wiz-a11y" aria-haspopup="dialog">Accessibility options</button>
     <div id="wiz-save-slot"></div>
   </div>
   <div class="wbody">
@@ -923,6 +924,17 @@ function applyDisplay(){
   document.querySelectorAll("main textarea, #wizard textarea").forEach(grow);
 }
 [mqContrast, mqForced].forEach(m => m.addEventListener && m.addEventListener("change", applyDisplay));
+/* The first-visit accessibility prompt, shared with the front page and the game (ER.a11yAskOpen in shared.js). It is
+   asked once per browser, on the Welcome step, and "Accessibility options" (here and in the guided steps' top bar)
+   opens it again. The game-only settings it holds are kept for the student preview and the game. */
+function askA11y(opener){
+  return ER.a11yAskOpen({ where: "maker", opener,
+    get: id => id === "contrast" ? contrastOn() : id === "readable" ? readableOn() : ER.a11yPref(id),
+    set: (id, on) => { prefSet(ER.A11Y_OPTIONS.find(o => o.id === id).key, on ? "on" : "off"); applyDisplay(); },
+    locked: id => id === "contrast" && mqForced.matches ? "Your device’s forced colours keep it on." :
+      id === "motion" && matchMedia("(prefers-reduced-motion: reduce)").matches ? "Your device asks for less motion, so it stays off." : "",
+    modal: { open: (el, onEsc, back) => modalOpen(el, onEsc, back), close: m => modalClose(m) } });
+}
 
 /* Said quietly to screen readers when something changes that sighted teachers simply see. */
 let sayTimer = 0;
@@ -1689,7 +1701,8 @@ function renderNav(){
       h("div", { class: "opt" }, toggle("contrast-toggle", "High contrast", contrastOn(), on => { prefSet(PREF.contrast, on ? "on" : "off"); applyDisplay(); say(`High contrast ${contrastOn() ? "on" : "off"}.`); }),
         tip("Plain backgrounds, black on white, and heavier outlines, here and in the student preview. It follows your system's contrast setting until you choose.", "High contrast")),
       h("div", { class: "opt" }, toggle("readable-toggle", "Readable text", readableOn(), on => { prefSet(PREF.readable, on ? "on" : "off"); applyDisplay(); say(`Readable text ${on ? "on" : "off"}.`); }),
-        tip("A plain, larger typeface with more room between letters and lines, in place of the old-book lettering.", "Readable text"))),
+        tip("A plain, larger typeface with more room between letters and lines, in place of the old-book lettering.", "Readable text")),
+      h("button", { type: "button", class: "cut", id: "a11y-options", "aria-haspopup": "dialog", onclick: e => askA11y(e.currentTarget) }, "Accessibility options")),
     cabSave].filter(Boolean));
 }
 let meterText = "", navSig = "", cabSave = null;
@@ -1917,7 +1930,8 @@ document.getElementById("btn-export").onclick = () => {
 };
 document.getElementById("btn-guided").onclick = () => { closeTools(); wizGo(hashFor(stored ? "hub" : "welcome")); };
 document.getElementById("wiz-save-slot").replaceWith(saveStatus("wiz-save", "save"));
-if (!/^https?:$/.test(location.protocol)) document.getElementById("wiz-home").remove();   // a copy of the maker opened as a file has no front page beside it
+if (!/^https?:$/.test(location.protocol)) document.getElementById("wiz-home").remove();
+document.getElementById("wiz-a11y").onclick = e => askA11y(e.currentTarget);   // a copy of the maker opened as a file has no front page beside it
 document.getElementById("btn-save").onclick = () => { download(`${slug()}-project.json`, JSON.stringify(cfg, null, 2), "application/json"); toast("Project saved. Open it again with Open…"); };
 document.getElementById("btn-open").onclick = () => document.getElementById("file").click();
 document.getElementById("file").onchange = async e => {
@@ -2052,6 +2066,7 @@ function routeTo(r, focus){
   const n = stepNo(r.step); if (n > (meta.reached || 0) && stored) { meta.reached = n; saveMeta(); }
   renderWizard(focus ? "heading" : null);
   if (focus) scrollTo(0, 0);
+  if (r.step === "welcome" && !ER.a11yAsked()) askA11y(document.getElementById("wiz-h1"));   // first visit: asked once, first thing
 }
 
 /* ---------- small builders for the steps ---------- */
