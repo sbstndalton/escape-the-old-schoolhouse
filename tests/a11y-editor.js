@@ -48,7 +48,7 @@ async function open(browser, base, viewport, opts = {}) {
   page.errors = [];
   page.on("pageerror", e => page.errors.push(e.message));
   page.on("dialog", d => { page.errors.push("native dialog: " + d.message()); d.accept(); });
-  await page.goto(base + "/editor.html");
+  await page.goto(base + "/editor.html?mode=advanced");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.evaluate(() => document.fonts.ready);
@@ -126,6 +126,59 @@ async function eachState(page, visit, only) {
       await page.click("#btn-preview");
     }, async () => { await escapeAll(page); await page.evaluate(() => { cfg = JSON.parse(window.__keep); changed(); render(); }); });
   }
+  if (await page.evaluate(() => typeof renderWizard === "function")) await wizardStates(page, go, phone);
+  await page.evaluate(() => { location.hash = "#advanced"; });
+  await page.waitForFunction(() => document.documentElement.dataset.mode === "advanced");
+}
+/* The guided steps: every step and its variants (errors, choices revealed, the password slip), then the hub. */
+async function wizardStates(page, go, phone){
+  const to = async (hash, setup) => {
+    if (setup) await page.evaluate(setup);
+    await page.evaluate(h => { location.hash = h; }, hash);
+    await page.waitForFunction(h => location.hash === h && document.documentElement.dataset.mode === "wizard" && document.getElementById("wiz-h1"), hash);
+    await settle(page);
+  };
+  const stay = async () => {};
+  const err = async () => { await page.click("#wiz-continue"); await page.locator("#wiz-errors, #wiz-warn").first().waitFor(); };
+  await go("wizard / 1 welcome", () => to("#step=welcome"), stay);
+  await go("wizard / 1 welcome, help open", async () => { await to("#step=welcome&h=1"); await page.click("#wiz-help summary"); }, stay);
+  if (phone) await go("wizard / steps list open", async () => { await to("#step=name&s=1"); await page.click("#wiz-steps summary"); }, async () => { await page.click("#wiz-steps summary"); });
+  await go("wizard / 2 start", () => to("#step=start", "WIZ.start = null"), stay);
+  await go("wizard / 2 start, nothing chosen: error", async () => { await to("#step=start&e=1", "WIZ.start = null"); await err(); }, stay);
+  await go("wizard / 2 start, open a saved file", async () => { await to("#step=start&f=1"); await page.click("label[for=start-file]"); }, async () => { await page.evaluate(() => { WIZ.start = null; }); });
+  await go("wizard / 3 name", () => to("#step=name"), stay);
+  await go("wizard / 3 name, empty: error", async () => { await to("#step=name&e=1", "window.__t = cfg.meta.title"); await page.fill("#wiz-title", ""); await err(); },
+    async () => { await page.evaluate(() => { cfg.meta.title = window.__t; changed(); }); });
+  await go("wizard / 4 rooms", () => to("#step=rooms"), stay);
+  await go("wizard / 4 add a room", () => to("#step=add", "WIZ.kind = null"), stay);
+  await go("wizard / 4 add a room, nothing chosen: error", async () => { await to("#step=add&e=1", "WIZ.kind = null"); await err(); }, stay);
+  await go("wizard / 5 matching: cards", () => to("#step=room&room=1&part=cards"), stay);
+  await go("wizard / 5 matching: clues", () => to("#step=room&room=1&part=clues"), stay);
+  await go("wizard / 5 matching: clues, one missing: error", async () => { await to("#step=room&room=1&part=clues&e=1", "window.__c = cfg.rooms[0].cards[0].clue; cfg.rooms[0].cards[0].clue = ''; cfg.rooms[0].cards[0].decoy = false"); await err(); },
+    async () => { await page.evaluate(() => { cfg.rooms[0].cards[0].clue = window.__c; delete cfg.rooms[0].cards[0].decoy; changed(); }); });
+  await go("wizard / 5 room story", () => to("#step=room&room=1&part=story"), stay);
+  await go("wizard / 5 timeline room: Advanced mode", () => to("#step=room&room=3&part=advanced"), stay);
+  await go("wizard / 5 quiz questions", () => to("#step=room&room=6&part=questions"), stay);
+  await go("wizard / 5 quiz questions, one empty: error", async () => { await to("#step=room&room=6&part=questions&e=1", "cfg.rooms[5].questions.push(blankQuestion())"); await err(); },
+    async () => { await page.evaluate(() => { cfg.rooms[5].questions.pop(); changed(); }); });
+  await go("wizard / 6 check your facts", () => to("#step=facts"), stay);
+  await go("wizard / 6 check your facts, not all checked: note", async () => { await to("#step=facts&e=1"); await err(); }, stay);
+  await go("wizard / 7 try it", () => to("#step=try"), stay);
+  await go("wizard / 7 try it, problems listed", async () => { await to("#step=try&e=1", "window.__a = cfg.rooms[5].questions[0].answers; cfg.rooms[5].questions[0].answers = ''"); await page.click("#wiz-try"); await page.locator("#wiz-errors").waitFor(); },
+    async () => { await page.evaluate(() => { cfg.rooms[5].questions[0].answers = window.__a; changed(); }); });
+  await go("wizard / 8 how students get it, Moodle chosen", () => to("#step=deliver", "meta.delivery = { where: 'moodle' }"), stay);
+  await go("wizard / 8 how students get it, nothing chosen: error", async () => { await to("#step=deliver&e=1", "meta.delivery = {}"); await err(); }, stay);
+  for (const [route, d] of [["moodle-scorm", "{ where: 'moodle', how: 'scorm' }"], ["moodle-quiz", "{ where: 'moodle', how: 'quiz' }"], ["canvas-scorm", "{ where: 'canvas', how: 'scorm' }"],
+    ["canvas-quiz", "{ where: 'canvas', how: 'quiz' }"], ["other", "{ where: 'other' }"], ["file", "{ where: 'file' }"]])
+    await go(`wizard / 9 walkthrough: ${route}`, async () => { await to(`#step=walk&r=${route}`, `meta.delivery = ${d}`); if (route === "canvas-quiz") await page.click("details.wtrouble summary"); }, stay);
+  await go("wizard / 9 the exit password slip", async () => { await to("#step=walk&r=pw", "meta.delivery = { where: 'file' }; cfg.finish.exitPassword = ''"); await page.click("#wiz-download"); await page.locator("#ask-password").waitFor(); },
+    async () => { await escapeAll(page); await page.evaluate(() => { cfg.finish.exitPassword = "DEWEY1916"; changed(); }); });
+  await go("wizard / 9 the exit password slip, empty: error", async () => { await to("#step=walk&r=pw2", "cfg.finish.exitPassword = ''"); await page.click("#wiz-download"); await page.locator("#ask-password").waitFor(); await page.fill("#ask-password", ""); await page.click("#ask-ok"); },
+    async () => { await escapeAll(page); await page.evaluate(() => { cfg.finish.exitPassword = "DEWEY1916"; changed(); }); });
+  await go("wizard / 10 done", () => to("#step=done"), stay);
+  await go("wizard / hub, two escape rooms", async () => {
+    await to("#step=hub", "saveNow(); const id = newId(); lsSet(keyOf(id), JSON.stringify(SAMPLE)); lib.list.push({ id, title: 'Chapter 4', created: Date.now(), updated: Date.now() - 86400000 }); writeLib()"); }, stay);
+  await go("wizard / hub, remove slip", async () => { await to("#step=hub&d=1"); await page.click("#wiz-lib [id^=lib-remove-]"); await page.locator(".modal").waitFor(); }, async () => { await escapeAll(page); });
 }
 
 /* ---------- axe ---------- */
@@ -387,7 +440,7 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
         if (process.env.A11Y_TIME) log(`time: axe ${T.axe} ms, pixels ${T.px} ms, total ${Date.now() - T.start} ms`);
         log(`${states} states; axe violations ${v.length}; needs review ${inc.length} (plus ${byPixels} colour-contrast nodes axe left to the pixel measurement); text runs measured ${texts}, lowest contrast ${min.toFixed(2)}:1, under 7:1 ${below7}, failing ${px.length}; small targets ${tg.length}; edges ${ed.length}`);
         assert.deepEqual(page.errors, []);
-        report("axe violations", v); report("axe needs review", inc); report("contrast (pixels)", px); report("target size", tg); report("visible edges", ed);
+        report("axe violations", v); report("axe needs review", inc); report("target size", tg); report("contrast (pixels)", px); report("visible edges", ed);
         await page.context().close();
       });
     }
@@ -397,7 +450,7 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     test(`every tab stop shows a focus ring and is never covered: ${size}`, async log => {
       const page = await open(browser, base, viewport);
       const problems = []; let stops = 0;
-      await eachState(page, async name => { const r = await focusWalk(page, `[${size}] ${name}`); stops += r.stops; problems.push(...r.problems); }, only || /room 1 \/ items|room 6|room 4 \/ items|room 5 \/ questions|settings \/ about|finish \/ accuracy|accessibility check|overlay|dialog|phone|cabinet/);
+      await eachState(page, async name => { const r = await focusWalk(page, `[${size}] ${name}`); stops += r.stops; problems.push(...r.problems); }, only || /room 1 \/ items|room 6|room 4 \/ items|room 5 \/ questions|settings \/ about|finish \/ accuracy|accessibility check|overlay|dialog|phone|cabinet|wizard/);
       log(`${stops} tab stops checked`);
       report("focus", problems);
       await page.context().close();
@@ -498,6 +551,10 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     await tabTo(page, "#export-html", 12);
     const [dl] = await Promise.all([page.waitForEvent("download"), (async () => {
       await K.press("Enter");
+      // the sample was changed, so the exit password is asked for first: the keyboard is in the box, Enter takes the suggestion
+      await page.locator("#ask-password").waitFor();
+      assert.equal((await active(page)).id, "ask-password");
+      await K.press("Enter");
       await page.locator(".modal[role=alertdialog]").waitFor();
       assert.equal((await active(page)).id, "ask-cancel", "the keyboard starts on the safe button");
       await K.press("Tab");
@@ -513,6 +570,65 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     assert.equal(cfg.rooms[5].questions[0].prompt, "Who wrote Democracy and Education?");
     assert.equal(cfg.rooms[5].questions[0].answers, "John Dewey | Dewey");
     assert.equal(cfg.rooms[5].questions[0].verified, true);
+    assert.equal(await page.evaluate(() => window.__pointer), 0, "no pointer was used");
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test("keyboard only: the guided steps from Welcome to the download, without a mouse", async () => {
+    const page = await open(browser, base, DESKTOP);
+    await page.goto(base + "/editor.html");
+    await page.evaluate(() => { window.__pointer = 0; ["mousedown", "pointerdown", "touchstart"].forEach(t => addEventListener(t, () => window.__pointer++, true)); });
+    const K = page.keyboard;
+    const step = text => page.waitForFunction(t => { const h = document.getElementById("wiz-h1"); return h && h.textContent.includes(t) && document.activeElement === h; }, text);
+    await K.press("Tab");
+    assert.equal((await active(page)).text, "Skip to the question");
+    await K.press("Enter"); assert.equal((await active(page)).id, "wiz-main");
+    await tabTo(page, "#wiz-continue"); await K.press("Enter");
+    await step("How do you want to start?");
+    assert.match(await page.title(), /^Step 2 of 10: How do you want to start\?/);
+    await tabTo(page, "#start-sample"); await K.press("ArrowDown");
+    assert.equal((await active(page)).id, "start-empty", "arrow keys choose within the radio cards");
+    await tabTo(page, "#wiz-continue"); await K.press("Enter");
+    await step("What is this escape room called?");
+    await K.press("Tab"); assert.equal((await active(page)).id, "wiz-title", "the question's own box is next");
+    await K.press("Control+A"); await K.type("Week 3 review"); await K.press("Enter");          // Enter sends the page, like Continue
+    await step("Your rooms");
+    await tabTo(page, "#wiz-continue"); await K.press("Enter");
+    await step("Room 1: Write your questions");
+    await tabTo(page, "#q1-prompt"); await K.type("Who wrote Emile (1762)?");
+    await tabTo(page, "#q1-a0"); await K.type("Jean-Jacques Rousseau");
+    await tabTo(page, "#q1-add-a"); await K.press("Enter");
+    assert.equal((await active(page)).id, "q1-a1"); await K.type("Rousseau");
+    await tabTo(page, "#wiz-continue"); await K.press("Enter");
+    await step("What do students read");
+    await tabTo(page, "#room-title"); await K.press("Control+A"); await K.type("The Reading Room");
+    await tabTo(page, "#room-story"); await K.type("Answer the slip to open the box.");
+    await tabTo(page, "#wiz-continue"); await K.press("Enter");
+    await step("Check your facts");
+    await tabTo(page, "#wiz-next-unchecked"); await K.press("Enter");
+    assert.equal((await active(page)).id, "f1-questions-1-ok");
+    await K.press("Space");
+    await said(page, /Checked: room 1, question 1\. 1 of 1 checked\./);
+    await tabTo(page, "#wiz-continue"); await K.press("Enter");
+    await step("Try it as a student");
+    await tabTo(page, "#wiz-continue"); await K.press("Enter");
+    await step("How will your students get");
+    await tabTo(page, "#where-moodle"); await K.press("Space");
+    assert.equal((await active(page)).id, "where-moodle", "the keyboard stays on the choice when the next question opens");
+    await K.press("Tab"); assert.equal((await active(page)).id, "how-quiz");
+    await K.press("ArrowDown"); assert.equal((await active(page)).id, "how-scorm");
+    await tabTo(page, "#wiz-continue"); await K.press("Enter");
+    await step("Put it in Moodle (grade file)");
+    await tabTo(page, "#wiz-download");
+    const [dl] = await Promise.all([page.waitForEvent("download"), (async () => {
+      await K.press("Enter");
+      await page.locator("#ask-password").waitFor();
+      assert.equal((await active(page)).id, "ask-password");
+      await K.press("Enter");
+    })()]);
+    assert.equal(dl.suggestedFilename(), "Week-3-review-SCORM.zip");
+    assert.equal(await page.evaluate(() => cfg.finish.exitPassword), "WEEK3");
     assert.equal(await page.evaluate(() => window.__pointer), 0, "no pointer was used");
     assert.deepEqual(page.errors, []);
     await page.context().close();
@@ -823,7 +939,7 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
 
   test("High contrast and Readable text: keyboard switches, remembered, follow the system, reach the answer sheet", async () => {
     const page = await open(browser, base, DESKTOP);
-    const html = () => page.evaluate(() => ({ ...document.documentElement.dataset }));
+    const html = () => page.evaluate(() => { const d = { ...document.documentElement.dataset }; delete d.mode; return d; });
     assert.deepEqual(await html(), {});
     const hc = page.getByRole("switch", { name: "High contrast" }), rt = page.getByRole("switch", { name: "Readable text" });
     assert.equal(await page.getByRole("group", { name: "Display" }).count(), 1);
