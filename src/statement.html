@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" data-contrast="normal" data-readable="off">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data:; base-uri 'none'; form-action 'none'">
+<title>Accessibility statement: Escape the Old Schoolhouse</title>
+<script>
+/* The same display choices as the front page, the game and the maker. */
+(function(){
+  var get = function(k){ try { return localStorage.getItem(k); } catch (e) { return null; } };
+  var hc = get("escape-room-contrast"), rd = get("escape-room-readable");
+  var auto = window.matchMedia && matchMedia("(prefers-contrast: more)").matches;
+  document.documentElement.dataset.contrast = hc === "on" || (hc == null && auto) ? "more" : "normal";
+  document.documentElement.dataset.readable = rd === "on" ? "on" : "off";
+})();
+</script>
+<style>
+/*__FONTS__*/
+/* A page for reading: dark ink on plain paper, one column, the reader's own text size. Generated from ACCESSIBILITY.md. */
+*{box-sizing:border-box}
+html{background:#f4ecd8;color:#1b140d}
+body{margin:0;font:400 1.125rem/1.6 "Atkinson Hyperlegible",Verdana,"Segoe UI",Arial,sans-serif}
+.skip{position:absolute;left:1rem;top:-10rem;padding:.7rem 1rem;background:#1b140d;color:#fff}
+.skip:focus{top:1rem}
+.top{background:#1d150e;color:#f3e8cf;padding:.8rem clamp(1rem,4vw,3rem)}
+.top a{color:inherit;font-weight:700;display:inline-flex;align-items:center;min-height:2.75rem;text-underline-offset:.2em}
+main{overflow-wrap:anywhere;max-width:48rem;margin:0 auto;padding:1.5rem clamp(1rem,4vw,2rem) 4rem}
+main:focus{outline:none}
+h1,h2,h3,h4{line-height:1.25;margin:2.2rem 0 .6rem}
+h1{font-size:2.1rem;margin-top:1rem} h2{font-size:1.6rem;padding-bottom:.25rem;border-bottom:2px solid #1b140d} h3{font-size:1.3rem} h4{font-size:1.15rem}
+p,li{max-width:44em} li{margin:.35rem 0}
+a{color:#5a1209;text-underline-offset:.18em}
+code{font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace;font-size:.95em;background:#e8dcc0;padding:0 .2em;border-radius:2px}
+hr{border:0;border-top:1px solid #8a7a60;margin:2.5rem 0}
+.tbl{overflow-x:auto;margin:1rem 0 1.4rem;border:1px solid #8a7a60}
+table{border-collapse:collapse;width:100%;font-size:1rem;line-height:1.45}
+th,td{text-align:left;vertical-align:top;padding:.45rem .6rem;border-bottom:1px solid #b9a988}
+thead th{background:#e8dcc0;border-bottom:2px solid #1b140d}
+tbody th{font-weight:700}
+:focus-visible{outline:3px solid #1b140d;outline-offset:3px;box-shadow:0 0 0 6px #ffe7ae}
+.top :focus-visible{outline-color:#ffe7ae;box-shadow:0 0 0 6px #1b140d}
+html[data-readable=on]{font-size:112.5%} html[data-readable=on] body{line-height:1.75;word-spacing:.06em}
+html[data-contrast=more]{background:#fff;color:#000} html[data-contrast=more] .top{background:#000;color:#fff}
+html[data-contrast=more] a{color:#000} html[data-contrast=more] .top a{color:#fff} html[data-contrast=more] code,html[data-contrast=more] thead th{background:#fff;border:1px solid #000}
+html[data-contrast=more] th,html[data-contrast=more] td{border-bottom-color:#000} html[data-contrast=more] .tbl{border-color:#000}
+@media (forced-colors: active){ :focus-visible{outline-color:Highlight} .top{background:Canvas;color:CanvasText} .top a{color:LinkText} }
+</style>
+</head>
+<body>
+<a class="skip" href="#statement">Skip to the statement</a>
+<div class="top" role="banner"><a href="index.html" id="home">Back to the front page</a></div>
+<main id="statement" tabindex="-1">
+<!--__STATEMENT__-->
+</main>
+</body>
+</html>

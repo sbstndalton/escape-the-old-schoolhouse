@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en" data-contrast="normal" data-readable="off">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#120d09">
+<!-- Nothing is fetched from anywhere: everything this page needs is inside it. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">
+<title>Escape the Old Schoolhouse: escape rooms for your class</title>
+<script>
+/* Old addresses: the game used to be this page, so a class link or bookmark to index.html#play=… goes on to the
+   game with the same link. Display choices (the same as in the game and the maker) apply before the first paint. */
+(function(){
+  if (/^#play=/.test(location.hash)) { location.replace("play.html" + location.hash); return; }
+  var get = function(k){ try { return localStorage.getItem(k); } catch (e) { return null; } };
+  var hc = get("escape-room-contrast"), rd = get("escape-room-readable");
+  var auto = window.matchMedia && matchMedia("(prefers-contrast: more)").matches;
+  document.documentElement.dataset.contrast = hc === "on" || (hc == null && auto) ? "more" : "normal";
+  document.documentElement.dataset.readable = rd === "on" ? "on" : "off";
+})();
+</script>
+<style>
+/*__FONTS__*/
+/* =====================================================================================
+   The front page: one place for students and teachers, in the same lamplit world as the game.
+   Flat 2D: a dark wall lit from the left, two oak doors with brass plates, the words on paper.
+   The light sits behind everything (nothing is laid over text). Sizes are in rem, so the reader's
+   text size and zoom work; nothing has a fixed height. No animation: nothing on this page moves.
+   ===================================================================================== */
+:root{
+  --night:#120d09; --ink:#2a1d14; --ink2:#4a3a2a; --parch:#efe3c6; --paper:#efe4ca; --red:#7d170e;
+  --f-r:"Atkinson Hyperlegible",Verdana,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --f-d:"IM Fell English SC","Atkinson Hyperlegible",Georgia,serif;
+  --fi:#ffe7ae; --fo:#120d09;
+  --plate:linear-gradient(170deg,#f3dc9c 0%,#dcbd72 34%,#c9a656 66%,#bd9a4a 100%);
+  --pgrain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  --wood:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='420'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.28 .006' numOctaves='3' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .08 0 0 0 0 .05 0 0 0 0 .02 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='300' height='420' filter='url(%23w)'/%3E%3C/svg%3E");
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{background:var(--night)}
+body{margin:0;min-height:100vh;font:400 1.125rem/1.5 var(--f-r);overflow-wrap:break-word;color:var(--parch);-webkit-font-smoothing:antialiased;
+  background:radial-gradient(ellipse 60rem 44rem at 18% 8%,rgba(255,206,140,.17),rgba(255,180,110,.05) 45%,transparent 72%),
+    radial-gradient(ellipse 50rem 40rem at 95% 100%,rgba(127,160,184,.07),transparent 70%),
+    linear-gradient(180deg,#1d150e 0%,#140e09 60%,#0f0a07 100%)}
+a{color:inherit}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.skip{position:absolute;left:1rem;top:-10rem;z-index:5;padding:.7rem 1rem;background:var(--paper);color:var(--ink);font-weight:700}
+.skip:focus{top:1rem}
+.wrap{max-width:72rem;margin:0 auto;padding:2.2rem clamp(1rem,4vw,3rem) 2.5rem}
+
+/* ---------- the top: the museum's brass placard and one plain sentence ---------- */
+header{display:grid;grid-template-columns:auto 1fr;gap:.2rem 1.4rem;align-items:center;margin-bottom:2rem}
+.lamp{grid-row:1 / span 2;width:3.4rem;height:auto}
+.placard{margin:0;justify-self:start;padding:.4rem 1rem .3rem;font:400 1rem/1.3 var(--f-d);letter-spacing:.14em;color:#2b1c08;background:var(--plate);
+  border:1px solid #5a4317;border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,246,214,.7),inset 0 -2px 0 rgba(70,48,12,.35),0 .25rem .5rem rgba(0,0,0,.55)}
+h1{margin:.5rem 0 0;font:700 clamp(1.75rem,1.2rem + 2vw,2.6rem)/1.2 var(--f-r);color:#f6ecd4;max-width:34em}
+.intro{grid-column:2;margin:.6rem 0 0;max-width:42em;color:var(--parch)}
+
+/* ---------- the two doors ---------- */
+.doors{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,26rem),1fr));gap:2rem 2.4rem;align-items:start}
+.door{position:relative;padding:1.1rem 1.1rem 1.3rem;border:2px solid #0b0705;border-radius:.4rem .4rem .2rem .2rem;
+  background:linear-gradient(90deg,rgba(255,220,170,.07),transparent 30%,rgba(0,0,0,.25)),var(--wood),#3b2615;
+  box-shadow:inset 0 0 0 .55rem #2e1d10,inset 0 0 0 .65rem rgba(0,0,0,.55),0 1rem 2rem rgba(0,0,0,.55)}
+.door .knob{position:absolute;right:.25rem;top:48%;width:.8rem;height:.8rem;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff2c4,#c9a556 40%,#5a4317);box-shadow:0 2px 3px rgba(0,0,0,.6)}
+.door h2{margin:.35rem auto 1rem;width:fit-content;max-width:100%;padding:.5rem 1.3rem .4rem;font:400 1.5rem/1.2 var(--f-d);letter-spacing:.1em;text-align:center;color:#2b1c08;
+  background:var(--plate);border:1px solid #5a4317;border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,246,214,.7),inset 0 -2px 0 rgba(70,48,12,.35),0 .3rem .6rem rgba(0,0,0,.6)}
+.sheet{position:relative;margin:0 .5rem;padding:1.3rem 1.4rem 1.4rem;color:var(--ink);background:var(--pgrain),#efe4ca;border:1px solid #6b5636;border-radius:1px;box-shadow:.15rem .35rem .7rem rgba(0,0,0,.55)}
+.sheet p{margin:0 0 1rem}
+.sheet .lead{font-size:1.2rem}
+.sheet h3{margin:1.6rem 0 .6rem;font:700 1.2rem/1.3 var(--f-r);padding-top:1.2rem;border-top:2px solid rgba(42,29,20,.35)}
+.small{font-size:1rem;color:var(--ink2)}
+label.big{display:block;font-weight:700;font-size:1.15rem;margin:0 0 .2rem}
+.fhint{margin:0 0 .5rem!important;font-size:1rem;color:var(--ink2)}
+input[type=text]{display:block;width:100%;min-height:2.9rem;margin:0 0 .9rem;padding:.55rem .7rem;font:400 1.05rem/1.4 var(--f-r);color:var(--ink);background:#fffaf0;
+  border:2px solid #2a1d14;border-radius:3px}
+input[type=text][aria-invalid=true]{border-color:var(--red);border-width:3px}
+.err{margin:0 0 .6rem!important;padding:.5rem 0 .5rem .8rem;font-weight:700;color:var(--red);border-left:.3rem solid var(--red)}
+/* the brass buttons: one look for "Open my escape room", "Play the sample" and "Make an escape room" */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;min-height:3rem;padding:.7rem 1.4rem .6rem;font:700 1.15rem/1.2 var(--f-r);text-decoration:none;cursor:pointer;
+  color:#21160a;background:var(--plate);border:2px solid #4a3612;border-radius:3px;box-shadow:inset 0 1px 0 rgba(255,246,214,.7),inset 0 -3px 0 rgba(70,48,12,.35),0 .2rem .35rem rgba(0,0,0,.45)}
+.btn:hover{filter:brightness(1.07)}
+.btn svg{width:1.4rem;height:1.4rem;flex:none}
+.btn.wide{width:100%}
+.or{margin:1.6rem 0 .5rem!important;padding-top:1.2rem;border-top:2px solid rgba(42,29,20,.35);font-weight:700}
+.alt{display:inline-flex;align-items:center;min-height:2.75rem;margin-top:.9rem;font-weight:700;text-underline-offset:.2em}
+/* how it works: three small pictures, each beside its words (the words go under the picture when it is narrow) */
+.how{list-style:none;margin:0;padding:0;display:grid;gap:1.1rem;counter-reset:s}
+.how li{counter-increment:s;display:flex;flex-wrap:wrap;gap:.3rem 1rem;align-items:flex-start}
+.how svg{flex:none;width:4.6rem;height:auto;fill:none;stroke:#2a1d14;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.how li>div{flex:1 1 9rem;min-width:0}
+.how b{display:block;font-size:1.1rem;line-height:1.3}
+.how b::before{content:counter(s) ". "}
+.how span{font-size:1rem;color:var(--ink2)}
+
+/* ---------- the foot ---------- */
+footer{margin-top:2.6rem;padding-top:1.4rem;border-top:1px solid rgba(232,217,181,.3);display:grid;grid-template-columns:minmax(0,1fr);gap:1rem}
+footer p{margin:0;max-width:46em}
+footer a{font-weight:700;text-underline-offset:.2em}
+.links{display:flex;flex-wrap:wrap;gap:.6rem 2rem;align-items:center}
+.links a{display:inline-flex;align-items:center;min-height:2.75rem}
+#display-toggles{display:flex;flex-wrap:wrap;gap:.8rem}
+.switch{display:inline-flex;flex-wrap:wrap;max-width:100%;text-align:left;align-items:center;gap:.6rem;min-height:2.75rem;padding:.35rem .9rem;font:400 1rem/1.2 var(--f-r);color:var(--parch);background:#1c140d;border:2px solid #a08850;border-radius:3px;cursor:pointer}
+.switch .st{font-weight:700;min-width:1.8em}
+.switch .track{position:relative;width:2.4rem;height:1.3rem;border:2px solid currentColor;border-radius:1rem;flex:none}
+.switch .track::after{content:"";position:absolute;top:.12rem;left:.15rem;width:.8rem;height:.8rem;border-radius:50%;background:currentColor}
+.switch[aria-checked=true] .track::after{left:auto;right:.15rem}
+.switch[aria-checked=true]{background:#3a2c12;border-color:#f1d38a}
+
+/* ---------- focus: one two-tone ring for everything ---------- */
+:focus-visible{outline:3px solid var(--fo)!important;outline-offset:3px!important;box-shadow:0 0 0 3px var(--fi),0 0 0 9px var(--fo)!important}
+.door :focus-visible,.sheet :focus-visible{outline-color:var(--fo)!important}
+
+/* ---------- Readable text: one plain face, larger, more space ---------- */
+html[data-readable=on]{font-size:112.5%}
+html[data-readable=on] body{line-height:1.7;word-spacing:.06em;letter-spacing:.01em}
+html[data-readable=on] .placard,html[data-readable=on] .door h2{font-family:var(--f-r);letter-spacing:.02em;font-weight:700}
+
+/* ---------- High contrast: solid colours, no textures or light, a real border on everything ---------- */
+html[data-contrast=more] body{background:#000;color:#fff}
+html[data-contrast=more] h1,html[data-contrast=more] .intro,html[data-contrast=more] footer{color:#fff}
+html[data-contrast=more] .door{background:#000;border:3px solid #fff;box-shadow:none}
+html[data-contrast=more] .door .knob{display:none}
+html[data-contrast=more] .sheet{background:#fff;color:#000;border:3px solid #fff;box-shadow:none}
+html[data-contrast=more] .small,html[data-contrast=more] .fhint,html[data-contrast=more] .how span{color:#000}
+html[data-contrast=more] .placard,html[data-contrast=more] .door h2,html[data-contrast=more] .btn{background:#fff;color:#000;border:3px solid #000;box-shadow:none;text-shadow:none}
+html[data-contrast=more] .door h2,html[data-contrast=more] .placard{border-color:#fff}
+html[data-contrast=more] .btn{border-color:#000}
+html[data-contrast=more] .how svg{stroke:#000}
+html[data-contrast=more] .switch{background:#000;color:#fff;border-color:#fff}
+html[data-contrast=more] .switch[aria-checked=true]{background:#fff;color:#000}
+html[data-contrast=more] .lamp{visibility:hidden}
+html[data-contrast=more] input[type=text]{background:#fff;color:#000;border-color:#000}
+html[data-contrast=more] .err{color:#8b0000;border-color:#8b0000}
+html[data-contrast=more] .skip{background:#fff;color:#000;border:3px solid #000}
+html[data-contrast=more] :focus-visible{outline-color:#000!important;box-shadow:0 0 0 3px #fff,0 0 0 9px #000!important}
+html[data-contrast=more] footer :focus-visible,html[data-contrast=more] .door h2 :focus-visible{outline-color:#fff!important;box-shadow:0 0 0 3px #000,0 0 0 9px #fff!important}
+
+/* ---------- forced colours (Windows High Contrast and the like) ---------- */
+@media (forced-colors: active){
+  .door,.sheet,.placard,.door h2,.btn,.switch,input[type=text]{border:2px solid CanvasText;forced-color-adjust:auto}
+  .btn{border-color:ButtonText}
+  .switch{background:ButtonFace;color:ButtonText}
+  .switch[aria-checked=true]{border-color:Highlight;border-width:4px}
+  body,footer,h1,.intro{background:Canvas;color:CanvasText}
+  .switch .track::after{background:CanvasText}
+  .err{border-color:CanvasText}
+  .lamp,.door .knob{display:none}
+  :focus-visible{outline-color:Highlight!important}
+}
+@media (max-width:30em){
+  header{grid-template-columns:1fr}
+  .lamp{display:none}
+  .intro{grid-column:1}
+  .door{padding:.7rem .6rem 1rem}
+  .sheet{margin:0;padding:1.1rem 1rem 1.2rem}
+}
+@media print{ body{background:#fff;color:#000} .door{background:none;box-shadow:none} #display-toggles{display:none} }
+</style>
+</head>
+<body>
+<a class="skip" href="#doors">Skip to the two doors</a>
+<div class="wrap">
+<header>
+  <svg class="lamp" viewBox="0 0 34 92" aria-hidden="true" focusable="false"><path d="M17 0v40" stroke="#8a6a2a" stroke-width="1.6" stroke-dasharray="3 2"/><path d="M9 44h16l-3-6h-10z" fill="#5a4317"/><rect x="8" y="44" width="18" height="30" rx="2" fill="#ffd28a"/><rect x="8" y="44" width="18" height="30" rx="2" fill="none" stroke="#3b2a0c" stroke-width="2.4"/><path d="M17 44v30M8 59h18" stroke="#3b2a0c" stroke-width="1.4"/><path d="M6 74h22l-2 5H8z" fill="#5a4317"/></svg>
+  <p class="placard">Escape the Old Schoolhouse</p>
+  <h1>Escape rooms for your class, in the browser</h1>
+  <p class="intro">Students solve short puzzles about a chapter to “escape”. Teachers make their own and share them with one link.</p>
+</header>
+<main id="doors" tabindex="-1">
+  <div class="doors">
+    <section class="door" id="student" aria-labelledby="student-h">
+      <span class="knob" aria-hidden="true"></span>
+      <h2 id="student-h">I'm a student</h2>
+      <div class="sheet">
+        <p class="lead">Your teacher shares a <strong>class link</strong> in Moodle, Canvas, Google Classroom or an email. Click it, and your escape room opens.</p>
+        <form id="link-form" novalidate>
+          <label class="big" for="class-link">Or paste your class link here</label>
+          <p class="fhint" id="link-hint">It is a long web address. Copy all of it, then paste it in this box.</p>
+          <p class="err" id="link-error" hidden></p>
+          <input id="class-link" name="link" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="link-hint">
+          <button class="btn wide" id="open-link" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 21V4h9v17M3 21h18M14 4l4 1.5V21M11.5 12.5v1"/></svg>Open my escape room</button>
+        </form>
+        <p class="or">No link? Try the sample</p>
+        <a class="btn wide" id="play-sample" href="play.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 4l12 8-12 8z"/></svg>Play the sample escape room</a>
+        <p class="small" style="margin:.7rem 0 0">“Escape the Old Schoolhouse”: five rooms about the philosophies and philosophers of education.</p>
+      </div>
+    </section>
+    <section class="door" id="teacher" aria-labelledby="teacher-h">
+      <span class="knob" aria-hidden="true"></span>
+      <h2 id="teacher-h">I'm a teacher</h2>
+      <div class="sheet">
+        <p class="lead">Make an escape room about your own chapter, one step at a time. It takes about 30 to 45 minutes. You don't need an account or anything to install.</p>
+        <a class="btn wide" id="make" href="editor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20l1.2-4.6L16 4.6l3.4 3.4L8.6 18.8zM14 7l3 3"/></svg>Make an escape room</a>
+        <a class="alt" id="open-saved" href="editor.html#step=start&amp;open=1">Open one I saved before</a>
+        <h3 id="how-h">How it works</h3>
+        <ol class="how" aria-labelledby="how-h">
+          <li><svg viewBox="0 0 88 70" aria-hidden="true" focusable="false"><path d="M14 8h40l10 10v46H14zM54 8v10h10M22 28h30M22 36h34M22 44h26"/><path d="M48 62l4-14 22-22 6 6-22 22zM70 30l6 6"/></svg><div><b>You make it</b><span>Type your questions, step by step. It is saved in your browser as you go.</span></div></li>
+          <li><svg viewBox="0 0 88 70" aria-hidden="true" focusable="false"><path d="M36 42a10 10 0 0 1 0-14l8-8a10 10 0 0 1 14 14l-4 4M52 28a10 10 0 0 1 0 14l-8 8a10 10 0 0 1-14-14l4-4"/><path d="M8 60h72"/></svg><div><b>You share a class link</b><span>Paste it into Moodle, Canvas, Google Classroom or an email.</span></div></li>
+          <li><svg viewBox="0 0 88 70" aria-hidden="true" focusable="false"><path d="M10 10h60v52H10zM10 22h60M10 34h60M10 46h60M30 10v52"/><path d="M46 27l5 5 11-12" stroke-width="2.4"/></svg><div><b>Students type the exit password into your quiz</b><span>The password is on their certificate. Your course records the grade.</span></div></li>
+        </ol>
+      </div>
+    </section>
+  </div>
+</main>
+<footer>
+  <p id="privacy"><strong>Privacy:</strong> nothing is sent anywhere. The escape room travels inside the link itself: the part of a class link after the “#” never reaches a web server. There are no accounts, no tracking and no cookies.</p>
+  <div class="links"><a id="a11y-link" href="accessibility.html">Accessibility statement</a></div>
+  <div id="display-toggles" role="group" aria-label="Display">
+    <button type="button" class="switch" id="contrast-toggle" role="switch" aria-checked="false"><span class="track" aria-hidden="true"></span><span class="lbl">High contrast</span><span class="st" aria-hidden="true">off</span></button>
+    <button type="button" class="switch" id="readable-toggle" role="switch" aria-checked="false"><span class="track" aria-hidden="true"></span><span class="lbl">Readable text</span><span class="st" aria-hidden="true">off</span></button>
+  </div>
+</footer>
+</div>
+<div class="sr" aria-live="polite" id="live"></div>
+<script>
+/*__SHARED__*/
+</script>
+<script>
+const $ = s => document.querySelector(s), root = document.documentElement;
+const say = t => { const l = $("#live"); l.textContent = ""; setTimeout(() => { l.textContent = t; }, 80); };
+const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
+
+/* The student's door: a pasted class link opens the game with that link. Only the link's code is used (never the
+   pasted address itself), so a pasted address can't send anyone elsewhere. It is checked here first, so a cut-off
+   link gets a plain message on this page instead of a broken game. */
+const form = $("#link-form"), input = $("#class-link"), err = $("#link-error");
+function problem(text){
+  err.textContent = text; err.hidden = false;
+  input.setAttribute("aria-invalid", "true"); input.setAttribute("aria-describedby", "link-error link-hint");
+  document.title = "Error: " + document.title.replace(/^Error: /, "");
+  input.focus();
+}
+function clear(){ err.hidden = true; err.textContent = ""; input.removeAttribute("aria-invalid"); input.setAttribute("aria-describedby", "link-hint"); document.title = document.title.replace(/^Error: /, ""); }
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text) return problem("Paste your class link in the box first.");
+  if (!ER.hasLink(text)) return problem(ER.LINK_WORDS["not-link"]);
+  try { await ER.fromLink(text); }
+  catch (x) { return problem(ER.LINK_WORDS[x.kind] || ER.LINK_WORDS.incomplete); }
+  const c = ER.linkCode(text);
+  clear(); location.href = "play.html#play=" + c.version + "." + c.data;
+});
+input.addEventListener("input", () => { if (!err.hidden && !input.value.trim()) clear(); });
+
+/* Display choices, shared with the game and the maker (the same keys in localStorage). */
+const PREF = { contrast: { key: "escape-room-contrast", btn: "#contrast-toggle", attr: "contrast", on: "more", off: "normal", auto: () => !!(window.matchMedia && matchMedia("(prefers-contrast: more)").matches) },
+  readable: { key: "escape-room-readable", btn: "#readable-toggle", attr: "readable", on: "on", off: "off", auto: () => false } };
+function prefOn(p){ const v = store.get(p.key); return v === "on" ? true : v === "off" ? false : p.auto(); }
+function paint(p){ const on = prefOn(p), b = $(p.btn); root.dataset[p.attr] = on ? p.on : p.off; b.setAttribute("aria-checked", on ? "true" : "false"); b.querySelector(".st").textContent = on ? "on" : "off"; }
+Object.values(PREF).forEach(p => { paint(p);
+  $(p.btn).onclick = () => { const on = !prefOn(p); store.set(p.key, on ? "on" : "off"); paint(p); say(`${$(p.btn).querySelector(".lbl").textContent} is ${on ? "on" : "off"}.`); }; });
+/* A class link opened straight on this page (an old bookmark) goes on to the game (see the script at the top). */
+addEventListener("hashchange", () => { if (/^#play=/.test(location.hash)) location.replace("play.html" + location.hash); });
+</script>
+</body>
+</html>

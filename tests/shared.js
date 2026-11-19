@@ -64,4 +64,98 @@ t("a11yCheck gives teachers advisory notes about content that is hard to use", (
   assert.doesNotMatch(text, /Question 2/);
   assert.deepEqual(ER.a11yCheck({ intro: { story: "x" }, rooms: [{ type: "quiz", story: "s", questions: [{ kind: "choice", prompt: "p", choices: ["a", "b"], correct: 0 }] }] }), []);
 });
-console.log(`\n${n} passed, 0 failed.`);
+
+/* ---------- class links ---------- */
+const SAMPLE = require("../content/foundations-of-education.json");
+const SITE = "https://sbstndalton.github.io/escape-the-old-schoolhouse/play.html";
+const at = async (name, fn) => { await fn(); n++; console.log("  ✔ " + name); };
+const kindOf = async p => { try { await p; return "opened"; } catch (e) { return e.kind || e.message; } };
+const linkOf = async obj => "#play=1." + Buffer.from(require("zlib").deflateRawSync(Buffer.from(typeof obj === "string" ? obj : JSON.stringify(obj)))).toString("base64url");
+(async () => {
+  await at("a class link round-trips the sample exactly, starts with #play=1. and is about 7.3 KB", async () => {
+    const link = await ER.toLink(SAMPLE, SITE);
+    assert.ok(link.startsWith(SITE + "#play=1."), link.slice(0, 80));
+    assert.match(link.slice(SITE.length), /^#play=1\.[A-Za-z0-9_-]+$/, "only characters that survive email and course systems");
+    assert.ok(link.length > 6000 && link.length < 8500, "length " + link.length);
+    assert.deepEqual(await ER.fromLink(link), SAMPLE);
+    assert.deepEqual(ER.cleanConfig(SAMPLE), SAMPLE, "cleaning a valid escape room changes nothing");
+    // zlib in Node reads it too, so the format is plain deflate-raw
+    const data = link.split("#play=1.")[1];
+    assert.deepEqual(JSON.parse(require("zlib").inflateRawSync(Buffer.from(data, "base64url"))), SAMPLE);
+  });
+  await at("a link is found in whatever a person pastes: the address, the code, a sentence, angle brackets", async () => {
+    const link = await ER.toLink(SAMPLE, SITE), code = link.split("#play=")[1];
+    for (const pasted of [link, "  " + link + "  ", `Here is the escape room: ${link}.`, `<${link}>`, code, "#play=" + code, link.replace("#play=1.", "#play=1%2E")])
+      assert.deepEqual(await ER.fromLink(pasted), SAMPLE, pasted.slice(0, 60));
+    assert.equal(ER.hasLink("https://example.com/"), false);
+    assert.equal(await kindOf(ER.fromLink("https://example.com/page")), "not-link");
+    assert.equal(await kindOf(ER.fromLink("")), "not-link");
+  });
+  await at("a cut-off or damaged link says so plainly, wherever it was cut", async () => {
+    const link = await ER.toLink(SAMPLE, SITE), cut = [SITE.length + 8, SITE.length + 20, 200, 1000, 3000, 6000, link.length - 40, link.length - 3, link.length - 1];
+    for (const at of cut) assert.equal(await kindOf(ER.fromLink(link.slice(0, at))), "incomplete", "cut at " + at);
+    assert.equal(await kindOf(ER.fromLink(link.slice(0, 3000) + "AAAAAAAAAAAAAAA")), "incomplete");
+    assert.equal(await kindOf(ER.fromLink(link.replace("#play=1.", "#play=2."))), "newer");
+    assert.equal(await kindOf(ER.fromLink(SITE + "#play=")), "incomplete");
+    assert.equal(await kindOf(ER.fromLink(await linkOf("not json at all"))), "incomplete");
+    assert.equal(await kindOf(ER.fromLink(await linkOf([1, 2, 3]))), "invalid");
+    assert.equal(await kindOf(ER.fromLink(await linkOf({ meta: { title: "x" }, rooms: [] }))), "invalid", "validated: an escape room needs a room");
+    assert.match(ER.LINK_WORDS.incomplete, /^This class link is incomplete\. Ask your teacher to send it again\.$/);
+  });
+  await at("link content is untrusted: __preview and odd shapes are dropped, numbers stay numbers, sizes are capped", async () => {
+    const bad = JSON.parse(JSON.stringify(SAMPLE));
+    Object.assign(bad, { __preview: true, __proto__x: 1, constructor: "x" });
+    bad["__proto__"] = { polluted: true };
+    bad.scoring = { mode: "deductions", wrongPenalty: "<img src=x onerror=alert(1)>", hintPenalty: "5", minScore: { a: 1 } };
+    bad.meta.title = { toString: "<b>" }; bad.rooms[0].cards = "not a list"; bad.rooms[1].hints = [{ x: 1 }, "<script>alert(1)</script>", 7];
+    bad.rooms[2].items[0].text = "x".repeat(200000); bad.rooms[3].type = "constructor";
+    const c = ER.cleanConfig(JSON.parse(JSON.stringify(bad).replace('"__proto__x"', '"__proto__"')));
+    assert.equal(c.__preview, undefined); assert.equal(Object.getPrototypeOf(c), Object.prototype); assert.equal({}.polluted, undefined);
+    assert.equal(c.constructor, Object, "an own 'constructor' key is dropped");
+    assert.equal(c.scoring.wrongPenalty, undefined, "a penalty that isn't a number is dropped"); assert.equal(c.scoring.hintPenalty, 5); assert.equal(c.scoring.minScore, undefined);
+    assert.equal(c.meta.title, undefined, "a title that isn't text is dropped");
+    assert.deepEqual(c.rooms[0].cards, []); assert.deepEqual(c.rooms[1].hints, ["", "<script>alert(1)</script>", "7"], "texts stay texts (the game escapes them)");
+    assert.equal(c.rooms[2].items[0].text.length, 50000);
+    // nesting deeper than the format goes is cut off; huge lists are capped
+    const deep = JSON.parse('{"rooms":[{"cards":['.repeat(400) + "]}]}".repeat(400));
+    assert.equal(JSON.stringify(ER.cleanConfig(deep)).length < 200, true, "deep nesting is cut off");
+    assert.ok(["incomplete", "invalid"].includes(await kindOf(ER.fromLink(await linkOf('{"rooms":' + "[".repeat(200000) + "]".repeat(200000) + "}")))), "very deep nesting can't break it");
+    assert.equal(ER.cleanConfig({ rooms: Array.from({ length: 5000 }, () => ({ type: "quiz" })) }).rooms.length, 500);
+    assert.throws(() => ER.cleanConfig("x")); assert.throws(() => ER.cleanConfig(null));
+  });
+  await at("a link that unpacks to something huge is refused (a 'zip bomb')", async () => {
+    const big = await linkOf({ meta: { title: "x" }, rooms: [{ type: "quiz", title: "q", questions: [{ kind: "short", prompt: "p", answers: "a" }] }], pad: " ".repeat(30 * 1024 * 1024) });
+    assert.ok(big.length < 60000, "the link itself is small: " + big.length);
+    assert.equal(await kindOf(ER.fromLink(big)), "too-big");
+    assert.equal(await kindOf(ER.fromLink("#play=1." + "A".repeat(2100000))), "too-big");
+  });
+  await at("without CompressionStream a link is still made (uncompressed) and read; a compressed one says the browser is too old", async () => {
+    const keep = [globalThis.CompressionStream, globalThis.DecompressionStream], small = { meta: { title: "Tiny" }, rooms: [{ type: "quiz", title: "Q", questions: [{ kind: "short", prompt: "Who?", answers: "Dewey" }] }] };
+    const zipped = await ER.toLink(small, SITE);
+    try {
+      globalThis.CompressionStream = undefined; globalThis.DecompressionStream = undefined;
+      const plain = await ER.toLink(small, SITE);
+      assert.ok(plain.length > zipped.length);
+      assert.deepEqual(await ER.fromLink(plain), small);
+      assert.equal(await kindOf(ER.fromLink(zipped)), "old-browser");
+      assert.equal(await kindOf(ER.fromLink(plain.slice(0, plain.length - 10))), "incomplete");
+    } finally { [globalThis.CompressionStream, globalThis.DecompressionStream] = keep; }
+    assert.deepEqual(await ER.fromLink(await ER.toLink(small, SITE)), small);
+  });
+  await at("QR codes: the right size, finder squares in three corners, none when the link is too long, and they decode", async () => {
+    const q = ER.qr("https://example.com/");
+    assert.equal(q.size, q.version * 4 + 17);
+    for (const [x, y] of [[0, 0], [q.size - 7, 0], [0, q.size - 7]]) { assert.equal(q.dark(x, y), true); assert.equal(q.dark(x + 1, y + 1), false); assert.equal(q.dark(x + 3, y + 3), true); }
+    assert.equal(ER.qr("x".repeat(3000)), null); assert.equal(ER.qr("x".repeat(2000), { maxVersion: 25 }), null);
+    assert.match(ER.qrSvg("hello", { label: "QR <code>" }), /^<svg [^>]*role="img" aria-label="QR &lt;code&gt;"/);
+    let jsQR = null; try { jsQR = require("jsqr"); } catch (e) {}
+    if (!jsQR) return console.log("      (jsqr isn't installed, so the codes weren't decoded)");
+    const small = await ER.toLink({ meta: { title: "Tiny" }, rooms: [{ type: "quiz", title: "Q", questions: [{ kind: "short", prompt: "Who?", answers: "Dewey" }] }] }, SITE);
+    for (const text of ["A", "https://example.com/", small, "é and ü: " + "z".repeat(600), "q".repeat(2900)]) {
+      const c = ER.qr(text), s = 3, w = (c.size + 8) * s, px = new Uint8ClampedArray(w * w * 4);
+      for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4, d = c.dark(Math.floor(x / s) - 4, Math.floor(y / s) - 4); px[i] = px[i + 1] = px[i + 2] = d ? 0 : 255; px[i + 3] = 255; }
+      const r = jsQR(px, w, w); assert.ok(r, "decodes (version " + c.version + ")"); assert.equal(r.data, text);
+    }
+  });
+  console.log(`\n${n} passed, 0 failed.`);
+})().catch(e => { console.error("  ✘ " + e.stack); process.exit(1); });

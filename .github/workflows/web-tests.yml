@@ -2,7 +2,7 @@ name: Web tests
 
 on:
   push:
-    paths: ["index.html", "editor.html", "src/**", "content/**", "tests/**", "scripts/**", "package.json", "package-lock.json", ".github/workflows/web-tests.yml"]
+    paths: ["index.html", "play.html", "editor.html", "accessibility.html", "ACCESSIBILITY.md", "src/**", "content/**", "tests/**", "scripts/**", "package.json", "package-lock.json", ".github/workflows/web-tests.yml"]
   pull_request:
   workflow_dispatch:
 
@@ -20,7 +20,7 @@ jobs:
       - run: npm test
       - name: Check the built files are committed
         run: |
-          git diff --exit-code -- index.html editor.html EscapeRoom_SCORM.zip imsmanifest.xml \
+          git diff --exit-code -- index.html play.html editor.html accessibility.html EscapeRoom_SCORM.zip imsmanifest.xml \
             || { echo "::error::Built files are out of date. Run 'npm run build' and commit the result."; exit 1; }
       - name: Upload screenshots
         if: always()

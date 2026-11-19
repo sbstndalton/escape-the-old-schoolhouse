@@ -182,8 +182,11 @@ const ER = (() => {
   const encodeConfig = cfg => { const bytes = new TextEncoder().encode(JSON.stringify(cfg)); let s = ""; for (const b of bytes) s += String.fromCharCode(b); return btoa(s); };
   const decodeConfig = b64 => JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(String(b64).trim()), c => c.charCodeAt(0))));
   // Placeholders are built by concatenation so this code never matches itself once inlined into the game.
-  const P_TITLE = "__ESCAPE_" + "TITLE__", P_CONFIG = "__ESCAPE_" + "CONFIG__";
-  const buildGame = (template, cfg) => template.split(P_TITLE).join(esc(cfg.meta?.title || "Escape Room")).split(P_CONFIG).join(encodeConfig(cfg));
+  // `home` is the front page the game links back to when a class link is broken: set for the website's play.html
+  // only. Exported files (the .html download, SCORM) leave it empty, because they have no front page beside them.
+  const P_TITLE = "__ESCAPE_" + "TITLE__", P_CONFIG = "__ESCAPE_" + "CONFIG__", P_HOME = "__ESCAPE_" + "HOME__";
+  const buildGame = (template, cfg, { home = "" } = {}) => template.split(P_TITLE).join(esc(cfg.meta?.title || "Escape Room"))
+    .split(P_HOME).join(esc(home)).split(P_CONFIG).join(encodeConfig(cfg));
   // Pull the content back out of an exported game file (so a teacher can reopen and edit it).
   function configFromHtml(html) {
     const m = String(html).match(/<script id="escape-config" type="text\/plain">([\s\S]*?)<\/script>/);
@@ -332,5 +335,235 @@ ER.a11yCheck = cfg => {
     if (long > 2500) add(r, `This room has a lot of reading (about ${Math.round(long / 5)} words). Consider splitting it into two rooms.`);
   });
   return out;
+};
+/* ---------- class links (ER.toLink, ER.fromLink, ER.cleanConfig) ----------
+ * A class link is the play page's address with the whole escape room packed into its fragment:
+ *   play.html#play=1.<data>
+ * "1" is the format version (so the format can change later); <data> is the content as JSON, compressed with
+ * deflate-raw and written in base64url (A-Z a-z 0-9 - _), which survives email, Moodle and Canvas unchanged.
+ * The part after # is never sent to a web server: the escape room travels only inside the link.
+ * Anyone can make a link, so what comes out of one is UNTRUSTED. fromLink() limits its size (also after
+ * decompression), cleans it with cleanConfig() (only the shapes the game knows; keys starting with "__", such as
+ * __preview, are dropped) and checks it with validate(). The game escapes every text it draws.
+ * Works in browsers and in Node 18+ (CompressionStream). Without CompressionStream, toLink() writes uncompressed
+ * ("stored") deflate blocks, which every reader understands; fromLink() can read those without it, and says
+ * plainly that the browser is too old for anything else. */
+(() => {
+  const VERSION = "1", MAX_CHARS = 2000000, MAX_BYTES = 4 * 1024 * 1024;
+  const WORDS = {
+    "not-link": "That doesn't look like a class link. A class link is a long web address with “#play=” in it. Ask your teacher to send it again.",
+    incomplete: "This class link is incomplete. Ask your teacher to send it again.",
+    newer: "This class link was made with a newer version of the escape room maker. Ask your teacher to send it again.",
+    "old-browser": "This browser is too old to open class links. Try an up-to-date Chrome, Edge, Firefox or Safari, or ask your teacher for the escape room as a file.",
+    "too-big": "This class link is too long to open. Ask your teacher for the escape room as a file instead.",
+    invalid: "This class link doesn't hold a working escape room. Ask your teacher to send it again."
+  };
+  const fail = (kind, detail) => { const e = new Error(WORDS[kind]); e.kind = kind; if (detail) e.detail = detail; return e; };
+  const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_", IDX = {};
+  for (let i = 0; i < 64; i++) IDX[A[i]] = i;
+  function b64u(bytes){
+    let s = "";
+    for (let i = 0; i < bytes.length; i += 3) {
+      const k = bytes.length - i, n = (bytes[i] << 16) | ((k > 1 ? bytes[i + 1] : 0) << 8) | (k > 2 ? bytes[i + 2] : 0);
+      s += A[n >> 18 & 63] + A[n >> 12 & 63] + (k > 1 ? A[n >> 6 & 63] : "") + (k > 2 ? A[n & 63] : "");
+    }
+    return s;
+  }
+  function unb64u(s){
+    const out = new Uint8Array(Math.floor(s.length * 3 / 4)); let o = 0, acc = 0, bits = 0;
+    for (let i = 0; i < s.length; i++) { const v = IDX[s[i]]; if (v === undefined) throw fail("incomplete");
+      acc = ((acc << 6) | v) & 0xFFFFFF; bits += 6; if (bits >= 8) { bits -= 8; out[o++] = (acc >> bits) & 255; } }
+    return out.subarray(0, o);
+  }
+  async function through(bytes, stream, limit){
+    const reader = new Blob([bytes]).stream().pipeThrough(stream).getReader(), parts = []; let n = 0;
+    for (;;) {
+      const { done, value } = await reader.read(); if (done) break;
+      n += value.length;
+      if (n > limit) { try { await reader.cancel(); } catch (e) {} throw fail("too-big"); }
+      parts.push(value);
+    }
+    const out = new Uint8Array(n); let p = 0; for (const a of parts) { out.set(a, p); p += a.length; }
+    return out;
+  }
+  const make = (C, kind) => { try { return typeof C === "function" ? new C(kind) : null; } catch (e) { return null; } };
+  // Uncompressed deflate blocks: a valid deflate-raw stream that needs no compressor to write or read.
+  function stored(bytes){
+    const n = Math.max(1, Math.ceil(bytes.length / 65535)), out = new Uint8Array(bytes.length + n * 5); let p = 0;
+    for (let b = 0; b < n; b++) { const part = bytes.subarray(b * 65535, (b + 1) * 65535), len = part.length;
+      out[p++] = b === n - 1 ? 1 : 0; out[p++] = len & 255; out[p++] = len >> 8; out[p++] = ~len & 255; out[p++] = (~len >> 8) & 255; out.set(part, p); p += len; }
+    return out;
+  }
+  function unstored(bytes){
+    const parts = []; let p = 0, n = 0;
+    for (;;) {
+      if (p + 5 > bytes.length) throw fail("incomplete");
+      const head = bytes[p]; if (head & 6) throw fail("old-browser");      // a compressed block: this browser can't read it
+      const len = bytes[p + 1] | (bytes[p + 2] << 8); p += 5;
+      if (p + len > bytes.length) throw fail("incomplete");
+      parts.push(bytes.subarray(p, p + len)); p += len; n += len; if (n > MAX_BYTES) throw fail("too-big");
+      if (head & 1) break;
+    }
+    const out = new Uint8Array(n); let q = 0; for (const a of parts) { out.set(a, q); q += a.length; }
+    return out;
+  }
+  /* The link's code from anything a person pastes: the whole address, the part from #play=, or the code alone.
+     Punctuation around it (a full stop at the end of a sentence, angle brackets from an email) is ignored. */
+  function linkCode(text){
+    let s = String(text == null ? "" : text).trim();
+    try { if (/%2e|%3d/i.test(s)) s = decodeURIComponent(s); } catch (e) {}
+    const m = s.match(/[#&?]play=(\d*)(?:\.([A-Za-z0-9_-]*))?/) || s.match(/^(\d+)\.([A-Za-z0-9_-]{8,})/);
+    return m ? { version: m[1], data: m[2] || "" } : null;
+  }
+  const hasLink = text => !!linkCode(text);
+  async function toLink(cfg, base = ""){
+    const json = JSON.stringify(cfg, (k, v) => (k.startsWith("__") ? undefined : v));
+    const bytes = new TextEncoder().encode(json), cs = make(typeof CompressionStream !== "undefined" ? CompressionStream : null, "deflate-raw");
+    const packed = cs ? await through(bytes, cs, Infinity) : stored(bytes);
+    return String(base).split("#")[0] + "#play=" + VERSION + "." + b64u(packed);
+  }
+  async function fromLink(text){
+    if (String(text == null ? "" : text).length > MAX_CHARS) throw fail("too-big");
+    const c = linkCode(text); if (!c) throw fail("not-link");
+    if (c.version !== VERSION) throw fail(c.version && +c.version > +VERSION ? "newer" : "incomplete");
+    if (c.data.length < 8) throw fail("incomplete");
+    const bytes = unb64u(c.data);
+    const ds = make(typeof DecompressionStream !== "undefined" ? DecompressionStream : null, "deflate-raw");
+    let raw;
+    if (ds) { try { raw = await through(bytes, ds, MAX_BYTES); } catch (e) { throw e.kind ? e : fail("incomplete"); } }
+    else raw = unstored(bytes);
+    let data;
+    try { data = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(raw)); } catch (e) { throw fail("incomplete"); }
+    const cfg = ER.cleanConfig(data), errs = ER.validate(cfg);
+    if (errs.length) throw fail("invalid", errs);
+    return cfg;
+  }
+  /* Only the shapes the game knows survive: these lists of objects, lists of texts and groups; known numbers become
+     numbers; every other value must be plain text, a number, true/false or null (anything else is dropped). Keys
+     that start with "__" (such as the editor's __preview), "constructor" and "prototype" are dropped. Sizes are
+     capped, and nothing is nested deeper than the format goes. A valid escape room comes out unchanged. */
+  const LISTS = new Set(["rooms", "cards", "questions", "items", "profiles", "options"]);
+  const TEXTS = new Set(["hints", "categories", "choices"]);
+  const GROUPS = new Set(["meta", "intro", "scoring", "finish", "hintRules"]);
+  const NUMBERS = new Set(["correct", "category", "hintPenalty", "wrongPenalty", "minScore", "first", "second", "schema"]);
+  const MAX_TEXT = 50000, MAX_LIST = 500;
+  function cleanConfig(input){
+    if (!input || typeof input !== "object" || Array.isArray(input)) throw fail("invalid", ["This isn't an escape room."]);
+    let budget = 100000;
+    const text = v => typeof v === "string" ? v.slice(0, MAX_TEXT) : typeof v === "number" && isFinite(v) ? String(v) : "";
+    const obj = (o, depth) => {
+      const out = {};
+      if (!o || typeof o !== "object" || Array.isArray(o) || depth > 6) return out;
+      if (--budget < 0) throw fail("too-big");
+      for (const k of Object.keys(o).slice(0, 200)) {
+        if (/^__|^(constructor|prototype)$/.test(k)) continue;
+        const v = o[k];
+        if (LISTS.has(k)) out[k] = Array.isArray(v) ? v.slice(0, MAX_LIST).filter(x => x && typeof x === "object" && !Array.isArray(x)).map(x => obj(x, depth + 1)) : [];
+        else if (TEXTS.has(k)) out[k] = Array.isArray(v) ? v.slice(0, MAX_LIST).map(text) : [];
+        else if (GROUPS.has(k)) out[k] = obj(v, depth + 1);
+        else if (NUMBERS.has(k)) { const n = typeof v === "number" ? v : typeof v === "string" && v.trim() ? Number(v) : NaN; if (isFinite(n)) out[k] = n; }
+        else if (typeof v === "string") out[k] = v.slice(0, MAX_TEXT);
+        else if ((typeof v === "number" && isFinite(v)) || typeof v === "boolean" || v === null) out[k] = v;
+      }
+      return out;
+    };
+    const cfg = obj(input, 0);
+    if (!Array.isArray(cfg.rooms)) cfg.rooms = [];
+    return cfg;
+  }
+  Object.assign(ER, { toLink, fromLink, cleanConfig, linkCode, hasLink, LINK_WORDS: WORDS, LINK_LONG: 30000,
+    SITE: "https://sbstndalton.github.io/escape-the-old-schoolhouse/" });
+})();
+/* ---------- QR codes (ER.qr, ER.qrSvg) ----------
+ * A small QR Code encoder (byte mode, error correction level L or M, versions 1 to 40), so a short class link can
+ * be shown as a QR code with nothing downloaded. It follows the structure of Project Nayuki's "QR Code generator
+ * library" (Copyright (c) Project Nayuki, MIT License, https://www.nayuki.io/page/qr-code-generator-library):
+ *   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ *   documentation files (the "Software"), to deal in the Software without restriction, including without limitation
+ *   the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+ *   to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above
+ *   copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ *   Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+ * ER.qr(text, { ecl, maxVersion }) returns { size, version, dark(x, y) }, or null when the text doesn't fit. */
+ER.qr = (() => {
+  const ECC = { L: [7,10,15,20,26,18,20,24,30,18,20,24,26,30,22,24,28,30,28,28,28,28,30,30,26,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+    M: [10,16,26,18,24,16,18,22,22,26,30,22,22,24,24,28,28,26,26,26,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28] };
+  const BLOCKS = { L: [1,1,1,1,1,2,2,2,2,4,4,4,4,4,6,6,6,6,7,8,8,9,9,10,12,12,12,13,14,15,16,17,18,19,19,20,21,22,24,25],
+    M: [1,1,1,2,2,4,4,4,5,5,5,8,9,9,10,10,11,13,14,16,17,17,18,20,21,23,25,26,28,29,31,33,35,37,38,40,43,45,47,49] };
+  const FORMAT = { L: 1, M: 0 };
+  const bit = (x, i) => ((x >>> i) & 1) !== 0;
+  const rawModules = v => { let r = (16 * v + 128) * v + 64; if (v >= 2) { const n = Math.floor(v / 7) + 2; r -= (25 * n - 10) * n - 55; if (v >= 7) r -= 36; } return r; };
+  const dataCodewords = (v, e) => Math.floor(rawModules(v) / 8) - ECC[e][v - 1] * BLOCKS[e][v - 1];
+  const mul = (x, y) => { let z = 0; for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11D); z ^= ((y >>> i) & 1) * x; } return z; };
+  function divisor(deg){ const r = new Array(deg).fill(0); r[deg - 1] = 1; let root = 1;
+    for (let i = 0; i < deg; i++) { for (let j = 0; j < deg; j++) { r[j] = mul(r[j], root); if (j + 1 < deg) r[j] ^= r[j + 1]; } root = mul(root, 2); } return r; }
+  function remainder(data, div){ const r = div.map(() => 0);
+    for (const b of data) { const f = b ^ r.shift(); r.push(0); div.forEach((c, i) => { r[i] ^= mul(c, f); }); } return r; }
+  return (text, { ecl = "L", maxVersion = 40 } = {}) => {
+    const bytes = Array.from(new TextEncoder().encode(String(text)));
+    let v = 1; for (; v <= maxVersion; v++) if (4 + (v < 10 ? 8 : 16) + 8 * bytes.length <= dataCodewords(v, ecl) * 8) break;
+    if (v > maxVersion) return null;
+    // the data bits: byte mode, the count, the bytes, a terminator, then padding
+    const bits = [], put = (val, n) => { for (let i = n - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+    put(4, 4); put(bytes.length, v < 10 ? 8 : 16); bytes.forEach(b => put(b, 8));
+    const cap = dataCodewords(v, ecl) * 8;
+    put(0, Math.min(4, cap - bits.length)); put(0, (8 - bits.length % 8) % 8);
+    for (let p = 0xEC; bits.length < cap; p ^= 0xEC ^ 0x11) put(p, 8);
+    const data = []; for (let i = 0; i < bits.length; i += 8) { let b = 0; for (let j = 0; j < 8; j++) b = (b << 1) | bits[i + j]; data.push(b); }
+    // error correction, block by block, then interleaved
+    const nb = BLOCKS[ecl][v - 1], el = ECC[ecl][v - 1], raw = Math.floor(rawModules(v) / 8), short = nb - raw % nb, slen = Math.floor(raw / nb), div = divisor(el), blocks = [];
+    for (let i = 0, k = 0; i < nb; i++) { const d = data.slice(k, k + slen - el + (i < short ? 0 : 1)); k += d.length; const ec = remainder(d, div); if (i < short) d.push(0); blocks.push(d.concat(ec)); }
+    const words = []; for (let i = 0; i < blocks[0].length; i++) blocks.forEach((b, j) => { if (i !== slen - el || j >= short) words.push(b[i]); });
+    // the grid
+    const size = v * 4 + 17, mod = [], fn = [];
+    for (let y = 0; y < size; y++) { mod.push(new Array(size).fill(false)); fn.push(new Array(size).fill(false)); }
+    const set = (x, y, d) => { mod[y][x] = d; fn[y][x] = true; };
+    for (let i = 0; i < size; i++) { set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0); }
+    const finder = (cx, cy) => { for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) { const x = cx + dx, y = cy + dy, d = Math.max(Math.abs(dx), Math.abs(dy));
+      if (x >= 0 && x < size && y >= 0 && y < size) set(x, y, d !== 2 && d !== 4); } };
+    finder(3, 3); finder(size - 4, 3); finder(3, size - 4);
+    if (v > 1) { const n = Math.floor(v / 7) + 2, step = Math.floor((v * 8 + n * 3 + 5) / (n * 4 - 4)) * 2, pos = [6];
+      for (let p = size - 7; pos.length < n; p -= step) pos.splice(1, 0, p);
+      pos.forEach((a, i) => pos.forEach((b, j) => { if ((i === 0 && j === 0) || (i === 0 && j === n - 1) || (i === n - 1 && j === 0)) return;
+        for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) set(a + dx, b + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1); })); }
+    const format = mask => { const d = FORMAT[ecl] << 3 | mask; let r = d; for (let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537);
+      const b = (d << 10 | r) ^ 0x5412;
+      for (let i = 0; i <= 5; i++) set(8, i, bit(b, i));
+      set(8, 7, bit(b, 6)); set(8, 8, bit(b, 7)); set(7, 8, bit(b, 8));
+      for (let i = 9; i < 15; i++) set(14 - i, 8, bit(b, i));
+      for (let i = 0; i < 8; i++) set(size - 1 - i, 8, bit(b, i));
+      for (let i = 8; i < 15; i++) set(8, size - 15 + i, bit(b, i));
+      set(8, size - 8, true); };
+    format(0);
+    if (v >= 7) { let r = v; for (let i = 0; i < 12; i++) r = (r << 1) ^ ((r >>> 11) * 0x1F25); const b = v << 12 | r;
+      for (let i = 0; i < 18; i++) { const a = size - 11 + i % 3, c = Math.floor(i / 3); set(a, c, bit(b, i)); set(c, a, bit(b, i)); } }
+    let i = 0;
+    for (let right = size - 1; right >= 1; right -= 2) { if (right === 6) right = 5;
+      for (let vert = 0; vert < size; vert++) for (let j = 0; j < 2; j++) { const x = right - j, y = ((right + 1) & 2) === 0 ? size - 1 - vert : vert;
+        if (!fn[y][x] && i < words.length * 8) { mod[y][x] = bit(words[i >>> 3], 7 - (i & 7)); i++; } } }
+    // pick the mask that scores best (long runs, 2x2 blocks, finder look-alikes, and the balance of dark and light)
+    const MASKS = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, x => x % 3 === 0, (x, y) => (x + y) % 3 === 0, (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0,
+      (x, y) => x * y % 2 + x * y % 3 === 0, (x, y) => (x * y % 2 + x * y % 3) % 2 === 0, (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0];
+    const flip = m => { for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (!fn[y][x] && MASKS[m](x, y)) mod[y][x] = !mod[y][x]; };
+    const score = () => { let s = 0, dark = 0;
+      const lines = []; for (let y = 0; y < size; y++) { lines.push(mod[y].map(d => d ? 1 : 0).join("")); lines.push(mod.map(r => r[y] ? 1 : 0).join("")); }
+      for (const l of lines) { for (const run of l.match(/0+|1+/g)) if (run.length >= 5) s += run.length - 2;
+        s += 40 * ((l.match(/(?=10111010000|00001011101)/g) || []).length); }
+      for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) { if (mod[y][x]) dark++;
+        if (x < size - 1 && y < size - 1 && mod[y][x] === mod[y][x + 1] && mod[y][x] === mod[y + 1][x] && mod[y][x] === mod[y + 1][x + 1]) s += 3; }
+      return s + 10 * Math.floor(Math.abs(dark * 20 - size * size * 10) / (size * size)); };
+    let best = 0, low = Infinity;
+    for (let m = 0; m < 8; m++) { flip(m); format(m); const s = score(); if (s < low) { low = s; best = m; } flip(m); }
+    flip(best); format(best);
+    return { size, version: v, dark: (x, y) => x >= 0 && y >= 0 && x < size && y < size && mod[y][x] };
+  };
+})();
+/* An SVG picture of a QR code: dark squares on white with the usual quiet border of 4 modules. */
+ER.qrSvg = (text, { label = "QR code" } = {}) => {
+  const q = ER.qr(text); if (!q) return "";
+  let d = "";        // one path, a rectangle per run of dark squares in a row
+  for (let y = 0; y < q.size; y++) for (let x = 0; x < q.size; x++) { if (!q.dark(x, y)) continue; let n = 1; while (q.dark(x + n, y)) n++; d += `M${x + 4} ${y + 4}h${n}v1h-${n}z`; x += n - 1; }
+  const n = q.size + 8;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" role="img" aria-label="${ER.esc(label)}" shape-rendering="crispEdges"><rect width="${n}" height="${n}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
 };
 if (typeof module !== "undefined") module.exports = ER;

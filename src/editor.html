@@ -765,6 +765,11 @@
   .copy code,.copy .val{font-family:var(--type);font-size:1.3rem;letter-spacing:.08em;padding:.1rem .5rem;border:1.5px dashed var(--ink);background:rgba(255,250,235,.5)}
   .copy .val.text{font-family:var(--read);font-size:1.05rem;letter-spacing:0}
   .copy .done{font-style:italic}
+  textarea.wlink{display:block;width:100%;height:6.5em;min-height:4.5em;overflow:auto;margin:.3rem 0 .4rem;padding:.45rem .55rem;font:400 .95rem/1.35 var(--mono);color:var(--ink);background:rgba(255,250,235,.7);border:1.5px solid var(--ink);resize:vertical;word-break:break-all}
+  .wqr{margin:1rem 0 .4rem;display:flex;flex-wrap:wrap;align-items:center;gap:.6rem 1.2rem}
+  .wqr svg{width:12rem;height:12rem;flex:none;border:2px solid var(--ink);background:#fff}
+  .wqr figcaption{flex:1 1 12rem;font-size:1rem}
+  .linkbox{margin-top:.6rem}
   .wtrouble{margin:.3rem 0;border-bottom:1px dashed var(--rule)}
   .wtrouble>summary{cursor:pointer;min-height:2.4rem;display:flex;align-items:center;font-weight:700;text-decoration:underline;text-underline-offset:.2em}
   .wtrouble>div{padding:0 0 .6rem 1rem}
@@ -843,6 +848,7 @@
 <div id="wizard">
   <div class="wtop" role="banner">
     <p class="brand">Escape room maker</p>
+    <a class="cut" id="wiz-home" href="index.html">Front page</a>
     <div id="wiz-save-slot"></div>
   </div>
   <div class="wbody">
@@ -1053,6 +1059,7 @@ function h(tag, props = {}, ...kids){
 }
 /* Engraved line icons, drawn here so nothing is downloaded and no emoji is used. */
 const ICONS = {
+  link: '<path d="M10.2 13.8a3.9 3.9 0 0 1 0-5.5l2.9-2.9a3.9 3.9 0 0 1 5.5 5.5l-1.4 1.4M13.8 10.2a3.9 3.9 0 0 1 0 5.5l-2.9 2.9a3.9 3.9 0 0 1-5.5-5.5l1.4-1.4"/>',
   gear: '<circle cx="12" cy="12" r="3.1"/><circle cx="12" cy="12" r="6.8"/><path d="M12 2.6v2.6M12 18.8v2.6M2.6 12h2.6M18.8 12h2.6M5.4 5.4l1.8 1.8M16.8 16.8l1.8 1.8M5.4 18.6l1.8-1.8M16.8 7.2l1.8-1.8"/>',
   page: '<path d="M6 3.5h9l3 3v14H6zM15 3.5v3h3M8.6 10.5h6.8M8.6 13.5h6.8M8.6 16.5h4.2"/>',
   key: '<circle cx="7.3" cy="12" r="3.6"/><circle cx="7.3" cy="12" r="1.1"/><path d="M10.9 12h10.3M17.4 12v3.2M20.3 12v2.4"/>',
@@ -1893,6 +1900,13 @@ document.getElementById("btn-export").onclick = () => {
   const box = h("div", { class: "sheet" },
     h("h2", {}, "Export for students"),
     h("div", { class: "slips" },
+      h("div", { class: "slip" }, h("div", { class: "to" }, "To: anywhere, as a link"), h("h3", {}, "Class link", tip("The whole escape room, packed into one web address. Paste it into Moodle, Canvas, Google Classroom or an email; students click it and play. Nothing is uploaded. If you change the escape room, copy a new link: the old one keeps the old version. The link also opens again in this editor.", "Class link")),
+        h("button", { id: "export-link", class: "stamp", onclick: async e => {
+          const btn = e.currentTarget, url = await makeClassLink(); if (!url) return;
+          const box = document.getElementById("export-link-box");
+          box.replaceChildren(h("label", { class: "lbl", for: "export-link-text" }, "Your class link"), h("textarea", { id: "export-link-text", class: "wlink", readonly: true, rows: 3, spellcheck: "false", value: url, onfocus: ev => ev.target.select() }), ...linkNotes(url, "export"));
+          box.hidden = false; copyText(url, btn, "The class link");      // "Copied." is written beside the button and announced (no toast: it would cover the buttons below)
+        } }, icon("link"), "Copy class link"), h("span", { class: "done" }), h("div", { id: "export-link-box", class: "linkbox", hidden: true })),
       h("div", { class: "slip" }, h("div", { class: "to" }, "To: Moodle or Canvas gradebook"), h("h3", {}, "SCORM package", tip("Moodle: Add an activity → SCORM package. Canvas: SCORM tool. Upload the zip without unzipping it.", "SCORM package")),
         h("button", { id: "export-scorm", class: "stamp", onclick: async () => { if (await readyToDownload()) { download(`${slug()}-SCORM.zip`, ER.scorm(gameHtml(), cfg.meta.title), "application/zip"); toast("SCORM package downloaded."); } } }, icon("save"), "Download SCORM .zip")),
       h("div", { class: "slip" }, h("div", { class: "to" }, "To: anywhere, as one file"), h("h3", {}, "Web page", tip("Double-click it, upload it as a Moodle or Canvas file, or put it on a website. Pair it with the exit password and an LMS quiz for credit. You can also reopen this file in the editor later.", "Web page")),
@@ -1903,14 +1917,16 @@ document.getElementById("btn-export").onclick = () => {
 };
 document.getElementById("btn-guided").onclick = () => { closeTools(); wizGo(hashFor(stored ? "hub" : "welcome")); };
 document.getElementById("wiz-save-slot").replaceWith(saveStatus("wiz-save", "save"));
+if (!/^https?:$/.test(location.protocol)) document.getElementById("wiz-home").remove();   // a copy of the maker opened as a file has no front page beside it
 document.getElementById("btn-save").onclick = () => { download(`${slug()}-project.json`, JSON.stringify(cfg, null, 2), "application/json"); toast("Project saved. Open it again with Open…"); };
 document.getElementById("btn-open").onclick = () => document.getElementById("file").click();
 document.getElementById("file").onchange = async e => {
   const f = e.target.files[0]; e.target.value = ""; if (!f) return;
   try {
     const text = await f.text();
-    const next = /\.html?$/i.test(f.name) ? ER.configFromHtml(text) : JSON.parse(text);
-    if (!next || !Array.isArray(next.rooms)) throw new Error("This file doesn't contain an escape room.");
+    const raw = /\.html?$/i.test(f.name) ? ER.configFromHtml(text) : JSON.parse(text);
+    if (!raw || !Array.isArray(raw.rooms)) throw new Error("This file doesn't contain an escape room.");
+    const next = ER.cleanConfig(raw);
     if (!(await ask(`Open “${next.meta?.title || f.name}”?`, ["It is added to the escape rooms in this browser. The one you have open now stays there too."], { ok: "Open it", cancel: "Keep what I have" }))) return;
     await startEscapeRoom(next, true); toast("Opened " + f.name);
     if (document.documentElement.dataset.mode === "wizard") wizGo(hashFor("hub")); else { render(); document.getElementById("page-title").focus(); }
@@ -2125,7 +2141,7 @@ function renderWizard(focus){
       back ? h("a", { class: "inkline", id: "wiz-back", href: back }, "Back") : null),
     wFooter(r));
   sheet.replaceChildren(form);
-  sheet.querySelectorAll("textarea").forEach(grow);
+  sheet.querySelectorAll("textarea:not([readonly])").forEach(grow);
   renderSteps(n);
   document.title = `${WIZ.errors.length ? "Error: " : ""}${n ? `Step ${n} of ${STEP_ORDER.length}: ` : ""}${title} – Escape room maker`;
   if (focus === "errors") document.getElementById("wiz-errors").focus();
@@ -2177,7 +2193,7 @@ function readStartFile(f){
 function parseSaved(text, name){
   const next = /\.json$/i.test(name) ? JSON.parse(text) : ER.configFromHtml(text);
   if (!next || !Array.isArray(next.rooms)) throw new Error("This file doesn't contain an escape room.");
-  return next;
+  return ER.cleanConfig(next);
 }
 WSTEPS.start = {
   title: () => "How do you want to start?",
@@ -2193,24 +2209,30 @@ WSTEPS.start = {
         options: [
           { value: "sample", title: "Change the sample", pic: "books", desc: "“Escape the Old Schoolhouse”, about the foundations of education: five rooms, ready to play. Swap in your own questions." },
           { value: "empty", title: "Start with an empty escape room", pic: "page", desc: "One empty quiz room for you to fill in." },
-          { value: "file", title: "Open one I saved before", pic: "folder", desc: "A backup copy, or a game file you downloaded from here (it ends in .html).",
+          { value: "file", title: "Open one I saved before", pic: "folder", desc: "A backup copy, a game file you downloaded from here (it ends in .html), or a class link you shared.",
             reveal: () => {
               const err = wErr("start-file") || (WIZ.fileErr ? { text: WIZ.fileErr } : null);
               return [err ? h("p", { class: "ferr", id: "wiz-file-err" }, h("span", { class: "sr" }, "Error: "), err.text) : null,
                 wbtn({ class: "stamp", id: "wiz-file-btn", "aria-describedby": err ? "wiz-file-err" : null, onclick: () => document.getElementById("wiz-file").click() }, icon("folder"), WIZ.fileCfg ? "Choose a different file" : "Choose the file"),
                 WIZ.fileCfg ? h("p", { id: "wiz-file-name" }, "Chosen: ", h("b", {}, WIZ.fileName), ` (“${WIZ.fileCfg.meta?.title || "Untitled"}”).`) : null,
-                h("input", { type: "file", id: "wiz-file", accept: ".html,.htm,.json", hidden: true, tabindex: "-1", "aria-hidden": "true", onchange: e => { readStartFile(e.target.files[0]); e.target.value = ""; } })];
+                h("input", { type: "file", id: "wiz-file", accept: ".html,.htm,.json", hidden: true, tabindex: "-1", "aria-hidden": "true", onchange: e => { readStartFile(e.target.files[0]); e.target.value = ""; } }),
+                WIZ.fileCfg ? null : wField({ id: "wiz-link-paste", key: "start-link", label: "Or paste a class link", value: WIZ.linkText,
+                  hint: "A class link holds the whole escape room, so it works as a backup too. Paste all of it.", set: v => { WIZ.linkText = v; } })];
             } }] })];
   },
   check: () => {
     if (!WIZ.start) return [{ key: "start", target: "start-sample", text: "Choose how you want to start" }];
-    if (WIZ.start === "file" && !WIZ.fileCfg) return [{ key: "start-file", target: "wiz-file-btn", text: WIZ.fileErr || "Choose the file you saved" }];
+    if (WIZ.start === "file" && !WIZ.fileCfg && !String(WIZ.linkText || "").trim()) return [{ key: "start-file", target: "wiz-file-btn", text: WIZ.fileErr || "Choose the file you saved, or paste a class link" }];
     return [];
   },
   save: async () => {
+    if (WIZ.start === "file" && !WIZ.fileCfg) {           // a pasted class link: unpack it (its content is untrusted: fromLink cleans and checks it)
+      try { WIZ.fileCfg = await ER.fromLink(WIZ.linkText); WIZ.fileName = "class link"; }
+      catch (e) { WIZ.errors = [{ key: "start-link", target: "wiz-link-paste", text: ER.LINK_WORDS[e.kind] ? linkWords(e.kind) : "That class link couldn't be opened" }]; renderWizard("errors"); return false; }
+    }
     const next = WIZ.start === "sample" ? clone(SAMPLE) : WIZ.start === "empty" ? blankConfig() : WIZ.fileCfg;
     if (!(await startEscapeRoom(next, WIZ.start === "file"))) return false;
-    const was = WIZ.start; WIZ.start = null; WIZ.fileCfg = null; WIZ.fileName = ""; WIZ.lastStart = was;
+    const was = WIZ.start; WIZ.start = null; WIZ.fileCfg = null; WIZ.fileName = ""; WIZ.linkText = ""; WIZ.lastStart = was;
   },
   next: () => WIZ.lastStart === "file" ? hashFor("hub") : hashFor("name")
 };
@@ -2245,7 +2267,7 @@ const later = (title, words) => ({ title: () => title, body: r => [H1(title), h(
 /* ---------- 10 Done ---------- */
 function deliveryWords(){
   const d = meta.delivery || {};
-  const where = { moodle: "Moodle", canvas: "Canvas", other: "Another course system", file: "A file you share" }[d.where];
+  const where = { link: "A class link", moodle: "Moodle", canvas: "Canvas", other: "Another course system", file: "A file you share" }[d.where];
   if (!where) return null;
   const how = d.where === "moodle" || d.where === "canvas" ? (d.how === "scorm" ? ", grade file" : d.how === "quiz" ? ", file and exit-password quiz" : "") : "";
   return where + how;
@@ -2270,7 +2292,9 @@ WSTEPS.done = {
         : h("p", { id: "wiz-done-backup-note" }, "Download a backup copy and keep it somewhere safe, such as your course folder. It is one file: it plays as the game in any browser, and it opens again in this maker."),
       fresh ? null : wbtn({ class: "stamp", id: "wiz-done-backup", onclick: () => { backup(); renderWizard(); document.getElementById("wiz-done-backup-note")?.focus?.(); } }, icon("save"), "Download a backup copy"),
       h("h2", {}, "Changing it later"),
-      h("p", {}, "Open this maker, choose “Open one I saved before”, and pick your file. Make the change, download it again, and replace the old file in Moodle or Canvas.")];
+      (meta.delivery || {}).where === "link"
+        ? h("p", {}, "Open this maker, choose “Open one I saved before”, and paste your class link (or pick your backup file). Make the change, make a new class link, and share the new link instead of the old one.")
+        : h("p", {}, "Open this maker, choose “Open one I saved before”, and pick your file. Make the change, download it again, and replace the old file in Moodle or Canvas.")];
   },
   go: () => "Go to your escape room",
   next: () => hashFor("hub")
@@ -2694,7 +2718,7 @@ function askPassword(){
 }
 /* Before any file for students is made: nothing that would stop a room working, an exit password of its own,
    and a word about unchecked items. Used by Advanced mode's Export and by the guided steps. */
-async function readyToDownload(){
+async function readyToDownload(what = "file"){
   const errs = ER.validate(cfg);
   if (errs.length) {
     if (document.documentElement.dataset.mode === "wizard") { WIZ.errors = problemsLinked(); renderWizard("errors"); } else showErrors(errs);
@@ -2706,9 +2730,58 @@ async function readyToDownload(){
     say(`The exit password is now ${pw}.`);
   }
   const st = ER.reviewStatus(cfg);
-  if (st.unverified) return ask("Download a draft?",
-    [`${st.unverified} of ${st.total} items haven't been checked yet.`, "Students will see a “Draft” notice saying answers may contain errors."], { ok: "Download anyway", cancel: "Go back" });
+  if (st.unverified) return ask(what === "link" ? "Share a draft?" : "Download a draft?",
+    [`${st.unverified} of ${st.total} items haven't been checked yet.`, "Students will see a “Draft” notice saying answers may contain errors."], { ok: what === "link" ? "Make the link anyway" : "Download anyway", cancel: "Go back" });
   return true;
+}
+
+/* ---------- class links ----------
+   The whole escape room packed into the game's address (ER.toLink): play.html#play=1.<data>. Nothing is uploaded;
+   the part after # never reaches a web server. A link is made on request (after the same checks as a download), and
+   kept in this escape room's bookkeeping (meta.link) with the change count it was made at, so the steps can say
+   when it is out of date: a link holds the version it was made from, and changing the escape room needs a new one. */
+const playBase = () => /^https?:$/.test(location.protocol) ? new URL("play.html", location.href).href.split(/[?#]/)[0] : ER.SITE + "play.html";
+const linkWords = kind => ({ "not-link": "That isn't a class link. A class link is a long web address with “#play=” in it.",
+  incomplete: "This class link is incomplete: part of it is missing. Copy the whole link and paste it again.",
+  newer: "This class link was made with a newer version of the maker.", "old-browser": "This browser is too old to open class links. Try an up-to-date Chrome, Edge, Firefox or Safari.",
+  "too-big": "This class link is too long to open.", invalid: "This class link doesn't hold a working escape room." })[kind] || "That class link couldn't be opened.";
+/* Checks first (problems, the exit password, unchecked items), then the link. Resolves the link, or null. */
+async function makeClassLink(){
+  if (!(await readyToDownload("link"))) return null;
+  let url;
+  try { url = await ER.toLink(cfg, playBase()); }
+  catch (e) { tell("The class link couldn't be made", ["Share the escape room as a file instead (the game .html file)."]); return null; }
+  if (saveTimer) saveNow();
+  meta.link = { url, rev: meta.rev, at: Date.now() }; saveMeta();
+  return url;
+}
+const linkFresh = () => !!(meta.link && meta.link.url && meta.link.rev === meta.rev);
+const kb = n => `${Math.round(n / 1024)} KB`;
+/* What to say about a link: its length, a warning when it is very long, and a QR code when it fits one. */
+function linkNotes(url, pre){
+  const long = url.length > ER.LINK_LONG, svg = long ? "" : ER.qrSvg(url, { label: "QR code of your class link" });
+  let qr = null;
+  if (svg) { qr = h("figure", { class: "wqr", id: pre + "-qr" }); qr.innerHTML = svg; qr.append(h("figcaption", {}, "Or students can scan this QR code with a phone camera, for example from your projector screen.")); }
+  return [long ? h("p", { class: "ferr", id: pre + "-long" }, h("span", { class: "sr" }, "Warning: "), `This link is very long (${kb(url.length)}), usually because of long texts. Some course systems and email programs cut long links off, and a cut-off link won't open. If that happens, share the escape room as a file instead.`) : null,
+    qr || h("p", { id: pre + "-qr-none" }, "This link is too long for a QR code. Share the link itself.")];
+}
+function linkStep(){
+  const L = meta.link;
+  if (!linkFresh()) return h("li", {},
+    L && L.url ? h("p", { class: "ferr", id: "wiz-link-stale" }, "You changed the escape room after making your link. The old link still opens the old version. Make a new link, and share that one instead.")
+      : h("p", {}, "The link holds the whole escape room. Nothing is uploaded anywhere."),
+    wbtn({ class: "plate", id: "wiz-make-link", onclick: async () => {
+      const url = await makeClassLink(); if (!url) return;
+      renderWizard(); document.getElementById("wiz-link")?.focus(); say("Your class link is ready. Copy it with the Copy link button.");
+    } }, icon("link"), L && L.url ? "Make a new class link" : "Make the class link"));
+  return h("li", {},
+    h("label", { class: "wlabel", for: "wiz-link" }, "Your class link"),
+    h("p", { class: "whint", id: "wiz-link-size" }, `It is ${L.url.length.toLocaleString("en-US")} characters long, so copy it with the button rather than by hand.`),
+    h("textarea", { id: "wiz-link", class: "wlink", readonly: true, rows: 3, spellcheck: "false", "aria-describedby": "wiz-link-size", value: L.url, onfocus: e => e.target.select() }),
+    h("div", { class: "copy" }, wbtn({ class: "stamp", id: "wiz-link-copy", onclick: e => copyText(L.url, e.currentTarget, "The class link") }, icon("page"), "Copy link"),
+      h("a", { class: "inkline", id: "wiz-link-open", href: L.url, target: "_blank", rel: "noopener" }, icon("play"), "Open it as a student", h("span", { class: "sr" }, " (opens in a new tab)")),
+      h("span", { class: "done" })),
+    linkNotes(L.url, "wiz"));
 }
 
 /* ---------- 8 How will students get it? ---------- */
@@ -2724,8 +2797,9 @@ WSTEPS.deliver = {
         { value: "scorm", title: "Yes: use a grade file (SCORM), if my school allows it", desc: `${LMS[where]} records the grade when a student finishes. Your school must have SCORM switched on.` }] });
     return [wRadios({ name: "where", legend: "How will your students get to the escape room?", asH1: true, value: d.where, set: v => set("where", v),
         hint: "Next you get step-by-step instructions for the one you choose.",
-        options: [{ value: "moodle", title: "Moodle", reveal: () => how("moodle") }, { value: "canvas", title: "Canvas", reveal: () => how("canvas") },
-          { value: "other", title: "Another course system", desc: "Such as Blackboard, D2L Brightspace or Google Classroom." },
+        options: [{ value: "link", title: "Share a class link (recommended)", desc: "Works anywhere: paste it into Moodle, Canvas, Google Classroom or an email. Students click it and play. The grade comes from a one-question quiz with the exit password." },
+          { value: "moodle", title: "Moodle", reveal: () => how("moodle") }, { value: "canvas", title: "Canvas", reveal: () => how("canvas") },
+          { value: "other", title: "Another course system", desc: "Such as Blackboard or D2L Brightspace, with a file. (For Google Classroom, a class link is easiest.)" },
           { value: "file", title: "I'll email or post a file", desc: "Students download one file and open it in their browser." }] }),
       wHelp(h("p", {}, "Which should I pick?"),
         h("table", { class: "wcompare" }, h("thead", {}, h("tr", {}, h("th", { scope: "col" }, ""), h("th", { scope: "col" }, "Grade file (SCORM)"), h("th", { scope: "col" }, "File and exit-password quiz"))),
@@ -2735,7 +2809,7 @@ WSTEPS.deliver = {
   },
   check: () => {
     const d = meta.delivery || {};
-    if (!d.where) return [{ key: "where", target: "where-moodle", text: "Choose where your students will play" }];
+    if (!d.where) return [{ key: "where", target: "where-link", text: "Choose how your students will get to the escape room" }];
     if (LMS[d.where] && !d.how) return [{ key: "how", target: "how-quiz", text: `Choose how the grade gets to ${LMS[d.where]}` }];
     return [];
   },
@@ -2758,7 +2832,7 @@ const copyRow = (id, label, text, what, cls = "") => h("div", { class: "copy" },
   wbtn({ class: "stamp", id: id + "-copy", onclick: e => copyText(text, e.currentTarget, what) }, "Copy", h("span", { class: "sr" }, " " + label)), h("span", { class: "done" }));
 function walkRoute(){ const d = meta.delivery || {}; return LMS[d.where] ? `${d.where}-${d.how}` : d.where; }
 const WALK_TITLE = { "moodle-scorm": "Put it in Moodle (grade file)", "moodle-quiz": "Put it in Moodle (file and exit-password quiz)", "canvas-scorm": "Put it in Canvas (grade file)",
-  "canvas-quiz": "Put it in Canvas (file and exit-password quiz)", other: "Put it in your course system", file: "Share it as a file" };
+  "canvas-quiz": "Put it in Canvas (file and exit-password quiz)", other: "Put it in your course system", file: "Share it as a file", link: "Share a class link" };
 const QUIZ_Q = "Type the exit password from the certificate at the end of the escape room.";
 function downloadStep(route){
   const zip = /scorm$/.test(route), lms = LMS[(meta.delivery || {}).where];
@@ -2772,11 +2846,11 @@ function downloadStep(route){
     zip ? h("p", {}, "Don't unzip it: ", B(lms), " needs the .zip file exactly as it is.") : h("p", {}, "This one file is the whole escape room. It is also your backup copy: it opens again in this maker."),
     meta.downloaded ? h("p", { class: "wnote", id: "wiz-downloaded" }, `Downloaded ${when(meta.downloaded)}.`) : null);
 }
-function passwordPart(withQuiz){
+function passwordPart(withQuiz, how = "when you download the file in step 1"){
   const pw = String(cfg.finish?.exitPassword || "").trim(), ready = pw && !needsPassword();
   return [h("h2", {}, "Your exit password"),
     ready ? [h("p", {}, "Students see it on their certificate at the end."), copyRow("wiz-password", "the exit password", pw, "The exit password")]
-      : h("p", { id: "wiz-password-later" }, "You choose it when you download the file in step 1."),
+      : h("p", { id: "wiz-password-later" }, `You choose it ${how}.`),
     withQuiz ? [h("h2", {}, "Ready to copy into your quiz"),
       h("p", {}, "Question text:"), copyRow("wiz-quiz-q", "the question text", QUIZ_Q, "The question text", "text"),
       ready ? [h("p", {}, "Correct answer:"), copyRow("wiz-quiz-a", "the correct answer", pw, "The answer")] : null,
@@ -2784,6 +2858,19 @@ function passwordPart(withQuiz){
 }
 const trouble = (q, ...a) => h("details", { class: "wtrouble" }, h("summary", {}, q), h("div", {}, ...a));
 const WALKS = {
+  link: () => [h("ol", { class: "walk" }, linkStep(),
+      h("li", {}, B("In Moodle:"), " turn on ", B("Edit mode"), ", click ", B("Add an activity or resource"), " (in Moodle 5, the ", B("+"), " and then ", B("Activity or resource"), "), choose ", B("URL"), " and click ", B("Add"), ". Type a ", B("Name"), `, for example “${cfg.meta?.title || "Escape room"}”, and paste the link into `, B("External URL"), ". Click ", B("Save and return to course"), ".", MENUS()),
+      h("li", {}, B("In Canvas:"), " go to ", B("Modules"), ", click the ", B("+"), " on a module, choose ", B("External URL"), ", paste the link into ", B("URL"), ", type a ", B("Page Name"), ", tick ", B("Load in a new tab"), ", and click ", B("Add Item"), ". Publish it. (You can also put the link on a ", B("Page"), " with the ", B("Link"), " button.)", MENUS()),
+      h("li", {}, B("In Google Classroom or an email:"), " paste the link into a post, an assignment or a message. Students click it."),
+      h("li", {}, "For the grade, add a one-question quiz with the exit password as the answer: in Moodle, a ", B("Quiz"), " with a ", B("Short answer"), " question (", B("Case sensitivity"), ": ", B("No, case is unimportant"), "); in Canvas, a ", B("Quiz"), " with a ", B("Fill in the Blank"), " question. The text is below, ready to copy.", MENUS()),
+      h("li", {}, "Try it the way a student would: open the link, play to the end, and type the password into your quiz.")),
+    passwordPart(true, "when you make the link in step 1"),
+    h("h2", {}, "Changing it later"),
+    h("p", { id: "wiz-link-change" }, "The link holds the escape room as it is when you make it. If you change anything, make a new link here and share that one: the old link keeps opening the old version."),
+    h("p", { id: "wiz-link-backup" }, "The link is also a backup copy. To work on this escape room again, on any computer, open this maker, choose “Open one I saved before”, and paste the link."),
+    h("h2", {}, "If something goes wrong"),
+    trouble("Students see “This class link is incomplete”", h("p", {}, "Part of the link was cut off on the way. Copy it again with the Copy link button and paste all of it. If your course system keeps cutting it, share the escape room as a file instead: ", h("a", { href: hashFor("deliver") }, "choose “I'll email or post a file”"), ".")),
+    trouble("My course system won't take such a long link", h("p", {}, "Some systems limit how long a web address can be. Share the escape room as a file instead: ", h("a", { href: hashFor("deliver") }, "choose “I'll email or post a file”"), "."))],
   "moodle-scorm": () => [h("ol", { class: "walk" }, downloadStep("moodle-scorm"),
       h("li", {}, "In your Moodle course, turn on ", B("Edit mode"), " (top right)."),
       h("li", {}, "In the section you want, click ", B("Add an activity or resource"), ". In Moodle 5, click the ", B("+"), " and then ", B("Activity or resource"), ".", MENUS()),

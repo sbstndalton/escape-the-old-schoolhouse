@@ -1,7 +1,10 @@
-// Builds the files people actually use from src/ and content/:
-//   index.html            the student game with the default content
-//   editor.html           the teacher editor (includes the game template so it can export new games)
-//   EscapeRoom_SCORM.zip  the student game packaged for Moodle/Canvas
+// Builds the files people actually use from src/, content/ and ACCESSIBILITY.md:
+//   index.html            the front page: "I'm a student" (open a class link, or play the sample) and "I'm a teacher"
+//   play.html             the student game with the sample content; it also plays any class link (play.html#play=…)
+//   editor.html           the teacher's maker (includes the game template so it can export games and make links)
+//   accessibility.html    the accessibility statement (ACCESSIBILITY.md as a page)
+//   EscapeRoom_SCORM.zip  the sample game packaged for Moodle/Canvas (its own launch file is index.html inside the zip)
+//   imsmanifest.xml       the SCORM manifest, for reference
 // Run: npm run build
 const fs = require("fs");
 const path = require("path");
@@ -14,24 +17,91 @@ const LS = String.fromCharCode(0x2028), PS = String.fromCharCode(0x2029);
 const jsLiteral = v => JSON.stringify(v).replace(/</g, "\\u003c").split(LS).join("\\u2028").split(PS).join("\\u2029");
 
 const shared = read("src/shared.js");
-const gameTemplate = read("src/game.html").replace("/*__SHARED__*/", () => shared);
+const gameSrc = read("src/game.html");
+const gameTemplate = gameSrc.replace("/*__SHARED__*/", () => shared);
 const content = JSON.parse(read("content/foundations-of-education.json"));
 
 const errors = ER.validate(content);
 if (errors.length) { console.error("Content has problems:\n- " + errors.join("\n- ")); process.exit(1); }
 
-const game = ER.buildGame(gameTemplate, content);
+// The website's game links back to the front page when a class link is broken; exported and SCORM games don't.
+const play = ER.buildGame(gameTemplate, content, { home: "index.html" });
+const packaged = ER.buildGame(gameTemplate, content);
 const editor = read("src/editor.html")
   .replace("/*__SHARED__*/", () => shared)
   .replace('"__GAME_TEMPLATE__"', () => jsLiteral(gameTemplate))
   .replace('"__DEFAULT_CONFIG__"', () => jsLiteral(content));
 
-// Fixed date so rebuilding unchanged content produces an identical zip.
-const zip = ER.scorm(game, content.meta.title, new Date(2026, 0, 1, 12, 0, 0));
+// The front page and the statement use the game's own embedded fonts (the reading face and the label face).
+const fontFaces = families => gameSrc.split("\n").filter(l => l.startsWith("@font-face") && families.some(f => l.includes(`font-family:"${f}"`))).join("\n");
+const FONT_NOTE = "/* Embedded fonts (no internet needed). Atkinson Hyperlegible: Copyright 2020 Braille Institute of America, Inc., SIL Open Font License 1.1."
+  + " IM Fell English SC: Copyright (c) 2007 Igino Marini, with Reserved Font Name \"IM FELL English SC\", SIL Open Font License 1.1 (its digits are left out on purpose). */\n";
+const front = read("src/front.html")
+  .replace("/*__FONTS__*/", () => FONT_NOTE + fontFaces(["Atkinson Hyperlegible", "IM Fell English SC"]))
+  .replace("/*__SHARED__*/", () => shared);
 
-fs.writeFileSync(path.join(root, "index.html"), game);
+/* ---------- ACCESSIBILITY.md as a page ----------
+   A small Markdown reader for what that file uses: headings, paragraphs, lists, tables, rules, **bold**, *italic*,
+   `code` and [links](…). Everything is escaped first; links may only go to web addresses, other pages here, or
+   headings on the page. Headings get the same ids GitHub gives them, so the file's own links still work. */
+function markdown(md){
+  const E = ER.esc;
+  const used = new Map();     // a repeated heading gets -1, -2 … like on GitHub
+  const unique = id => { const n = used.get(id) || 0; used.set(id, n + 1); return n ? `${id}-${n}` : id; };
+  const slug = t => t.toLowerCase().replace(/<[^>]+>/g, "").replace(/[^\p{L}\p{N}\s-]/gu, "").trim().replace(/\s/g, "-");
+  const inline = t => E(t)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\*)/g, "$1<em>$2</em>")
+    .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, text, href) => {
+      const h = href.replace(/&amp;/g, "&");
+      if (!/^(https?:\/\/|#|[A-Za-z0-9_.-]+\.(html|md)(#[\w-]*)?$)/.test(h)) return text;
+      return `<a href="${E(h.replace(/^ACCESSIBILITY\.md/, "accessibility.html").replace(/^README\.md.*/, "index.html"))}">${text}</a>`;
+    });
+  const lines = md.replace(/\r/g, "").split("\n"), out = [];
+  let tables = 0, section = "Accessibility";
+  for (let i = 0; i < lines.length;) {
+    const l = lines[i];
+    if (!l.trim()) { i++; continue; }
+    let m;
+    if ((m = l.match(/^(#{1,4})\s+(.*)$/))) { const n = m[1].length, t = inline(m[2]); section = m[2].replace(/[*`]/g, ""); out.push(`<h${n} id="${unique(slug(m[2].replace(/[*`]/g, "")))}">${t}</h${n}>`); i++; continue; }
+    if (/^---+\s*$/.test(l)) { out.push("<hr>"); i++; continue; }
+    if (/^\|/.test(l)) {
+      const rows = []; while (i < lines.length && /^\|/.test(lines[i])) rows.push(lines[i++]);
+      const cells = r => r.replace(/^\||\|\s*$/g, "").split("|").map(c => c.trim());
+      const head = cells(rows[0]), body = rows.slice(2).map(cells);
+      // each table scrolls sideways in its own box when the window is narrow; the box is named after the section it is in
+      out.push(`<div class="tbl" role="region" aria-label="Table ${++tables}: ${E(section)}" tabindex="0"><table><thead><tr>${head.map(c => c ? `<th scope="col">${inline(c)}</th>` : "<td></td>").join("")}</tr></thead><tbody>`
+        + body.map(r => `<tr>${r.map((c, k) => k === 0 ? `<th scope="row">${inline(c)}</th>` : `<td>${inline(c)}</td>`).join("")}</tr>`).join("") + "</tbody></table></div>");
+      continue;
+    }
+    if ((m = l.match(/^(\s*)([-*]|\d+\.)\s+/))) {
+      const ordered = /\d/.test(m[2]), items = [];
+      while (i < lines.length && /^\s*([-*]|\d+\.)\s+/.test(lines[i])) {
+        let t = lines[i++].replace(/^\s*([-*]|\d+\.)\s+/, "");
+        while (i < lines.length && /^\s{2,}\S/.test(lines[i]) && !/^\s*([-*]|\d+\.)\s+/.test(lines[i])) t += " " + lines[i++].trim();
+        items.push(`<li>${inline(t)}</li>`);
+      }
+      out.push(`<${ordered ? "ol" : "ul"}>${items.join("")}</${ordered ? "ol" : "ul"}>`);
+      continue;
+    }
+    const para = []; while (i < lines.length && lines[i].trim() && !/^(#{1,4}\s|\||---+\s*$|\s*([-*]|\d+\.)\s+)/.test(lines[i])) para.push(lines[i++].trim());
+    out.push(`<p>${inline(para.join(" "))}</p>`);
+  }
+  return out.join("\n");
+}
+const statement = read("src/statement.html")
+  .replace("/*__FONTS__*/", () => FONT_NOTE + fontFaces(["Atkinson Hyperlegible"]))
+  .replace("<!--__STATEMENT__-->", () => markdown(read("ACCESSIBILITY.md")));
+
+// Fixed date so rebuilding unchanged content produces an identical zip.
+const zip = ER.scorm(packaged, content.meta.title, new Date(2026, 0, 1, 12, 0, 0));
+
+fs.writeFileSync(path.join(root, "index.html"), front);
+fs.writeFileSync(path.join(root, "play.html"), play);
 fs.writeFileSync(path.join(root, "editor.html"), editor);
+fs.writeFileSync(path.join(root, "accessibility.html"), statement);
 fs.writeFileSync(path.join(root, "EscapeRoom_SCORM.zip"), zip);
 fs.writeFileSync(path.join(root, "imsmanifest.xml"), ER.manifest(content.meta.title));
 const st = ER.reviewStatus(content);
-console.log(`Built index.html, editor.html, EscapeRoom_SCORM.zip  (${content.rooms.length} rooms; ${st.verified}/${st.total} items verified)`);
+console.log(`Built index.html (front page), play.html, editor.html, accessibility.html, EscapeRoom_SCORM.zip  (${content.rooms.length} rooms; ${st.verified}/${st.total} items verified)`);

@@ -149,6 +149,32 @@ async function makeQuizRoom(page) {
     await game.close(); await page.close();
   });
 
+  await test("Export: “Copy class link” makes a link that holds the escape room and plays ", async () => {
+    const page = await openEditor(browser, base);
+    await makeQuizRoom(page);
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.click("#btn-export");
+    assert.match(await page.locator(".slip h3").first().textContent(), /^Class link/, "the link comes first");
+    await page.click("#export-link");
+    await page.locator("#export-link-text").waitFor();
+    const link = await page.inputValue("#export-link-text");
+    assert.ok(link.startsWith(base + "/play.html#play=1."));
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), link, "copied");
+    const cfg = await ER.fromLink(link);
+    assert.equal(cfg.meta.title, "Chapter 3 Review"); assert.equal(cfg.finish.exitPassword, "MANN1837");
+    assert.deepEqual(cfg, ER.cleanConfig(await page.evaluate(() => JSON.parse(JSON.stringify(cfg)))), "the link holds exactly what is in the editor");
+    assert.equal(await page.locator("#export-qr svg").count(), 1, "a short link gets a QR code");
+    const game = await browser.newPage();
+    const errors = []; game.on("pageerror", e => errors.push(e.message));
+    await game.goto(link); await game.click("#begin");
+    assert.equal(await game.isHidden("#draft"), true, "everything was checked, so no Draft notice");
+    await game.fill("input[name=q0]", "dewey"); await game.check("input[name=q1][value='1']");
+    await game.click("#try"); await door(game, "You Escaped");
+    assert.equal(await game.textContent("#exit-password"), "MANN1837");
+    assert.deepEqual(errors, []); assert.deepEqual(page.errors, []);
+    await game.close(); await page.close();
+  });
+
   await test("SCORM export is a valid package containing the game", async () => {
     const page = await openEditor(browser, base);
     await makeQuizRoom(page);
