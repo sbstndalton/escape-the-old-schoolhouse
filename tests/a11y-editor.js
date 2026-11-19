@@ -408,9 +408,9 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     const problems = [];
     // (1) the reader's own default text size doubled (a browser setting), (2) the browser zoomed to 200%
     const big = engine === playwright.chromium ? await engine.launch({ args: ["--blink-settings=defaultFontSize=32,defaultFixedFontSize=26"] }) : null;
-    for (const mode of ["default font size 32px at 1280×900", "zoom 200% (640×450)"]) {
+    for (const mode of ["default font size 32px at 1280×900", "default font size 32px at 390×844", "zoom 200% (640×450)"]) {
       if (mode.startsWith("default") && !big) continue;
-      const page = await open(mode.startsWith("default") ? big : browser, base, mode.startsWith("default") ? { width: 1280, height: 900 } : { width: 640, height: 450 });
+      const page = await open(mode.startsWith("default") ? big : browser, base, mode.includes("1280") ? { width: 1280, height: 900 } : mode.includes("390") ? PHONE : { width: 640, height: 450 });
       if (mode.startsWith("default")) assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize), "32px");
       await eachState(page, async name => { problems.push(...await clipping(page, `[${mode}] ${name}`)); if (SHOTS && /room 1 \/ items/.test(name)) await page.screenshot({ path: path.join(SHOTS, `text-200-${mode.slice(0, 4)}.png`) }); }, only);
       await page.context().close();
