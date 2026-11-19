@@ -259,11 +259,21 @@ const ER = (() => {
  *   Returns [{ room (index, or -1 for the whole game), message }]. It never blocks anything. */
 ER.a11yHow = room => {
   const t = room && room.type;
-  if (t === "matching") return "Set each dial with its up and down arrows or the arrow keys, or type the code in the box. Then pull the shackle.";
-  if (t === "quiz") return "Answer every question, then turn the handle to check.";
-  if (t === "ordering") return "Use each card's up and down buttons to put the cards in order, then turn the handle to check.";
-  if (t === "sorting") return "Stamp every slip with one of the stamps, then turn the handle to check.";
-  if (t === "reflection") return "Choose the answer closest to your view for each question. There are no wrong answers.";
+  // Each sentence names the real control (its button text) as well as the picture of it, and says what to do in order.
+  if (t === "matching") {
+    const m = ER.matching(room), look = ER.look(room), things = look === "books" ? "books" : look === "portraits" ? "portraits" : "cards";
+    const decoys = m.display.length > m.answerCards.length ? ` Some ${things} are decoys that no clue describes.` : "";
+    return `Each clue describes one of the ${things}. Take the clues in order: the codes of the ${things} they describe, in that order, open the lock.${decoys}`
+      + ` Set each dial with its up and down arrows or the arrow keys, or type the whole code in the box. Then press “Pull the shackle” to try it.`;
+  }
+  if (t === "quiz") return "Answer every question, then press “Check answers” (the handle) to try the lock.";
+  if (t === "ordering") return "Put the cards in order with each card's Move up and Move down buttons, then press “Check order” (the handle) to try the lock.";
+  if (t === "sorting") return "Stamp every slip: press one of the boxes on the slip, or pick the slip up and press a rubber stamp. Then press “Submit” (the handle) to try the lock.";
+  if (t === "reflection") {
+    let last = String((room && room.buttonLabel) || "");
+    try { last = last.replace(new RegExp("[\\p{Extended_Pictographic}\\uFE0F\\u200D]", "gu"), ""); } catch (e) {}
+    return `Choose the answer closest to your view for each question and press “Next question”; on the last question, press “${last.trim() || "Continue"}”. There are no wrong answers.`;
+  }
   return "";
 };
 ER.a11yDescribe = (room, state = {}) => {

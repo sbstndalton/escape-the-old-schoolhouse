@@ -42,7 +42,7 @@ t("a11yDescribe lists a room as text in reading order; a11yHow says how to work 
   assert.deepEqual(d.map(p => p.h), ["The note", "2 books on the shelf", "Clues", "The lock"]);
   assert.deepEqual(d[1].list, ["Code **B**: Alpha (1900)", "Code **A**: Zeta"]);
   assert.deepEqual(d[2].list, ["Clue 1: first clue", "Clue 2: second clue"]);
-  assert.match(d[3].text.join(" "), /2 dials.*arrow keys, or type the code/);
+  assert.match(d[3].text.join(" "), /2 dials.*arrow keys, or type the whole code in the box\. Then press “Pull the shackle”/);
   assert.ok(!JSON.stringify(d).includes("AB"), "the description never contains the answer");
   const sort = { type: "sorting", categories: ["Old", "New"], items: [{ text: "one", category: 0 }, { text: "two", category: 1 }] };
   assert.deepEqual(ER.a11yDescribe(sort, { picks: [1, null] })[1].list, ["one (stamped **New**)", "two (not stamped yet)"]);

@@ -642,7 +642,7 @@ h2.bplate .rn{font-size:.9em;letter-spacing:.12em}
 .pull{font-size:.88rem;line-height:1.2;letter-spacing:.1em;opacity:1;color:#1d1205}
 .tag{font-size:1rem;clip-path:none;padding:.45rem .8rem .4rem 1.6rem;box-shadow:.1rem .25rem .4rem rgba(0,0,0,.6)}
 .tag{flex-wrap:wrap;max-width:100%}
-.tag span{font-family:var(--f-ty);white-space:normal}
+.tag span{font-family:var(--f-r);font-weight:700;white-space:normal}
 #answer{min-height:2.2rem;border-bottom:2px dashed #2a1d14;font:700 1.15rem/1.3 var(--f-r);letter-spacing:.14em}
 .how,.msg,#hint-note{margin:0;max-width:21rem;text-align:center;font:400 1rem/1.5 var(--f-r);color:var(--parch);text-shadow:none}
 .how,.msg:not(:empty),#hint-note:not(:empty){padding:.4rem .75rem;background:rgba(12,8,5,.84);box-shadow:inset 0 0 0 1px rgba(176,138,62,.55)}
@@ -1010,7 +1010,8 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
     <ul class="tips">
       <li>There is no time limit. The clock only shows how long you have played, and it stops while this notebook is open.</li>
       <li>Papers: select one to read it up close. Esc or the close button puts it back.</li>
-      <li>Dials: use the arrows above and below each dial, the arrow keys, or type the code in the box.</li>
+      <li>Combination locks: take the clues in order; the codes they point to, in that order, open the lock. Set each dial with the arrows above and below it or the arrow keys, or type the whole code in the box labelled “Type the whole code instead”. Then press “Pull the shackle”.</li>
+      <li>Other locks: press the button named on the handle’s tag (“Check answers”, “Check order” or “Submit”).</li>
       <li>Every room has a Describe this room button. It lists everything in the room as text.</li>
       <li>Every sound comes with a message on screen, so the game plays the same with sound off.</li>
     </ul>
@@ -1281,11 +1282,21 @@ const ER = (() => {
  *   Returns [{ room (index, or -1 for the whole game), message }]. It never blocks anything. */
 ER.a11yHow = room => {
   const t = room && room.type;
-  if (t === "matching") return "Set each dial with its up and down arrows or the arrow keys, or type the code in the box. Then pull the shackle.";
-  if (t === "quiz") return "Answer every question, then turn the handle to check.";
-  if (t === "ordering") return "Use each card's up and down buttons to put the cards in order, then turn the handle to check.";
-  if (t === "sorting") return "Stamp every slip with one of the stamps, then turn the handle to check.";
-  if (t === "reflection") return "Choose the answer closest to your view for each question. There are no wrong answers.";
+  // Each sentence names the real control (its button text) as well as the picture of it, and says what to do in order.
+  if (t === "matching") {
+    const m = ER.matching(room), look = ER.look(room), things = look === "books" ? "books" : look === "portraits" ? "portraits" : "cards";
+    const decoys = m.display.length > m.answerCards.length ? ` Some ${things} are decoys that no clue describes.` : "";
+    return `Each clue describes one of the ${things}. Take the clues in order: the codes of the ${things} they describe, in that order, open the lock.${decoys}`
+      + ` Set each dial with its up and down arrows or the arrow keys, or type the whole code in the box. Then press “Pull the shackle” to try it.`;
+  }
+  if (t === "quiz") return "Answer every question, then press “Check answers” (the handle) to try the lock.";
+  if (t === "ordering") return "Put the cards in order with each card's Move up and Move down buttons, then press “Check order” (the handle) to try the lock.";
+  if (t === "sorting") return "Stamp every slip: press one of the boxes on the slip, or pick the slip up and press a rubber stamp. Then press “Submit” (the handle) to try the lock.";
+  if (t === "reflection") {
+    let last = String((room && room.buttonLabel) || "");
+    try { last = last.replace(new RegExp("[\\p{Extended_Pictographic}\\uFE0F\\u200D]", "gu"), ""); } catch (e) {}
+    return `Choose the answer closest to your view for each question and press “Next question”; on the last question, press “${last.trim() || "Continue"}”. There are no wrong answers.`;
+  }
   return "";
 };
 ER.a11yDescribe = (room, state = {}) => {
@@ -1741,7 +1752,7 @@ function onward(){
   msg.after(b); b.focus();
 }
 const keyLock = (label, action, { form = "", total = 0, what = "right" } = {}) => `<div class="lock klock"><div class="esc"><span class="hole" aria-hidden="true"></span>
-    <button id="try" class="key" ${form ? `type="submit" form="${form}"` : 'type="button"'} title="Turn the handle">${BIGKEY}<span class="sr">${esc(action)}</span></button></div>
+    <button id="try" class="key" ${form ? `type="submit" form="${form}"` : 'type="button"'} title="${esc(action)} (the handle)">${BIGKEY}<span class="sr">${esc(action)}</span></button></div>
   <span class="klabel paper" aria-hidden="true">${label ? `<small>${label}</small>` : ""}${esc(action)}</span>
   ${total ? `<span class="counter" id="counter" aria-hidden="true"><span>0</span><em>of</em><span>${total}</span><em>${what}</em></span>` : ""}</div>`;
 /* Under every lock: one plain sentence on how to work it, then the result of the last try (#msg; it is also
@@ -1765,8 +1776,8 @@ function dialLock(r, m){
     <div class="lbody"><span class="lname" id="lname">${lockText(r.lockLabel) || "Lock"}</span>
       <div class="dials" role="group" aria-labelledby="lname" aria-describedby="how">${Array.from({ length: n }, (_, k) => `<div class="dial" data-k="${k}" role="spinbutton" tabindex="0" aria-label="Dial ${k+1} of ${n}" aria-valuemin="0" aria-valuemax="${sym.length-1}" aria-valuenow="0" aria-valuetext="blank"><span class="nub" data-d="1" aria-hidden="true">${ICON.up}</span><span class="dwin"><span class="strip" aria-hidden="true"><i></i><i></i><i></i></span></span><span class="nub" data-d="-1" aria-hidden="true">${ICON.down}</span></div>`).join("")}</div>
       <span class="pull" aria-hidden="true">Pull the shackle to try</span></div>
-    <label class="tag paper"><span>or type the code</span><input id="answer" type="text" maxlength="${n}" ${m.numbers?'inputmode="numeric"':""} autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="how"></label>
-    <button type="button" id="try" class="shackle" title="Pull the shackle to try the lock">${SHACKLE}<span class="sr">Pull the shackle to try the lock</span></button></div>`;
+    <label class="tag paper"><span>Type the whole code instead</span><input id="answer" type="text" maxlength="${n}" ${m.numbers?'inputmode="numeric"':""} autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="how"></label>
+    <button type="button" id="try" class="shackle" title="Pull the shackle to try the lock">${SHACKLE}<span class="sr">Pull the shackle</span></button></div>`;
 }
 function wireDials(m, onTry){
   const sym = dialSymbols(m.answer), L = sym.length, dials = [...stage.querySelectorAll(".dial")], inp = $("#answer"), pos = dials.map(() => 0);
@@ -1885,7 +1896,7 @@ function intro(){
     `Wrong answers ${sc.mode==="deductions" && sc.wrongPenalty ? `cost ${sc.wrongPenalty} points each, so think before you try` : "cost nothing, so keep trying"}.`,
     ROOMS.some(r => roomHints(r).length) ? `Stuck? Some rooms have a hint drawer that unlocks after a wrong try. ${sc.mode==="deductions" && sc.hintPenalty ? `Each hint costs ${sc.hintPenalty} points.` : "Hints are counted, but they don't affect your grade."}` : "",
     `At the end you'll get a <strong>certificate</strong>${CFG.finish?.exitPassword ? " with the exit password" : ""}.`,
-    "Take your time: there is no time limit. Select any paper to read it up close. The pocket watch opens your notebook, where you can change sound, motion, contrast and text."
+    "Take your time: there is no time limit. Select any paper to read it up close. The Notebook button (the pocket watch) opens your notebook, where you can change sound, motion, contrast and text."
   ].filter(Boolean);
   const rulesHtml = `<h2>House rules</h2><ul>${rules.map(x => `<li>${x}</li>`).join("")}</ul>${CFG.meta?.learningOutcome ? `<p class="ref">Learning outcome: ${fmt(CFG.meta.learningOutcome)}</p>` : ""}`;
   stage.innerHTML = `

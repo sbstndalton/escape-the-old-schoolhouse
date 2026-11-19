@@ -260,7 +260,7 @@ const TEXTS = {
     ["Begin plate", "#begin", "big"], ["Draft note", "#draft", "read"], ["Notebook caption under the watch", ".wl", "label"], ["Clock", "#timer", "label"], ["Key ring: a locked key's number", ".door b", "label"]],
   "room 1, books": [["Room title plate", "h2.bplate", "big"], ["“Describe this room” plate", ".desc span", "label"], ["Book titles on the spines", ".vol .title", "read"], ["Code letters on the books", ".vol .letter b", "big"],
     ["Section label on the wall (Clues)", ".cap", "label"], ["Clue number", ".icard .no", "label"], ["Clue text", ".icard .p", "read"], ["Lock name on brass", ".lname", "label"],
-    ["“Pull the shackle to try”", ".pull", "label"], ["Tag: “or type the code”", ".tag span", "label"], ["How-to line under the lock", ".how", "read"], ["Hint drawer button (locked)", "#hint-btn span", "label"],
+    ["“Pull the shackle to try”", ".pull", "label"], ["Tag: “Type the whole code instead”", ".tag span", "label"], ["How-to line under the lock", ".how", "read"], ["Hint drawer button (locked)", "#hint-btn span", "label"],
     ["Hint note", "#hint-note", "read"], ["Key ring: the current key's number", ".door.current b", "label"]],
   "room 1, wrong try and a hint": [["Result message", "#msg", "read"], ["Hint paper", ".hint > span", "read"], ["Hint heading", ".hint .hb", "label"], ["Dial characters", ".dial .strip i:nth-child(2)", "big"], ["Typed code", "#answer", "big"]],
   "room 1, plain cards": [["Card name", ".mcard strong", "read"], ["Card code tab", ".mcard .badge", "big"]],
@@ -466,7 +466,7 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     await dial.focus(); await page.keyboard.press("e");
     assert.equal(await dial.getAttribute("aria-valuetext"), "E, 5 of 26"); assert.equal(await dial.getAttribute("aria-valuenow"), "5");
     assert.equal(await page.locator(".dials").getAttribute("role"), "group");
-    assert.match(await page.textContent("#" + await page.locator(".dials").getAttribute("aria-describedby")), /up and down arrows or the arrow keys, or type the code/, "the lock says how to work it, in plain words");
+    assert.match(await page.textContent("#" + await page.locator(".dials").getAttribute("aria-describedby")), /up and down arrows or the arrow keys, or type the whole code/, "the lock says how to work it, in plain words");
     assert.equal(await page.locator("label:has(#answer)").count(), 1, "the code box has a real label");
     // a dial arrow works on release, not on press (pointer cancellation), and a drag has a tap alternative
     const nub = await page.locator(".dial").nth(1).locator(".nub").first().boundingBox();
@@ -485,7 +485,7 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     await page.click("#describe");
     assert.equal(await page.getAttribute("#examine", "role"), "dialog"); assert.equal(await page.getAttribute("#examine", "aria-modal"), "true"); assert.equal(await page.getAttribute("#examine", "aria-label"), "Room description");
     const d = (await page.textContent("#examine")).replace(/\s+/g, " ");
-    for (const re of [/Room 1 of 5: The Library/, /5 books on the shelf/, /Code L: Essentialism/, /Clue 1: All students should master/, /combination padlock with 5 dials/, /pull the shackle/]) assert.match(d, re);
+    for (const re of [/Room 1 of 5: The Library/, /5 books on the shelf/, /Code L: Essentialism/, /Clue 1: All students should master/, /combination padlock with 5 dials/, /Pull the shackle/]) assert.match(d, re);
     assert.equal(await page.evaluate(() => document.querySelector("#scene").inert), true, "the room behind a sheet is inert");
     await page.keyboard.press("Escape"); assert.equal(await page.evaluate(() => document.activeElement.id), "describe"); assert.equal(await page.evaluate(() => document.querySelector("#scene").inert), false);
     // notebook switches
@@ -516,6 +516,23 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     assert.equal(await page.getAttribute(".qnav .n >> nth=0", "aria-label"), "Question 1, answered"); assert.equal(await page.getAttribute(".qnav .n >> nth=0", "aria-current"), "step");
     await done(page);
   }, { solo: true });
+  test("the instructions under every lock name the real control, and matching rooms say to take the clues in order", async () => {
+    if (REPORT) return;
+    const page = await open();
+    await page.evaluate(q => { S.player = "T"; ROOMS.push(q); }, QUIZ);
+    for (let n = 1; n <= 6; n++) {
+      await room(page, n);
+      const r = await page.evaluate(() => ({ type: ROOMS[S.room - 1].type, how: document.querySelector("#how").textContent, name: document.querySelector("#try .sr")?.textContent || document.querySelector("#try").textContent }));
+      if (r.type !== "reflection") assert.ok(r.how.includes(`“${r.name}”`), `room ${n} (${r.type}): the instructions should name the button “${r.name}”, got: ${r.how}`);
+      else assert.match(r.how, /“Next question”/);
+      assert.doesNotMatch(r.how, /^turn the handle|, turn the handle|then turn the handle/i, "no picture-only wording");
+      if (r.type === "matching") assert.match(r.how, /Take the clues in order: the codes of the \w+ they describe, in that order, open the lock/);
+      if (n === 2) assert.match(r.how, /Some portraits are decoys/);
+    }
+    await room(page, 1);
+    assert.equal(await page.textContent("label:has(#answer) span"), "Type the whole code instead", "the code box's label makes sense on its own");
+    await done(page);
+  });
   test("the reading face is Atkinson Hyperlegible, built in; the typewriter face is only on short tags", async () => {
     if (REPORT) return;
     const page = await open();
