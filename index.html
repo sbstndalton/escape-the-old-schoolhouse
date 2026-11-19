@@ -1686,7 +1686,10 @@ function lockMove(kind){
   if (kind === "nudge") l.animate(X(0, 3, 0), { duration: 180, easing: "ease-out" });
   return l;
 }
-function setMsg(cls, text){ const m=$("#msg"); if (m) { m.className="msg "+cls; m.textContent=text; } say(text); }
+/* The result of a try is always brought into view (it may sit below the lock on a phone or a zoomed window),
+   clear of the "more below" tab; with motion off it jumps there. */
+function setMsg(cls, text){ const m=$("#msg"); if (m) { m.className="msg "+cls; m.textContent=text; if (text) reveal(m); } say(text); }
+function reveal(el){ try { el.scrollIntoView({ block: "nearest", behavior: calm() ? "auto" : "smooth" }); } catch(e){} cue(); }
 function count(right){ const c = $("#counter"); if (!c) return; const d = c.firstElementChild; d.textContent = right;
   if (!calm() && d.animate) d.animate([{ transform: "translateY(-60%)", opacity: 0 }, { transform: "translateY(8%)", opacity: 1, offset: .7 }, { transform: "none" }], { duration: 260, easing: "ease-out" }); }
 let solvedRoom = -1;                  // once a room is solved its lock ignores further tries
@@ -2241,12 +2244,20 @@ function fit(){
   root.dataset.shape = tall ? "tall" : "wide";
   cue();
 }
-/* A small "more below" mark shows whenever the room continues past the bottom of the window. */
-function cue(){ $("#more").hidden = !(view.scrollHeight - view.clientHeight - view.scrollTop > 24); }
+/* A small "more below" mark shows whenever the room continues past the bottom of the window. It steps aside
+   whenever it would sit on the result of a try or on the control that has focus. */
+function cue(){
+  const more = $("#more"); more.hidden = !(view.scrollHeight - view.clientHeight - view.scrollTop > 24);
+  if (more.hidden) return;
+  const c = more.getBoundingClientRect(), msg = $("#msg"), a = document.activeElement;
+  const hits = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.left < c.right && r.right > c.left && r.top < c.bottom && r.bottom > c.top; };
+  if ((msg && msg.textContent.trim() && hits(msg)) || (a && a !== stage && view.contains(a) && hits(a))) more.hidden = true;
+}
 view.addEventListener("scroll", cue, { passive: true });
 /* Focus is never left out of sight: if the browser didn't scroll a focused control into the window, do it here. */
 view.addEventListener("focusin", e => { const t = e.target, r = t.getBoundingClientRect && t.getBoundingClientRect(); if (!r || t === stage) return;
-  if (r.top < 0 || r.bottom > window.innerHeight) { try { t.scrollIntoView({ block: "nearest" }); } catch(err){} } });
+  if (r.top < 0 || r.bottom > window.innerHeight) { try { t.scrollIntoView({ block: "nearest" }); } catch(err){} } cue(); });
+view.addEventListener("focusout", () => setTimeout(cue, 0));
 try { new ResizeObserver(cue).observe(stage); } catch(e){}
 $("#skip").onclick = e => { e.preventDefault(); (stage.querySelector("h2") || stage).focus(); };
 window.addEventListener("resize", fit);
