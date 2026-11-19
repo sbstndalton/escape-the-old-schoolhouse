@@ -164,7 +164,7 @@ function checkClip() {
     for (let a = el; a && a !== document.body; a = a.parentElement) {
       const cs = getComputedStyle(a); if (cs.display === "inline") continue;
       const hid = v => v === "hidden" || v === "clip", scr = v => v === "auto" || v === "scroll";
-      if (cs.webkitLineClamp && cs.webkitLineClamp !== "none") break;       // a teaser: the whole text opens in the examine view
+      if (cs.webkitLineClamp && cs.webkitLineClamp !== "none") { add("text is cut short with line-clamp: " + name(el)); break; }   // stories, clues and results are never shortened
       const q = a.getBoundingClientRect();
       if (hid(cs.overflowX) && (r.right > q.right + 1.5 || r.left < q.left - 1.5)) add("text is cut off at the side: " + name(el) + " inside " + name(a));
       if (hid(cs.overflowY) && !scrollsY && (r.bottom > q.bottom + 1.5 || r.top < q.top - 1.5)) add("text is cut off: " + name(el) + " inside " + name(a));
@@ -459,12 +459,18 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     assert.equal(await page.getAttribute("#doors", "aria-label"), "Rooms: you are in room 1 of 5, 0 solved");
     assert.deepEqual((await page.locator("#doors .door .sr").allTextContents()).slice(0, 2), ["Room 1, you are here", "Room 2, locked"]);
     // headings in order, one h1
-    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#scene h1,#scene h2,#scene h3")].map(h => h.tagName)), ["H1", "H2", "H3"]);
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#scene h1,#scene h2,#scene h3")].map(h => h.tagName + " " + h.textContent.trim())),
+      ["H1 Escape the Old Schoolhouse", "H2 Room 1 · The Library", "H3 Books on the shelf", "H3 Card Catalog", "H3 Library lock"], "the objects, the clues and the lock each have a heading");
+    // the Draft note keeps one name and unfolds a region it controls
+    const draftName = await page.textContent("#draft"); await page.click("#draft");
+    assert.equal(await page.textContent("#draft"), draftName); assert.equal(await page.getAttribute("#draft", "aria-expanded"), "true"); assert.equal(await page.isVisible("#" + await page.getAttribute("#draft", "aria-controls")), true);
+    await page.click("#draft");
     // dials
     const dial = page.locator(".dial").first();
     assert.equal(await dial.getAttribute("role"), "spinbutton"); assert.equal(await dial.getAttribute("aria-label"), "Dial 1 of 5"); assert.equal(await dial.getAttribute("aria-valuetext"), "blank");
     await dial.focus(); await page.keyboard.press("e");
     assert.equal(await dial.getAttribute("aria-valuetext"), "E, 5 of 26"); assert.equal(await dial.getAttribute("aria-valuenow"), "5");
+    await page.waitForFunction(() => document.querySelector("#live").textContent === "Dial 1: E");     // typing moves on to the next dial, so the value set is said first
     assert.equal(await page.locator(".dials").getAttribute("role"), "group");
     assert.match(await page.textContent("#" + await page.locator(".dials").getAttribute("aria-describedby")), /up and down arrows or the arrow keys, or type the whole code/, "the lock says how to work it, in plain words");
     assert.equal(await page.locator("label:has(#answer)").count(), 1, "the code box has a real label");
@@ -514,6 +520,16 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     assert.equal(await page.isVisible("input[name=q0]"), true, "choosing an answer doesn't change the question");
     assert.equal(await page.textContent("#try"), "Next question");
     assert.equal(await page.getAttribute(".qnav .n >> nth=0", "aria-label"), "Question 1, answered"); assert.equal(await page.getAttribute(".qnav .n >> nth=0", "aria-current"), "step");
+    assert.match(await page.textContent(".qcard:not([hidden]) legend"), /^Question 1 of 6:\s+\S/, "the question number and the question read as two phrases");
+    // ordering: each stud names its card and where it is now
+    await page.evaluate(() => go(3)); await page.locator("#stage h2:has-text('Room 3')").waitFor();
+    const studs = await page.$$eval("#order li:nth-child(2) .stud", els => els.map(e => e.getAttribute("aria-label")));
+    assert.match(studs[0], /^Move up: .+ \(now 2nd of 7\)$/); assert.match(studs[1], /^Move down: .+ \(now 2nd of 7\)$/);
+    assert.equal(await page.$$eval("#order .stud", els => new Set(els.map(e => e.getAttribute("aria-label"))).size), 14, "no two studs share a name");
+    // Play again asks first, because it throws the certificate away
+    await page.evaluate(() => go(6)); await page.locator("#again").waitFor();
+    await page.click("#again"); assert.match(await page.textContent("#again"), /certificate and exit password will be lost. Press again/);
+    assert.equal(await page.isVisible("#exit-password"), true, "the first press keeps the certificate");
     await done(page);
   }, { solo: true });
   test("the instructions under every lock name the real control, and matching rooms say to take the clues in order", async () => {

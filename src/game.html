@@ -126,7 +126,6 @@ svg{display:block}
   font:400 .7rem/1.35 var(--f-t);color:#3b3530;background:var(--stain),var(--pgrain),#e4d6b6;transform:rotate(-1.6deg);transform-origin:0 0;
   box-shadow:.1rem .25rem .4rem rgba(0,0,0,.7);clip-path:polygon(0 0,100% 0,100% calc(100% - .5rem),calc(100% - .5rem) 100%,0 100%)}
 #draft::before{content:"";position:absolute;left:50%;top:-.3rem;width:.7rem;height:.7rem;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f4dc9c,#8f6d2b 70%);box-shadow:.05rem .15rem .15rem rgba(0,0,0,.6)}
-#draft .more{display:none}#draft[aria-expanded=true] .more{display:inline}#draft[aria-expanded=true] .less{display:none}
 #draft u{text-decoration-style:wavy;text-decoration-color:#6c655c}
 
 /* ---------- Stage: where the current room's objects sit ---------- */
@@ -149,7 +148,7 @@ h2.bplate .rn{font-size:.82em;letter-spacing:.16em}
   clip-path:polygon(0 0,100% 0,100% calc(100% - .8rem),calc(100% - .9rem) 100%,0 100%);transition:transform .2s cubic-bezier(.3,1.7,.5,1)}
 .story::before{content:"";position:absolute;left:1.4rem;top:-.1rem;width:1.5rem;height:.5rem;background:rgba(214,200,160,.55);box-shadow:0 1px 1px rgba(0,0,0,.3);transform:rotate(-3deg)}
 .story:hover{transform:rotate(0deg) translateY(-.2rem)}
-.story .clip{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.story .clip{display:block}
 .story .go{display:block;margin-top:.3rem;font:400 .68rem/1 var(--f-d);letter-spacing:.16em;color:#7a2018}
 .cap{margin:0;font:400 .8rem/1 var(--f-d);letter-spacing:.2em;color:rgba(232,217,181,.78);display:flex;align-items:center;gap:.6rem}
 .cap::after{content:"";flex:0 0 3rem;height:1px;background:linear-gradient(90deg,rgba(232,217,181,.5),transparent)}
@@ -202,7 +201,7 @@ h2.bplate .rn{font-size:.82em;letter-spacing:.16em}
 .icard{position:relative;flex:1;padding:.42rem .65rem .5rem;text-align:left;min-height:6.3rem;transition:transform .2s cubic-bezier(.3,1.7,.5,1)}
 .icard:hover{transform:translateY(-.35rem) scale(1.03)}
 .icard .no{display:block;font:400 .78rem/1.2 var(--f-d);letter-spacing:.14em;color:#7a2018;margin-bottom:.32rem}
-.icard .p{font-size:.74rem;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden}
+.icard .p{font-size:.74rem;line-height:1.3}
 
 /* ---------- The dial padlock ---------- */
 .lock{position:relative}
@@ -428,7 +427,7 @@ h2.said{margin:0;font:400 1.25rem/1.2 var(--f-d);letter-spacing:.12em;color:#f0d
 .rules{position:relative;flex:0 1 13rem;padding:.7rem .8rem .6rem;text-align:left;transform:rotate(2.2deg);font-size:.72rem;line-height:1.35;transition:transform .2s cubic-bezier(.3,1.7,.5,1)}
 .rules:hover{transform:rotate(1deg) translateY(-.3rem)}
 .rules .rb{display:block;font:400 .82rem/1.1 var(--f-d);letter-spacing:.16em;color:#7a2018;margin-bottom:.35rem}
-.rules span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden}
+.rules span{display:block}
 
 /* ---------- Ending ---------- */
 [data-screen=end] #stage{grid-template-columns:minmax(12rem,30%) minmax(0,1fr);grid-template-areas:"door head" "door obj";gap:.9rem 3rem;padding-top:.6rem}
@@ -460,7 +459,7 @@ h2.said{margin:0;font:400 1.25rem/1.2 var(--f-d);letter-spacing:.12em;color:#f0d
 .result{position:relative;padding:.8rem .9rem .7rem;text-align:left;font-size:.76rem;line-height:1.36;transform:rotate(1.4deg);transition:transform .2s cubic-bezier(.3,1.7,.5,1)}
 .result:hover{transform:rotate(.4deg) translateY(-.3rem)}
 .result .h{display:block;margin:0 0 .4rem;font:400 .92rem/1.15 var(--f-d);letter-spacing:.1em;color:#7a2018}
-.result .clip{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6;overflow:hidden}
+.result .clip{display:block}
 .result .p{display:block;margin:0 0 .4em}
 .note{margin:0;padding:.55rem .7rem .45rem;font-size:.74rem;line-height:1.4;color:var(--ink);max-width:22rem;transform:rotate(-.8deg);background:var(--stain),var(--pgrain),#e4d6b6;box-shadow:.1rem .25rem .4rem rgba(0,0,0,.6);clip-path:polygon(0 0,100% 0,100% 100%,.6rem 100%,0 calc(100% - .5rem))}
 
@@ -581,6 +580,8 @@ body{overflow-wrap:break-word}
 #draft{flex:0 1 17rem;min-height:2.75rem;margin-top:.8rem;padding:.5rem .7rem .45rem;font:400 .9rem/1.5 var(--f-r);color:#2a1d14;clip-path:none}
 #draft::after,.story::after{content:"";position:absolute;right:0;bottom:0;border:.45rem solid;border-color:#b5a47c #17100a #17100a #b5a47c;box-shadow:-1px -1px 1px rgba(0,0,0,.25)}
 #draft u{text-decoration-color:#4a3b2c}
+/* what the Draft note unfolds: a second slip pinned under it (#draft keeps the same name; this is the region it controls) */
+#draft-more{flex:0 1 17rem;min-width:0;margin:.8rem 0 0;padding:.5rem .7rem .45rem;font:400 .9rem/1.5 var(--f-r);color:#2a1d14;background:var(--pgrain),#e4d6b6;box-shadow:.1rem .25rem .4rem rgba(0,0,0,.7)}
 
 /* ---------- Room head ---------- */
 h2.bplate{font-size:1.4rem;line-height:1.2;padding:.5rem 1.6rem .42rem;color:#1d1205}
@@ -612,6 +613,7 @@ h2.bplate .rn{font-size:.9em;letter-spacing:.12em}
 
 /* ---------- Matching: portraits, cards, clues ---------- */
 .gallery{grid-template-columns:repeat(auto-fill,minmax(8.6rem,10.5rem));flex:none}
+.pname{color:#1d1205;background:linear-gradient(170deg,#f6e3a8 0%,#e6c97f 45%,#d4b264 100%)}
 .pname strong{font-size:1rem;line-height:1.2}
 .pname .yrs{font-size:.9rem;line-height:1.25}
 .plate{font:400 .95rem/1.2 var(--f-r);border-top-color:rgba(60,40,10,.7)}
@@ -626,13 +628,13 @@ h2.bplate .rn{font-size:.9em;letter-spacing:.12em}
 .clues>li{min-width:0;max-width:none}
 .icard{min-height:7.2rem;padding:.5rem .75rem .6rem}
 .icard .no{font-size:.92rem;line-height:1.3;color:#6e1a12;margin-bottom:.3rem}
-.icard .p{font-size:1rem;line-height:1.5;-webkit-line-clamp:4}
+.icard .p{font-size:1rem;line-height:1.5}
 .ruled{background:linear-gradient(180deg,transparent 1.62rem,rgba(155,34,24,.5) 1.62rem 1.69rem,transparent 1.69rem),var(--stain),var(--pgrain),linear-gradient(175deg,#efe3c8,#e3d4b2)}
 
 /* ---------- The dial padlock ---------- */
 .dlock{--dw:3rem;max-width:100%}
 .lbody{min-width:0;max-width:100%;padding:1rem .9rem 1.1rem}
-.lname{font-size:.95rem;line-height:1.2;letter-spacing:.14em;color:#1d1205}
+.lname{margin:0;font-weight:400;font-size:.95rem;line-height:1.2;letter-spacing:.14em;color:#1d1205}
 .dials{flex-wrap:wrap;justify-content:center;max-width:100%;padding:.2rem .7rem}
 .dial{touch-action:manipulation}
 .dwin{touch-action:none}
@@ -726,7 +728,6 @@ h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
 .ledger .old{font-size:.8rem}
 .rules{flex-basis:15rem;padding:.8rem .9rem .7rem;font:400 1rem/1.5 var(--f-r)}
 .rules .rb{font-size:.95rem;line-height:1.2;color:#6e1a12}
-.rules span{-webkit-line-clamp:6}
 #begin{font-size:1.25rem;color:#1d1205}
 #begin small{font:400 .88rem/1.3 var(--f-r);letter-spacing:.02em;opacity:1}
 .pushplate{color:#1d1205;min-height:2.75rem}
@@ -858,7 +859,7 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
 [data-contrast=more] .exit{background:#000;box-shadow:inset 0 0 0 2px #8f6d2b}
 [data-contrast=more] .exit .slab{background:#17100a;box-shadow:inset 0 0 0 2px #8f6d2b}
 [data-contrast=more] .exit .void{background:#000}
-[data-contrast=more] :is(.paper,.story,.hint,.note,.cert,.ledger,.page,.sheet,#draft,#teacher-key,.typer input,.dwin,.x){background:#fffaf0;color:#000;border:2px solid #000}
+[data-contrast=more] :is(.paper,.story,.hint,.note,.cert,.ledger,.page,.sheet,#draft,#draft-more,#teacher-key,.typer input,.dwin,.x){background:#fffaf0;color:#000;border:2px solid #000}
 [data-contrast=more] :is(.story .go,.icard .no,.rules .rb,.hint .hb,.result .h,.sheet h2,.page h2,.page .howh,.ev .pick,#order .grip,.cert .kicker,.cert .small,.klabel small,.ledger label,.sheet .foot,.sheet .sub,.sheet .ref,.page li em,#teacher-key h2,#teacher-key h2 small){color:#000}
 [data-contrast=more] :is(h2.bplate,.placard,.desc,.pushplate,#tk-hide,.lbody,.esc,.counter,.pname,.stamp .base,.vol .letter,.mcard .badge,#more,.skip,.stud,.qnav .n.done){background:#f6dfa0;color:#000;border:2px solid #000}
 [data-contrast=more] :is(.how,.msg:not(:empty),#hint-note:not(:empty)){background:#000;color:#fff;box-shadow:inset 0 0 0 2px #fff}
@@ -911,7 +912,7 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
   *,*::before,*::after{text-shadow:none!important}
   #scene,#view,.how,.msg,#hint-note,.wl,#timer,.cap,h2.said,.qcard legend{background:Canvas;color:CanvasText}
   .msg.bad,.msg.good,.cap,.wl,#timer{color:CanvasText}
-  button,.paper,.story,.hint,.note,.cert,.ledger,.page,.book,.sheet,#draft,#teacher-key,h2.bplate,.placard,.lbody,.esc,.counter,.counter span,.pname,.gilt,
+  button,.paper,.story,.hint,.note,.cert,.ledger,.page,.book,.sheet,#draft,#draft-more,#teacher-key,h2.bplate,.placard,.lbody,.esc,.counter,.counter span,.pname,.gilt,
   .shelf,.drawer,.desk,#qf,.board,.dials,.dwin,.lev,.mirror,.glass,.typer,#pname,#answer,.typer input,.how,.msg:not(:empty),#hint-note:not(:empty),#more,.when,.stamp .base,.vol .letter,.mcard .badge,.slip .qn,.lever.paper{border:1px solid CanvasText}
   .dial{border:1px solid ButtonText}
   .dial .nub,.door,.door .tick,#sound-toggle,#hint-btn svg{color:ButtonText}
@@ -968,7 +969,7 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
   <header id="hud">
     <a href="#stage" id="skip" class="skip">Skip to the room</a>
     <h1 id="game-title" class="sr"></h1>
-    <div class="hud-l"><ol id="doors" role="list" aria-label="Rooms"></ol><button type="button" id="draft" hidden aria-expanded="false"></button></div>
+    <div class="hud-l"><ol id="doors" role="list" aria-label="Rooms"></ol><button type="button" id="draft" hidden aria-expanded="false" aria-controls="draft-more"></button><p id="draft-more" hidden></p></div>
     <div class="hud-r">
       <button type="button" id="sound-toggle" role="switch" aria-checked="true" aria-label="Sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true"><path d="M6.5 16.5c1.2-1.4 1.6-3 1.6-5.6a3.9 3.9 0 0 1 7.8 0c0 2.600.4 4.200 1.600 5.600z"/><path d="M10.300 18.800a1.800 1.800 0 0 0 3.400 0M12 5V3.600M9.500 9.500c.2-1 .8-1.600 1.600-1.900M8.500 14.500h7" /><path class="waves" d="M3.500 8.500c-.6 1.500-.6 3 0 4.500M20.500 8.500c.6 1.500.6 3 0 4.500"/><path class="off" d="M4 4l16 16"/></svg></button>
       <div class="watchbox"><button type="button" id="watch" aria-haspopup="dialog"><svg viewBox="0 0 60 66" focusable="false" aria-hidden="true">
@@ -1421,7 +1422,7 @@ const keyLock = (label, action, { form = "", total = 0, what = "right" } = {}) =
   ${total ? `<span class="counter" id="counter" aria-hidden="true"><span>0</span><em>of</em><span>${total}</span><em>${what}</em></span>` : ""}</div>`;
 /* Under every lock: one plain sentence on how to work it, then the result of the last try (#msg; it is also
    sent to the live region by setMsg). */
-const mech = (inner, room) => `<div class="mech">${inner}<p class="how" id="how">${esc(ER.a11yHow(room))}</p><p class="msg" id="msg"></p>${hintBlock(room)}</div>`;
+const mech = (inner, room) => `<div class="mech">${room.type === "matching" ? "" : `<h3 class="sr">The lock</h3>`}${inner}<p class="how" id="how">${esc(ER.a11yHow(room))}</p><p class="msg" id="msg"></p>${hintBlock(room)}</div>`;
 
 /* The combination padlock: one dial per character. Each dial is a flat window with a strip of characters
    that slides up or down a notch. #answer is a real text field kept in step with the dials, so typing
@@ -1437,7 +1438,7 @@ function dialLock(r, m){
   /* Reading and Tab order follow how the lock is worked: the dials, the box to type the code, then the shackle
      that tries it. The shackle is drawn above the body with CSS (order:-1). */
   return `<div class="lock dlock" style="--n:${n}">
-    <div class="lbody"><span class="lname" id="lname">${lockText(r.lockLabel) || "Lock"}</span>
+    <div class="lbody"><h3 class="lname" id="lname">${lockText(r.lockLabel) || "Lock"}</h3>
       <div class="dials" role="group" aria-labelledby="lname" aria-describedby="how">${Array.from({ length: n }, (_, k) => `<div class="dial" data-k="${k}" role="spinbutton" tabindex="0" aria-label="Dial ${k+1} of ${n}" aria-valuemin="0" aria-valuemax="${sym.length-1}" aria-valuenow="0" aria-valuetext="blank"><span class="nub" data-d="1" aria-hidden="true">${ICON.up}</span><span class="dwin"><span class="strip" aria-hidden="true"><i></i><i></i><i></i></span></span><span class="nub" data-d="-1" aria-hidden="true">${ICON.down}</span></div>`).join("")}</div>
       <span class="pull" aria-hidden="true">Pull the shackle to try</span></div>
     <label class="tag paper"><span>Type the whole code instead</span><input id="answer" type="text" maxlength="${n}" ${m.numbers?'inputmode="numeric"':""} autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="how"></label>
@@ -1466,7 +1467,7 @@ function wireDials(m, onTry){
       else if (key === "Home") put(k, 0); else if (key === "Delete") put(k, 0);
       else if (key === "Backspace") { put(k, 0); dials[k-1]?.focus(); }
       else if (key === "Enter") onTry();
-      else if (key.length === 1 && key !== " ") { const i = sym.indexOf(key.toUpperCase()); if (i > 0) { put(k, i); dials[k+1]?.focus(); } else used = false; }
+      else if (key.length === 1 && key !== " ") { const i = sym.indexOf(key.toUpperCase()); if (i > 0) { put(k, i); if (dials[k+1]) { say(`Dial ${k+1}: ${sym[i]}`); dials[k+1].focus(); } } else used = false; }
       else used = false;
       if (used) e.preventDefault();
     });
@@ -1619,7 +1620,8 @@ const LOOK = {
 function matching(r, n){
   const m = ER.matching(r), look = ER.look(r), cn = m.answerCards.length;
   const clueName = i => m.numbers ? String.fromCharCode(65 + i) : String(i + 1);
-  stage.innerHTML = roomHead(r,n) + `<div class="obj">${LOOK[look](m)}
+  const things = look === "books" ? "Books on the shelf" : look === "portraits" ? "Portraits on the wall" : "Cards in the drawer";
+  stage.innerHTML = roomHead(r,n) + `<div class="obj"><h3 class="sr">${things}</h3>${LOOK[look](m)}
     <h3 class="cap">${esc(r.cluesHeading || "Clues")}</h3>
     <ol class="clues" role="list" style="--per:${cn > 6 ? Math.ceil(cn/2) : Math.max(cn, 3)}">${m.answerCards.map((c,i)=>`<li style="--r:${(rot(i)*2.2).toFixed(2)}deg;--y:${((i*53)%5-2)*.14}rem"><div class="icard paper ruled"><span class="pin" aria-hidden="true"></span><button type="button" class="no" ${ex(`<h2>Clue ${clueName(i)}</h2><p>${fmt(c.clue)}</p>`, { cls: "ruled", label: "Clue " + clueName(i) })}>Clue ${clueName(i)}</button><span class="p">${fmt(c.clue)}</span></div></li>`).join("")}</ol></div>`
     + mech(dialLock(r, m), r);
@@ -1669,11 +1671,15 @@ function ordering(r, n){
   const items = r.items || [];
   let order = ER.scramble(items.length, (r.title||"") + items.map(i=>i.text).join("|"));
   stage.innerHTML = roomHead(r,n) + `<div class="obj"><div class="board"><ol id="order" role="list">${order.map((idx,i)=>`<li class="paper" data-idx="${idx}" style="--r:${(rot(idx)*.45).toFixed(2)}deg"><span class="grip" title="Drag to move" aria-hidden="true"><span class="pos"></span></span><span class="sr pn"></span><span class="t" id="ot${idx}">${fmt(items[idx].text)}</span>
-      <button type="button" class="stud" aria-label="Move up" aria-describedby="ot${idx}" data-d="-1">${ICON.up}</button><button type="button" class="stud" aria-label="Move down" aria-describedby="ot${idx}" data-d="1">${ICON.down}</button></li>`).join("")}</ol></div></div>`
+      <button type="button" class="stud" aria-label="Move up" data-d="-1">${ICON.up}</button><button type="button" class="stud" aria-label="Move down" data-d="1">${ICON.down}</button></li>`).join("")}</ol></div></div>`
     + mech(keyLock(lockText(r.lockLabel) || "Order lock", "Check order", { total: items.length, what: "in place" }), r);
   roomState = () => ({ order });
   const ol = $("#order"); wireInputs(ol);
-  const renum = () => { const k = [...ol.children]; k.forEach((li,i) => { li.querySelector(".pos").textContent = i+1; li.querySelector(".pn").textContent = `Position ${i+1} of ${k.length}: `; const u = li.querySelector("[data-d='-1']"), d = li.querySelector("[data-d='1']"); if (u) { u.disabled = i===0; d.disabled = i===k.length-1; } }); order = k.map(li => +li.dataset.idx); };
+  /* Each stud's name says which card it moves and where that card is now: "Move up: Rousseau publishes Émile (now 3rd of 7)". */
+  const nth = i => i + (i % 100 >= 11 && i % 100 <= 13 ? "th" : ["th","st","nd","rd"][i % 10] || "th");
+  const renum = () => { const k = [...ol.children]; k.forEach((li,i) => { li.querySelector(".pos").textContent = i+1; li.querySelector(".pn").textContent = `Position ${i+1} of ${k.length}: `;
+    const u = li.querySelector("[data-d='-1']"), d = li.querySelector("[data-d='1']"), what = `${li.querySelector(".t").textContent.trim()} (now ${nth(i+1)} of ${k.length})`;
+    if (u) { u.disabled = i===0; d.disabled = i===k.length-1; u.setAttribute("aria-label", "Move up: " + what); d.setAttribute("aria-label", "Move down: " + what); } }); order = k.map(li => +li.dataset.idx); };
   const told = li => say(`Moved to position ${[...ol.children].indexOf(li)+1} of ${ol.children.length}: ${li.querySelector(".t").textContent}`);
   // li itself never moves in the DOM (its neighbour does), so keyboard focus and a drag in progress survive.
   const move = (li, d, quiet) => {
@@ -1765,7 +1771,7 @@ function reflection(r, n){
      is the visible legend of its group of options. Nothing moves on by itself: the plate under the options goes
      to the next question, and on the last one it finishes. */
   stage.innerHTML = roomHead(r,n) + `<div class="obj"><div class="mirrorwrap" aria-hidden="true"><div class="mirror lock"><div class="glass"><span class="fog"></span></div></div></div></div>
-    <form id="mf" novalidate>${qs.map((q,qi)=>`<fieldset class="qcard" data-q="${qi}"${qi ? " hidden" : ""}><legend><span class="qno">Question ${qi+1} of ${qs.length}</span> ${fmt(q.prompt)}</legend>${(q.options||[]).map(o=>
+    <form id="mf" novalidate>${qs.map((q,qi)=>`<fieldset class="qcard" data-q="${qi}"${qi ? " hidden" : ""}><legend><span class="qno">Question ${qi+1} of ${qs.length}<span class="sr">: </span></span> ${fmt(q.prompt)}</legend>${(q.options||[]).map(o=>
      `<label class="lever paper"><input type="radio" name="q${qi}" value="${esc(o.profile)}"><span class="lev" aria-hidden="true"></span><span class="lt">${fmt(o.text)}</span></label>`).join("")}</fieldset>`).join("")}
     ${qs.length > 1 ? `<div class="qnav" role="group" aria-label="Go to a question">${qs.map((_,i)=>`<button type="button" class="n" data-go="${i}">${i+1}</button>`).join("")}</div>` : ""}
     <div class="titlerow" style="align-items:center"><button id="try" type="submit" class="pushplate"></button></div>
@@ -1845,7 +1851,13 @@ function finish(){
       ${f.instructions ? `<p class="note">${fmt(f.instructions)}</p>` : ""}
     </div>
   </div></div>`;
-  $("#print").onclick = () => window.print(); $("#again").onclick = () => location.reload();
+  /* Playing again throws away this certificate and its exit password, so the plate asks first, like "Start over". */
+  let againArmed = false;
+  $("#print").onclick = () => window.print();
+  $("#again").onclick = () => { if (againArmed) return location.reload(); againArmed = true;
+    const t = "Play again? Your certificate and exit password will be lost. Press again to start over";
+    $("#again").textContent = t; say(t + "."); };
+  $("#again").onblur = () => { if (!againArmed) return; againArmed = false; $("#again").textContent = "Play again"; };
   celebrate();
 }
 /* The wax seal is pressed into the paper, and one short burst of brass and paper flecks flies from it.
@@ -1964,8 +1976,10 @@ $("#game-title").textContent = CFG.meta?.title || "Escape Room";
 const review = ER.reviewStatus(CFG);
 if (review.unverified) {
   const d = $("#draft"); d.hidden = false;
-  d.innerHTML = `<span class="less"><u>Draft</u>: answers not yet checked by your instructor</span><span class="more"><u>Draft</u>: ${review.unverified} of ${review.total} items haven't been checked by the instructor yet. Answers may contain errors.</span>`;
-  d.onclick = () => { d.setAttribute("aria-expanded", d.getAttribute("aria-expanded") !== "true"); SND.play("rustle"); };
+  /* The note keeps one name; pressing it unfolds the details in the region it controls, just after it. */
+  d.innerHTML = `<u>Draft</u>: answers not yet checked by your instructor`;
+  const more = $("#draft-more"); more.textContent = `${review.unverified} of ${review.total} items haven't been checked by the instructor yet. Answers may contain errors.`;
+  d.onclick = () => { const open = d.getAttribute("aria-expanded") !== "true"; d.setAttribute("aria-expanded", open); more.hidden = !open; SND.play("rustle"); };
 }
 fit(); renderDoors(); go(0);
 </script>

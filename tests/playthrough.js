@@ -99,7 +99,7 @@ async function playThrough(page, shotPrefix) {
     assert.match(text, /You Escaped!/);
     assert.match(text, /DEWEY1916/);
     assert.match(text, /Your reflection: Progressivism/);
-    assert.match(await page.textContent("#draft"), /40 of 40 items haven't been checked/);
+    assert.match(await page.textContent("#draft-more"), /40 of 40 items haven't been checked/);
     assert.deepEqual(page.errors, [], "page had JavaScript errors");
     await page.close();
   });
@@ -399,9 +399,12 @@ async function playThrough(page, shotPrefix) {
     await page.keyboard.press("Escape");
     assert.equal(await page.isHidden("#pause"), true);
     assert.match(await page.textContent("#stage h2"), /Room 1/, "still in the room");
+    const name = await page.textContent("#draft");
     await page.click("#draft");                                              // the pencilled note unfolds
     assert.equal(await page.getAttribute("#draft", "aria-expanded"), "true");
-    assert.equal(await page.isVisible("#draft .more"), true);
+    assert.equal(await page.isVisible("#draft-more"), true);
+    assert.equal(await page.getAttribute("#draft", "aria-controls"), "draft-more");
+    assert.equal(await page.textContent("#draft"), name, "the note keeps the same name when it unfolds");
     assert.deepEqual(page.errors, []);
     await page.close();
   });
