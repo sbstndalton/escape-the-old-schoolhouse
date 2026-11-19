@@ -21,6 +21,7 @@ const assert = require("assert/strict");
 const fs = require("fs");
 const path = require("path");
 const { start } = require("../scripts/serve.js");
+const speechMock = require("./speech-mock.js");
 
 const arg = k => { const i = process.argv.indexOf("--" + k); return i > 0 ? process.argv[i + 1] : null; };
 const REPORT = arg("report"), URL_ = arg("url"), SNAP = arg("snapshots"), ONLY = arg("only");
@@ -62,6 +63,9 @@ async function open({ path = "/play.html", viewport = DESKTOP, hc = false, reada
   page.errors = [];
   page.on("pageerror", e => page.errors.push(e.message));
   page.on("console", m => { if (m.type() === "error") page.errors.push(m.text()); });
+  // Speech is mocked with local voices, so every Listen button is drawn and checked; a sentence "takes" a minute,
+  // so a state that is reading stays reading.
+  await page.addInitScript(speechMock, { ms: 60000 });
   await page.addInitScript(([hc, readable]) => { try { if (hc) localStorage.setItem("escape-room-contrast", "on"); if (readable) localStorage.setItem("escape-room-readable", "on"); } catch (e) {} }, [hc, readable]);
   await page.goto(URL_ || base + path);
   page.old = await page.evaluate(() => !document.querySelector("#view"));      // an older build, for the before/after report
@@ -82,11 +86,14 @@ async function tour(page, visit) {
   if (!page.old) { await page.click("#describe"); await visit("room 1, description open"); await esc(); }
   await page.click("#watch"); await visit("notebook open"); await esc();
   await page.fill("#answer", "xxxxx"); await page.click("#try"); await page.click("#hint-btn"); await visit("room 1, wrong try and a hint");
+  if (!page.old) { await page.locator(".icard .listen").nth(1).click(); await visit("room 1, reading a clue aloud");
+    await page.click("#describe"); await page.click("#examine .listen"); await visit("room 1, reading the description aloud"); await esc(); }
   await page.fill("#answer", "learn"); await page.click("#try"); await visit("room 1, solved");
   await page.evaluate(() => { ROOMS[0].look = "cards"; }); await room(page, 1); await visit("room 1, plain cards");
   await page.evaluate(() => { ROOMS[0].look = "books"; });
   await room(page, 2); await visit("room 2, portraits");
   await page.evaluate(q => { window.__keep = ROOMS[2]; ROOMS[2] = q; }, QUIZ); await room(page, 3); await visit("quiz room");
+  if (!page.old) { await page.locator(".slip .listen").nth(1).click(); await visit("quiz room, reading a question aloud"); await page.locator(".slip .listen").nth(1).click(); }
   await page.fill("input[name=q0]", "nobody"); await page.check("input[name=q1][value='1']"); await page.click("#try"); await visit("quiz room, wrong try");
   await page.evaluate(() => { ROOMS[2] = window.__keep; }); await room(page, 3); await visit("room 3, timeline");
   await solveTimeline(page); await page.click("#try"); await visit("room 3, solved");
@@ -136,7 +143,7 @@ function checkFocus() {
 }
 function checkTargets() {
   // HELPERS
-  const BIG = ".nub,.stamp,.lever input,.stud,#watch,#sound-toggle,.x,.qnav .n,.seg button,#try,#hint-btn,.desc,.pushplate,#begin,.page li button,.grip,.story,.icard,.hint,.rules,.result,.grab";
+  const BIG = ".listen,.nub,.stamp,.lever input,.stud,#watch,#sound-toggle,.x,.qnav .n,.seg button,#try,#hint-btn,.desc,.pushplate,#begin,.page li button,.grip,.story,.icard,.hint,.rules,.result,.grab";
   const PAPER = ".story .go,.icard .no,.hint .hb,.rules .rb,.result .h,.ev .pick";      // heading buttons stretched over their whole paper: the paper is the target
   const out = [];
   for (const el of layer.querySelectorAll("a[href],button,input,select,textarea,[role=spinbutton],.nub,.grip,.klabel")) {
@@ -265,6 +272,8 @@ const TEXTS = {
     ["Section label on the wall (Clues)", ".cap", "label"], ["Clue number", ".icard .no", "label"], ["Clue text", ".icard .p", "read"], ["Lock name on brass", ".lname", "label"],
     ["“Pull the shackle to try”", ".pull", "label"], ["Tag: “Type the whole code instead”", ".tag span", "label"], ["How-to line under the lock", ".how", "read"], ["Hint drawer button (locked)", "#hint-btn span", "label"],
     ["Hint note", "#hint-note", "read"], ["Key ring: the current key's number", ".door.current b", "label"]],
+  "room 1, reading a clue aloud": [["Listen button on paper", ".icard .listen:not([data-reading]) .lw", "label"], ["Listen button, reading (Stop)", ".listen[data-reading] .lw", "label"], ["Listen button on the wall", "#how + .listen .lw", "label"]],
+  "quiz room, reading a question aloud": [["Listen button on a question slip", ".slip .listen:not([data-reading]) .lw", "label"]],
   "room 1, wrong try and a hint": [["Result message", "#msg", "read"], ["Hint paper", ".hint > span", "read"], ["Hint heading", ".hint .hb", "label"], ["Dial characters", ".dial .strip i:nth-child(2)", "big"], ["Typed code", "#answer", "big"]],
   "room 1, plain cards": [["Card name", ".mcard strong", "read"], ["Card code tab", ".mcard .badge", "big"]],
   "room 2, portraits": [["Portrait name plate", ".pname strong", "read"], ["Portrait dates", ".pname .yrs", "read"], ["Portrait code", ".plate", "label"], ["Key ring: a solved key's number", ".door.open b", "label"]],
@@ -331,7 +340,7 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     // title: the skip link is the first stop; sign the ledger, read the rules, push the door
     await key("Tab"); assert.match(await focusOn(), /skip/, "the first Tab stop is the skip link");
     // the Tab order is the reading order: HUD, the story, the ledger, the rules, and Begin last (though it is drawn on the door at the left)
-    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#view a[href], #view button, #view input")].map(e => e.id || e.className)), ["skip", "draft", "sound-toggle", "watch", "go", "pname", "rb", "begin"]);
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#view a[href], #view button, #view input")].map(e => e.id || e.className)), ["skip", "draft", "sound-toggle", "watch", "go", "listen", "pname", "rb", "listen", "begin"]);
     await tabTo("#pname"); await page.keyboard.type("Keyboard Player");
     await tabTo(".rules .rb"); await key("Enter"); assert.equal(await page.isVisible("#examine"), true); await key("Tab"); await key("Tab"); assert.equal(await page.evaluate(() => !!document.activeElement.closest("#examine")), true, "Tab stays in the sheet");
     await key("Escape"); assert.match(await focusOn(), /\.rb/, "focus returns to the paper");
@@ -504,7 +513,7 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     assert.equal(await page.getAttribute("#hint-btn", "aria-disabled"), "true"); assert.equal(await page.getAttribute("#hint-btn", "aria-describedby"), "hint-note");
     await page.focus("#hint-btn"); assert.equal(await page.evaluate(() => document.activeElement.id), "hint-btn", "a locked hint drawer can still be focused");
     // papers: the words are plain text, and a short heading button opens the paper large
-    assert.deepEqual(await page.locator(".clues button").allTextContents(), ["Clue 1", "Clue 2", "Clue 3", "Clue 4", "Clue 5"]);
+    assert.deepEqual(await page.locator(".clues button.no").allTextContents(), ["Clue 1", "Clue 2", "Clue 3", "Clue 4", "Clue 5"]);
     assert.equal(await page.locator(".clues button[aria-haspopup=dialog]").count(), 5);
     assert.equal(await page.locator(".story .go").textContent(), "Pick up the note to read it");
     assert.equal(await page.evaluate(() => document.querySelector(".story .clip").closest("button")), null, "the story is text on the page, not a button's name");
