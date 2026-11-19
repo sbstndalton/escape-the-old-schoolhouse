@@ -36,14 +36,18 @@ async function openEditor(browser, base) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
   page.errors = [];
   page.on("pageerror", e => page.errors.push(e.message));
-  page.on("dialog", d => d.accept());           // accept confirm() prompts
+  page.on("dialog", d => { page.errors.push("native dialog: " + d.message()); d.dismiss(); });   // the editor asks on its own slips now
   await page.goto(base + "/editor.html");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   return page;
 }
 async function download(page, clickSelector) {
-  const [dl] = await Promise.all([page.waitForEvent("download"), page.click(clickSelector)]);
+  // Exporting a draft asks first on an in-app slip ("Export anyway"); a teacher would press it, so the helper does too.
+  const [dl] = await Promise.all([page.waitForEvent("download"), (async () => {
+    await page.click(clickSelector); await page.waitForTimeout(50);
+    if (await page.locator(".modal #ask-ok").count()) await page.click("#ask-ok");
+  })()]);
   const file = path.join(TMP, dl.suggestedFilename());
   await dl.saveAs(file);
   return file;
@@ -56,7 +60,7 @@ async function makeQuizRoom(page) {
   await page.fill("text=Exit password >> xpath=.. >> input", "MANN1837");
   await page.click("#nav .item:has-text('1.')");
   await page.click("text=Edit all questions as text");
-  await page.fill("textarea[aria-label='Questions as text']", QUIZ_TEXT);
+  await page.fill("#quiz-text", QUIZ_TEXT);
   await page.click("text=Use this text");
   // New questions come back un-checked; tick them the way the teacher would.
   for (const box of await page.locator(".entry .verify label.chk").all()) await box.click();
@@ -190,6 +194,14 @@ async function makeQuizRoom(page) {
     await page.click("#btn-new"); await page.click("#new-sample");
     assert.match(await page.textContent("#meter"), /\/ 40/);
     await page.setInputFiles("#file", file);
+    // opening replaces what is on the bench, so a slip asks first; Esc backs out and nothing changes
+    await page.locator(".modal[role=alertdialog]").waitFor();
+    assert.match(await page.textContent(".modal h2"), /Open “Chapter 3 Review”\?/);
+    await page.keyboard.press("Escape");
+    assert.equal(await page.locator(".modal").count(), 0);
+    assert.match(await page.textContent("#meter"), /\/ 40/);
+    await page.setInputFiles("#file", file);
+    await page.click("#ask-ok");
     await page.waitForFunction(() => /2 \/ 2/.test(document.querySelector("#meter").textContent));
     assert.match(await page.textContent("#nav"), /New question room/);
     await page.close();
@@ -289,7 +301,7 @@ async function makeQuizRoom(page) {
     await page.click("#btn-new"); await page.click("#new-blank");
     await page.click("#nav .item:has-text('1.')");
     await page.click("text=Edit all questions as text");
-    await page.fill("textarea[aria-label='Questions as text']", "Q: 2+2?\nA: 4");
+    await page.fill("#quiz-text", "Q: 2+2?\nA: 4");
     await page.click("text=Use this text");
     await page.click("#tab-hints");
     await page.click("label.switch:has(#hints-toggle)");
@@ -313,7 +325,7 @@ async function makeQuizRoom(page) {
     await makeQuizRoom(page);
     assert.match(await page.textContent("#meter"), /2 \/ 2 checked/);
     await page.click("text=Edit all questions as text");
-    const ta = page.locator("textarea[aria-label='Questions as text']");
+    const ta = page.locator("#quiz-text");
     await ta.fill((await ta.inputValue()).replace("A: John Dewey | Dewey", "A: Horace Mann"));
     await page.click("text=Use this text");
     assert.match(await page.textContent("#meter"), /1 \/ 2 checked/, "the edited question is un-checked, the untouched one stays checked");
@@ -336,9 +348,9 @@ async function makeQuizRoom(page) {
   await test("text view marks the right choice when a blank choice comes first", async () => {
     const page = await openEditor(browser, base);
     await makeQuizRoom(page);
-    await page.locator("input[aria-label='Choice 1']").first().fill("");          // blank before the correct choice
+    await page.getByRole("textbox", { name: "Choice 1", exact: true }).first().fill("");          // blank before the correct choice
     await page.click("text=Edit all questions as text");
-    const text = await page.inputValue("textarea[aria-label='Questions as text']");
+    const text = await page.inputValue("#quiz-text");
     assert.match(text, /\* Perennialism/); assert.match(text, /- Existentialism/);
     await page.close();
   });
@@ -346,11 +358,15 @@ async function makeQuizRoom(page) {
   await test("removing a sorting category makes its items pick a new answer", async () => {
     const page = await openEditor(browser, base);
     await page.click("#nav .item:has-text('4.')");
-    await page.click("text=+ Add category");
+    await page.click("text=Add category");
     await page.locator("text=Category 3 >> xpath=.. >> input[type=text]").fill("Mixed");
     await page.locator(".entry").first().locator(".rotary label:has(input[value='2'])").click();      // the new 3rd category
     await page.locator(".entry").first().locator("label.chk").click();
     await page.click("button:has-text('Remove') >> nth=2");                       // remove "Mixed"
+    // it is an answer, so the editor asks first on its own slip: Cancel has the keyboard, not the destructive button
+    assert.match(await page.textContent(".modal[role=alertdialog]"), /is the answer for 1 item/);
+    assert.equal(await page.evaluate(() => document.activeElement.id), "ask-cancel");
+    await page.click("#ask-ok");
     await page.click("#btn-preview");
     assert.match(await page.textContent(".overlay"), /item 1: pick its correct category/);
     await page.close();
@@ -467,23 +483,23 @@ async function makeQuizRoom(page) {
     const page = await openEditor(browser, base);
     assert.equal(await page.locator("main p.help, main small").count(), 0, "no helper paragraphs on the page");
     const mark = page.locator("main button.i[aria-label='Help: Completion code prefix']");
-    assert.equal(await page.locator(".pop").count(), 0);
+    assert.equal(await page.locator(".pop:visible").count(), 0);
     await page.focus("text=Course >> xpath=.. >> input");
     await page.keyboard.press("Tab");                                     // Tab reaches the next ⓘ, which shows its slip
     assert.equal(await mark.evaluate(el => el === document.activeElement), true);
-    await page.locator(".pop").waitFor();
-    assert.match(await page.textContent(".pop"), /Starts each student's completion code/);
+    await page.locator(".pop:visible").waitFor();
+    assert.match(await page.textContent(".pop:visible"), /Starts each student's completion code/);
     assert.equal(await mark.getAttribute("aria-expanded"), "true");
-    assert.equal(await page.getAttribute(".pop", "id"), await mark.getAttribute("aria-describedby"));
+    assert.equal(await page.getAttribute(".pop:visible", "id"), await mark.getAttribute("aria-describedby"));
     await page.keyboard.press("Escape");
-    assert.equal(await page.locator(".pop").count(), 0, "Esc puts it away");
+    assert.equal(await page.locator(".pop:visible").count(), 0, "Esc puts it away");
     assert.equal(await mark.getAttribute("aria-expanded"), "false");
     await page.keyboard.press("Enter");                                   // Enter opens it again and pins it
-    assert.equal(await page.locator(".pop").count(), 1);
+    assert.equal(await page.locator(".pop:visible").count(), 1);
     await page.keyboard.press("Tab");
-    assert.equal(await page.locator(".pop").count(), 0, "moving on closes it");
+    assert.equal(await page.locator(".pop:visible").count(), 0, "moving on closes it");
     await mark.hover();                                                   // and it works with a mouse
-    assert.equal(await page.locator(".pop").count(), 1);
+    assert.equal(await page.locator(".pop:visible").count(), 1);
     assert.deepEqual(page.errors, []);
     await page.close();
   });
@@ -522,6 +538,123 @@ async function makeQuizRoom(page) {
     assert.equal(await page.locator("#nav .item:has-text('6.')").count(), 1);
     assert.match(await page.textContent("main h2"), /New timeline room/);
     assert.equal(await page.evaluate(() => cfg.rooms[5].type), "ordering");
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
+  await test("accessibility check: every rule flags what it should and leaves fair wording alone", async () => {
+    const page = await openEditor(browser, base);
+    const check = cfg => page.evaluate(c => a11yCheck(c), cfg);
+    const rules = async cfg => (await check(cfg)).map(n => n.rule).sort();
+    const quiz = (over = {}) => ({ type: "quiz", title: "The Strongbox", story: "Answer every slip to open the box.", hintsEnabled: true, hints: ["Look again at chapter 3."],
+      questions: [{ prompt: "Who wrote Democracy and Education?", kind: "short", answers: "John Dewey | Dewey" }], ...over });
+    const matching = (n, over = {}) => ({ type: "matching", title: "The Library", story: "Match each clue to a book.", hintsEnabled: true, hints: ["Find one key idea in each clue."], codeStyle: "letters",
+      cards: Array.from({ length: n }, (_, i) => ({ term: "Term " + (i + 1), clue: "Clue number " + (i + 1), icon: "", code: "" })), ...over });
+    const make = (rooms, over = {}) => ({ meta: { title: "Chapter 3" }, intro: { heading: "Locked in", story: "Solve every room to leave." }, finish: { exitPassword: "MANN1837", instructions: "" }, rooms, ...over });
+    const story = s => make([quiz({ story: s })]);
+
+    assert.deepEqual(await rules(make([quiz(), matching(5)])), [], "well-made content gets no notes");
+
+    // missing title, story and instructions
+    assert.deepEqual(await rules(make([quiz({ title: "", story: " " })], { meta: { title: "" }, intro: { story: "" } })), ["missing-text", "missing-text", "missing-text", "missing-text"]);
+    // directions that depend on colour, position, shape, hearing, one input device, or hurrying
+    assert.deepEqual(await rules(story("Open the red book to begin.")), ["colour"]);
+    assert.deepEqual(await rules(story("The answers are marked in green.")), ["colour"]);
+    assert.deepEqual(await rules(story("Brown v. Board of Education ended the idea that Black students and white students could be kept apart.")), [], "colour words used as names are left alone");
+    assert.deepEqual(await rules(story("Read the card on the left, then the one in the top-right corner.")), ["position"]);
+    assert.deepEqual(await rules(story("Start with the first shelf.")), ["position"]);
+    assert.deepEqual(await rules(story("Every child has the right to an education, and Mann said so first.")), [], "“the right to” is not a direction");
+    assert.deepEqual(await rules(story("Press the round button.")), ["shape"]);
+    assert.deepEqual(await rules(story("When you hear the chime, move on.")), ["sound"]);
+    assert.deepEqual(await rules(story("The door clicks shut behind you.")), [], "a sound in the story is not an instruction");
+    assert.deepEqual(await rules(story("Click on each book, then drag the cards into place.")), ["device"]);
+    assert.deepEqual(await rules(story("Choose each book, then put the cards in order.")), []);
+    assert.deepEqual(await rules(story("You have 10 minutes. Hurry!")), ["time"]);
+    assert.deepEqual(await rules(story("DO NOT OPEN THIS DOOR until every lock is undone.")), ["caps"]);
+    assert.deepEqual(await rules(story("NCLB and IDEA changed what schools must report.")), [], "abbreviations are not shouting");
+    // the dial lock: one dial per clue
+    assert.deepEqual(await rules(make([matching(8)])), []);
+    const long = await check(make([matching(9)]));
+    assert.deepEqual(long.map(n => n.rule), ["long-code"]);
+    assert.match(long[0].text, /9 dials/); assert.equal(long[0].page, 0); assert.equal(long[0].where, "Room 1 · Lock");
+    assert.deepEqual(await rules(make([matching(13, { cards: matching(13).cards.map((c, i) => i < 8 ? c : { ...c, clue: "" }) })])), ["many-items"], "decoys don't lengthen the lock, but 13 cards is a lot");
+    // emoji or symbols as the only meaning
+    const sym = await check(make([matching(3, { cards: [{ term: "", icon: "🔬", clue: "Clue one" }, { term: "📚", icon: "", clue: "Clue two" }, { term: "Dewey", icon: "🍎", clue: "Clue three" }] })]));
+    assert.deepEqual(sym.map(n => [n.rule, n.where, n.tab]), [["symbol-only", "Room 1 · Card 1", "items"], ["symbol-only", "Room 1 · Card 2", "items"]], "an icon beside a name in words is fine");
+    assert.deepEqual(await rules(make([quiz({ questions: [{ prompt: "Which is right?", kind: "choice", choices: ["✔", "Perennialism"], correct: 1 }] })])), ["symbol-only"]);
+    // very long reading
+    const clue = "Truth is universal and unchanging. ".repeat(10);
+    const heavy = await check(make([matching(2, { cards: [{ term: "Perennialism", clue }, { term: "Essentialism", clue: "Short clue" }] })]));
+    assert.deepEqual(heavy.map(n => [n.rule, n.where]), [["long-text", "Room 1 · Card 1 · Clue"]]);
+    assert.deepEqual(await rules(story("Read this carefully. ".repeat(180))), ["long-text", "reading-load"]);
+    // quiz answers a student can actually match
+    const answers = a => rules(make([quiz({ questions: [{ prompt: "Who?", kind: "short", answers: a }] })]));
+    assert.deepEqual(await answers(""), ["answer-list"]);
+    assert.deepEqual(await answers("John Dewey"), ["answer-list"], "one accepted answer of two words: other fair spellings are needed");
+    assert.deepEqual(await answers("John Dewey | Dewey"), []);
+    assert.deepEqual(await answers("Dewey"), []);
+    assert.deepEqual(await answers("Education is not preparation for life; education is life itself"), ["answer-list"], "too long to type exactly");
+    assert.deepEqual(await rules(make([quiz({ questions: [{ prompt: "Which?", kind: "choice", choices: ["Essentialism", "Perennialism", "All of the above"], correct: 2 }] })])), ["above"]);
+    assert.deepEqual(await rules(make([quiz({ questions: [{ prompt: "Which?", kind: "choice", choices: ["A", "B", "C", "D", "E", "F", "G"], correct: 2 }] })])), ["many-items"]);
+    // hints, long lists, look-alike characters
+    assert.deepEqual(await rules(make([quiz({ hintsEnabled: false })])), ["no-hints"]);
+    assert.deepEqual(await rules(make([quiz({ hintsEnabled: true, hints: ["", ""] })])), ["no-hints"]);
+    assert.deepEqual(await rules(make([{ type: "reflection", title: "The Mirror", story: "Choose what fits you.", profiles: [], questions: [{ prompt: "Which fits?", options: [{ text: "Order" }, { text: "Freedom" }] }] }])), [], "a reflection room has no hints to miss");
+    const items = n => Array.from({ length: n }, (_, i) => ({ text: "Event " + (i + 1) }));
+    assert.deepEqual(await rules(make([{ type: "ordering", title: "Timeline", story: "Put these in order, oldest first.", hintsEnabled: true, hints: ["Start with the oldest."], items: items(9) }])), ["many-items"]);
+    assert.deepEqual(await rules(make([{ type: "ordering", title: "Timeline", story: "Put these in order, oldest first.", hintsEnabled: true, hints: ["Start with the oldest."], items: items(8) }])), []);
+    assert.deepEqual(await rules(make([{ type: "sorting", title: "Sort", story: "Stamp each slip.", hintsEnabled: true, hints: ["Who decides?"], categories: ["Traditional", "👍"], items: [{ text: "Desks in rows", category: 0 }] }])), ["symbol-only"]);
+    assert.deepEqual(await rules(make([quiz()], { finish: { exitPassword: "ROOM101" } })), ["look-alike"]);
+    assert.deepEqual(await rules(make([quiz()], { finish: { exitPassword: "DEWEY1916" } })), []);
+    // every note is written for a teacher: where it is, what to do, and which page and tab to open
+    const all = await check(make([quiz({ title: "", story: "Click on the red book on the left. HURRY UP NOW PLEASE EVERYONE.", hintsEnabled: false }), matching(10)], { intro: { story: "" } }));
+    assert.equal(all.length >= 8, true);
+    for (const n of all) { assert.match(n.where, /\S/); assert.equal(n.text.length > 40, true); assert.equal(typeof n.tab, "string"); assert.equal(n.page === "intro" || typeof n.page === "number", true); }
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
+  await test("accessibility check: a page of notes that jump to the spot, a count on the drawer, on the answer sheet, never blocking", async () => {
+    const page = await openEditor(browser, base);
+    const count = await page.evaluate(() => a11yCheck(cfg).length);
+    assert.equal(count > 0, true, "the sample has some advice (hints are off in four rooms)");
+    assert.match(await page.textContent("#nav .item:has-text('Accessibility check') .mark"), new RegExp(`${count} notes`));
+    await page.click("#nav .item:has-text('Accessibility check')");
+    assert.equal(await page.textContent("main h2"), "Accessibility check");
+    assert.match(await page.textContent("#a11y-summary"), new RegExp(`^${count} notes on what you have written\\. These are advice, not errors`));
+    assert.equal(await page.locator(".notes li").count(), count);
+    assert.equal(await page.locator("#answer-key, #preview-room").count(), 0);
+    // a note about room 1's hints opens room 1 on its Hints tab, with the keyboard on the heading
+    await page.locator(".notes li[data-rule='no-hints'] button.where").first().click();
+    assert.equal(await page.textContent("main h2"), "The Library");
+    assert.equal(await page.getAttribute("#tab-hints", "aria-selected"), "true");
+    assert.equal(await page.evaluate(() => document.activeElement.id), "page-title");
+    // writing a problem adds a note; fixing it takes the note away
+    await page.click("#tab-text");
+    await page.fill("text=Story / instructions >> xpath=.. >> textarea", "Click on the red book on the left.");
+    await page.click("#nav .item:has-text('Accessibility check')");
+    assert.equal(await page.locator(".notes li").count(), count + 3);
+    assert.deepEqual(await page.$$eval(".notes li", els => els.map(e => e.dataset.rule).filter(r => ["colour", "position", "device"].includes(r)).sort()).then(l => l.slice(0, 3)), ["colour", "device", "position"]);
+    assert.match(await page.textContent(".notes li[data-rule='colour']"), /“the red book”.*colour-blind/s);
+    await page.click("#tab-byhand");
+    assert.match(await page.textContent("#panel"), /can't see the picture/);
+    // the answer sheet carries the same notes
+    await page.click("#btn-review");
+    const sheet = page.frameLocator(".overlay iframe");
+    assert.equal(await sheet.locator("#a11y h2").textContent(), "Before you publish Accessibility check");
+    assert.equal(await sheet.locator("#a11y ul.notes").first().locator("li").count() > 0, true);
+    assert.match(await sheet.locator("#a11y").textContent(), new RegExp(`${count + 3} notes on what is written`));
+    assert.match(await sheet.locator("#a11y").textContent(), /“the red book”/);
+    assert.equal(await sheet.locator("html").getAttribute("lang"), "en");
+    assert.equal(await sheet.locator("[role=img][aria-label='Not yet checked']").count(), 40);
+    await page.keyboard.press("Escape");
+    // advice never blocks: preview still opens, and the export folder only mentions the notes
+    await page.click("#btn-export");
+    assert.match(await page.textContent("#export-a11y"), new RegExp(`${count + 3} notes`));
+    assert.equal(await page.isEnabled("#export-html"), true);
+    await page.click("#export-a11y button");
+    assert.equal(await page.textContent("main h2"), "Accessibility check");
+    await page.click("#btn-preview"); await page.frameLocator(".preview iframe").locator("#begin").waitFor();
     assert.deepEqual(page.errors, []);
     await page.close();
   });

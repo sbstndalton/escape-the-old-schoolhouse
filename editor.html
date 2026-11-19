@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#120d09">
 <title>Escape Room Editor</title>
+<script>
+/* High contrast and Readable text are applied before anything is drawn (the same keys the game uses). */
+(function(){ var d = document.documentElement, g = function(k){ try { return localStorage.getItem(k); } catch(e){ return null; } };
+  var c = g("escape-room-contrast"), mq = function(q){ return window.matchMedia && matchMedia(q).matches; };
+  if (c === "on" || mq("(forced-colors: active)") || (c !== "off" && mq("(prefers-contrast: more)"))) d.setAttribute("data-contrast", "more");
+  if (g("escape-room-readable") === "on") d.setAttribute("data-readable", "on"); })();
+</script>
 <style>
   /* =====================================================================
      The Curator's workshop: a lamplit oak workbench at night. Flat 2D art.
@@ -16,11 +23,14 @@
     --brass:#b08a3e; --brass-hi:#f1d38a; --brass-lo:#5a4317;
     --felt:#1f3a2b; --felt-lo:#14271c; --leather:#5a1d16; --wax:#8e1b1b; --wax-hi:#c2413a; --steel:#2b3440;
     --paper:#e9dcc0; --paper-lo:#d9c9a6; --manila:#c7a76c; --kraft:#b39160;
-    --ink:#2a1d14; --ink-2:#4b382a; --rule:rgba(42,29,20,.34); --red-ink:#7d1717; --green-ink:#1d4a2f;
+    --ink:#2a1d14; --ink-2:#4b382a; --rule:rgba(42,29,20,.34); --line:rgba(42,29,20,.78); --red-ink:#6f1212; --green-ink:#1d4a2f;
     --parch:#e8d9b5; --parch-2:rgba(232,217,181,.72);
     --display:"IM Fell English","Special Elite",Georgia,serif;
     --caps:"IM Fell English SC","Special Elite",Georgia,serif;
-    --type:"Special Elite","Courier New",Courier,monospace;
+    --type:"Special Elite","Courier New",Courier,monospace;                     /* short typed labels and digits only */
+    --read:Georgia,"Iowan Old Style","Palatino Linotype","Book Antiqua","DejaVu Serif","Times New Roman",serif;   /* everything that is read or written */
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono","DejaVu Sans Mono","Courier New",monospace;
+    --sans:"Atkinson Hyperlegible",Verdana,"Segoe UI","Helvetica Neue","DejaVu Sans",Arial,sans-serif;          /* the Readable text option */
     --ring:#ffd98a; --hh:3.5rem; --ease:cubic-bezier(.2,.8,.2,1);
     --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='300'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.005 .32' numOctaves='4' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .04  0 0 0 0 .02  0 0 0 0 .01  1.7 0 0 0 -.62'/%3E%3C/filter%3E%3Crect width='600' height='300' filter='url(%23g)'/%3E%3C/svg%3E");
     --grain-v:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='600'%3E%3Cfilter id='g' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.3 .005' numOctaves='4' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .04  0 0 0 0 .02  0 0 0 0 .01  1.7 0 0 0 -.62'/%3E%3C/filter%3E%3Crect width='300' height='600' filter='url(%23g)'/%3E%3C/svg%3E");
@@ -28,34 +38,36 @@
     --fox:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='700'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012' numOctaves='3' seed='23' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5  0 0 0 0 .3  0 0 0 0 .1  1.1 0 0 0 -.68'/%3E%3C/filter%3E%3Crect width='700' height='700' filter='url(%23f)'/%3E%3C/svg%3E");
     --nap:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' seed='9' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  .7 0 0 0 -.22'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
     --brush:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='60'%3E%3Cfilter id='b' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.01 1.2' numOctaves='2' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 .92  0 0 0 0 .7  .5 0 0 0 -.16'/%3E%3C/filter%3E%3Crect width='300' height='60' filter='url(%23b)'/%3E%3C/svg%3E");
-    --brassfill:var(--brush),linear-gradient(178deg,#efd08a 0,#c9a352 22%,#a98338 58%,#7d5f24 100%);
+    --brassfill:var(--brush),linear-gradient(178deg,#f5dc9c 0,#dab868 20%,#c6a152 60%,#a07c36 100%);
   }
   *{box-sizing:border-box}
   html{color-scheme:dark;-webkit-text-size-adjust:100%;height:100%}
-  body{margin:0;height:100%;overflow:hidden;font-family:var(--type);font-size:16px;line-height:1.5;color:var(--parch);
+  body{margin:0;height:100%;overflow:hidden;font-family:var(--read);font-size:100%;line-height:1.5;color:var(--parch);
     display:grid;grid-template-rows:auto minmax(0,1fr);grid-template-columns:19rem minmax(0,1fr);
     background:var(--grain),linear-gradient(180deg,#2c1b0e,#22150b 60%,#1a1008),var(--night)}
   @supports (height:100dvh){body{height:100dvh}}
   /* lamp pool (warm, from the upper right), window fill (cool, lower left), vignette */
-  .light{position:fixed;inset:-4%;pointer-events:none;z-index:4;mix-blend-mode:screen;
+  .light{position:fixed;inset:-4%;pointer-events:none;z-index:1;mix-blend-mode:screen;
     background:radial-gradient(52rem 34rem at 70% 6%,rgba(255,215,160,.34),rgba(255,200,130,.1) 45%,transparent 72%),
       radial-gradient(30rem 26rem at 0% 100%,rgba(127,160,184,.1),transparent 70%);
     transform:translate(calc(var(--px,0) * -10px),calc(var(--py,0) * -6px))}
-  .shade{position:fixed;inset:0;pointer-events:none;z-index:4;
+  .shade{position:fixed;inset:0;pointer-events:none;z-index:1;
     background:radial-gradient(120% 95% at 66% 22%,transparent 46%,rgba(8,5,3,.5) 82%,rgba(5,3,2,.78) 100%)}
   .sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;opacity:0}
-  .skip{position:absolute;left:.75rem;top:-5rem;z-index:70;background:var(--paper);color:var(--ink);padding:.6rem 1rem;font-family:var(--type);border:1px solid var(--ink)}
+  .skip{position:absolute;left:.75rem;top:-5rem;z-index:70;background:var(--paper);color:var(--ink);padding:.6rem 1rem;border:2px solid var(--ink);--ring:#ffd98a}
   .skip:focus{top:.6rem}
   main[tabindex]:focus{outline:none}
+  [hidden]{display:none!important}
   svg.ic{width:1.15em;height:1.15em;flex:none;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em}
   .icw{display:inline-flex}
 
   /* ---------- controls: every button starts bare ---------- */
   button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:inherit;border-radius:0}
   button:disabled{opacity:.38;cursor:not-allowed}
-  :focus-visible{outline:2px solid var(--ring);outline-offset:3px}
+  /* one focus ring everywhere: 3px, outside the control, lamp-yellow on wood and felt, ink on paper and brass */
+  :focus-visible{outline:3px solid var(--ring);outline-offset:2px}
   /* engraved brass plate with two screws */
-  .plate{display:inline-flex;align-items:center;gap:.45rem;min-height:2.25rem;padding:.3rem 1.35rem;font-family:var(--caps);font-size:.95rem;letter-spacing:.09em;color:#21150a;white-space:nowrap;
+  .plate{display:inline-flex;align-items:center;gap:.45rem;min-height:2.25rem;padding:.3rem 1.35rem;font-family:var(--caps);font-size:.95rem;letter-spacing:.09em;color:#120a03;white-space:nowrap;
     background:radial-gradient(circle at .55rem 50%,#3a2a10 0 1.5px,#e8cb88 1.6px 2.6px,transparent 2.8px),radial-gradient(circle at calc(100% - .55rem) 50%,#3a2a10 0 1.5px,#e8cb88 1.6px 2.6px,transparent 2.8px),var(--brassfill);
     border:1px solid #3d2c0e;border-radius:2px;text-shadow:0 1px 0 rgba(255,236,180,.55);
     box-shadow:inset 0 1px 0 rgba(255,240,196,.8),inset 0 -2px 0 rgba(70,48,12,.6),0 2px 0 #0d0704,0 5px 9px rgba(0,0,0,.55)}
@@ -73,34 +85,36 @@
   .stamp.red{color:var(--red-ink);border-color:var(--red-ink);box-shadow:inset 0 0 0 2px var(--paper),inset 0 0 0 3px var(--red-ink)}
   .stamp.red:hover:not(:disabled){background:var(--red-ink);color:var(--paper);box-shadow:inset 0 0 0 2px var(--red-ink),inset 0 0 0 3px var(--paper)}
   /* typed, underlined action on paper */
-  .inkline{display:inline-flex;align-items:center;gap:.35rem;min-height:2rem;font-family:var(--type);font-size:.9rem;color:var(--ink);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em}
+  .inkline{display:inline-flex;align-items:center;gap:.35rem;min-height:2rem;font-size:.95rem;color:var(--ink);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em}
   .inkline:hover:not(:disabled){text-decoration-thickness:2px}
   .inkline.red{color:var(--red-ink)}
   /* small drawn mark in the margin */
-  .glyph{display:inline-grid;place-items:center;width:1.75rem;height:1.75rem;color:var(--ink-2);border-radius:50%}
+  .glyph{display:inline-grid;place-items:center;width:1.75rem;height:1.75rem;color:var(--ink);border-radius:50%}
+  .glyph.red{color:var(--red-ink)}
   .glyph:hover:not(:disabled){color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
   .glyph.red:hover:not(:disabled){color:var(--red-ink);box-shadow:inset 0 0 0 1.5px var(--red-ink)}
-  .paper,.pop,.folder,.keycard,.addmenu,.note{--ring:#2a1d14}
+  .paper,.pop,.folder,.keycard,.addmenu,.note,.slipbox,.toast,.tabs{--ring:#2a1d14}
 
   /* ---------- top rail of the bench ---------- */
   header{grid-column:1/-1;position:relative;z-index:6;min-height:var(--hh);display:flex;align-items:center;gap:.5rem 1rem;padding:.4rem 1.1rem;
     background:var(--grain),linear-gradient(180deg,#4a2f18,#352010 55%,#241509);
     box-shadow:inset 0 1px 0 rgba(255,214,160,.22),inset 0 -1px 0 #0b0603,0 1px 0 rgba(176,138,62,.55),0 8px 18px rgba(0,0,0,.6)}
-  header h1{margin:0;font-family:var(--caps);font-weight:400;font-size:1.15rem;letter-spacing:.14em;color:var(--brass-hi);text-shadow:0 -1px 0 rgba(0,0,0,.85),0 1px 0 rgba(255,220,160,.12);white-space:nowrap}
+  header h1{margin:0 auto 0 0;font-family:var(--caps);font-weight:400;font-size:1.15rem;letter-spacing:.14em;color:var(--brass-hi);text-shadow:0 -1px 0 rgba(0,0,0,.85),0 1px 0 rgba(255,220,160,.12);white-space:nowrap}
   header .spacer{flex:1}
   header .tools{display:flex;gap:.15rem;align-items:center}
   header .run{display:flex;gap:.7rem;align-items:center}
   #cabinet-handle,#btn-more{display:none}
   /* the tally: inked on a brass plate */
-  .meter{font-family:var(--type);font-size:.95rem;letter-spacing:.02em;padding:.3rem 1.4rem;min-height:2.1rem;cursor:default}
+  .meter{font-family:var(--type);font-size:.95rem;letter-spacing:.02em;padding:.3rem 1.4rem;min-height:2.1rem;cursor:default;margin:0}
   .meter b{font-weight:400;font-size:1.1rem}
   .meter .w{font-family:var(--caps);letter-spacing:.1em;font-size:.85rem}
 
   /* ---------- the specimen cabinet ---------- */
-  nav{position:relative;z-index:5;overflow:auto;overscroll-behavior:contain;padding:.75rem .7rem 1.2rem .8rem;display:flex;flex-direction:column;gap:.38rem;
+  #cab{display:flex;flex-direction:column;gap:.38rem;min-height:100%}
+  nav{position:relative;z-index:5;overflow:auto;overscroll-behavior:contain;padding:.75rem .7rem 1.2rem .8rem;
     background:var(--grain-v),linear-gradient(90deg,#231509,#2e1c0e 30%,#2a190c 80%,#150c06);
     box-shadow:inset -10px 0 14px -8px rgba(0,0,0,.85),inset 0 0 0 1px rgba(0,0,0,.6),6px 0 18px rgba(0,0,0,.45)}
-  nav .bay{font-family:var(--caps);font-size:.85rem;letter-spacing:.2em;color:var(--brass);margin:.7rem .2rem .1rem;display:flex;align-items:center;gap:.6rem;text-shadow:0 -1px 0 #000}
+  nav .bay{font-family:var(--caps);font-size:.9rem;line-height:1.5;letter-spacing:.2em;color:var(--brass-hi);margin:.7rem .2rem .1rem;display:flex;align-items:center;gap:.6rem;text-shadow:0 -1px 0 #000}
   nav .bay::after{content:"";flex:1;height:2px;background:linear-gradient(180deg,#0c0704 0 1px,rgba(255,214,160,.14) 1px)}
   /* a drawer front */
   nav .item{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:.3rem;padding:.42rem .4rem .46rem .5rem;cursor:pointer;
@@ -113,38 +127,47 @@
     box-shadow:inset 0 1px 0 rgba(255,224,170,.45),inset 1px 0 0 rgba(255,214,160,.16),inset 0 -2px 0 rgba(0,0,0,.5),0 0 0 1px #0d0704,-7px 0 0 #120a05,0 12px 16px -2px rgba(0,0,0,.85)}
   nav .pull{display:block;width:100%;min-width:0}
   /* brass label holder with a typed paper label */
-  nav .holder{display:flex;align-items:center;gap:.5rem;padding:.34rem .5rem;min-height:2.2rem;color:var(--ink);font-size:.86rem;line-height:1.25;
+  nav .holder{display:flex;align-items:center;gap:.5rem;padding:.34rem .5rem;min-height:2.2rem;color:var(--ink);font-size:.92rem;line-height:1.3;
     background:var(--fibre),linear-gradient(180deg,#eee2c7,#dccba6);
     border:3px solid;border-color:#e9cc85 #8a6a2c #6e531f #c9a352;box-shadow:0 0 0 1px #2b1d08,inset 0 0 0 1px rgba(60,40,10,.55),inset 0 2px 3px rgba(60,40,10,.35)}
   nav .holder .t{flex:1;min-width:0;overflow-wrap:anywhere}
-  nav .item.sel .holder{background:var(--fibre),linear-gradient(180deg,#f6ecd4,#e6d7b4)}
-  nav .mark{font-size:.8rem;color:var(--red-ink);white-space:nowrap;border-bottom:1px solid currentColor;line-height:1.1}
+  nav .item.sel .holder{background:var(--fibre),linear-gradient(180deg,#f6ecd4,#e6d7b4);border-left:.45rem solid #f1d38a}
+  nav .item.sel .holder .t{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.25em}
+  nav .mark.adv{color:var(--ink)}
+  nav .mark{font-family:var(--type);font-size:.9rem;color:#640c0c;white-space:nowrap;border-bottom:1px solid currentColor;line-height:1.1}
   nav .mark.ok{color:var(--green-ink);border:0}
   nav .acts{display:flex;flex-direction:column;gap:.2rem}
-  nav .stud{display:grid;place-items:center;width:1.45rem;height:1.45rem;border-radius:50%;color:#21150a;font-size:.8rem;
-    background:radial-gradient(circle at 35% 30%,#f6e0a4,#b08a3e 55%,#6a4f1c);box-shadow:0 0 0 1px #2b1d08,0 2px 3px rgba(0,0,0,.6);opacity:.78}
-  nav .item:hover .stud,nav .item.sel .stud,nav .item:focus-within .stud{opacity:1}
-  nav .stud:disabled{opacity:.2!important}
+  nav .stud{display:grid;place-items:center;width:1.6rem;height:1.6rem;border-radius:50%;color:#140c04;font-size:.85rem;
+    background:radial-gradient(circle at 35% 30%,#f6e0a4,#c9a352 55%,#9a7a34);box-shadow:0 0 0 1px #2b1d08,0 2px 3px rgba(0,0,0,.6)}
+  nav .stud:disabled{opacity:.3}
   nav .knob{width:1.1rem;height:1.1rem;border-radius:50%;margin:0 .2rem;background:radial-gradient(circle at 35% 30%,#f6e0a4,#b08a3e 55%,#5a4317);box-shadow:0 0 0 1px #2b1d08,0 3px 3px rgba(0,0,0,.65)}
   /* empty bay: add a drawer */
-  #add-room{display:flex;align-items:center;gap:.5rem;min-height:2.6rem;padding:.4rem .7rem;margin-top:.1rem;font-family:var(--caps);letter-spacing:.1em;font-size:.9rem;color:var(--parch-2);
+  #add-room{display:flex;align-items:center;gap:.5rem;min-height:2.6rem;padding:.4rem .7rem;margin-top:.1rem;font-family:var(--caps);letter-spacing:.1em;font-size:.95rem;color:var(--parch);
     background:linear-gradient(180deg,#0e0804,#170e07);box-shadow:inset 0 3px 8px #000,inset 0 0 0 1px #000,0 1px 0 rgba(255,214,160,.12)}
   #add-room:hover{color:var(--brass-hi)}
   .addmenu{display:flex;flex-direction:column;background:var(--fibre),var(--paper);color:var(--ink);padding:.2rem .6rem;box-shadow:0 0 0 1px rgba(42,29,20,.6),3px 5px 0 rgba(0,0,0,.45)}
-  .addmenu button{display:grid;grid-template-columns:1.5rem 1fr;gap:0 .45rem;padding:.5rem 0;border-bottom:1px solid var(--rule);font-size:.8rem;line-height:1.35;color:var(--ink-2)}
+  .addmenu button{display:grid;grid-template-columns:1.5rem 1fr;gap:0 .45rem;padding:.5rem 0;border-bottom:1px solid var(--rule);font-size:.88rem;line-height:1.45;color:var(--ink)}
   .addmenu button:last-child{border-bottom:0}
   .addmenu button b{font-family:var(--caps);font-weight:400;font-size:.98rem;letter-spacing:.06em;color:var(--ink)}
   .addmenu button .icw{grid-row:1/3;font-size:1.15rem;color:var(--ink)}
   .addmenu button:hover b{text-decoration:underline}
-  nav .foot{margin-top:auto;padding:.9rem .2rem 0;font-size:.8rem;color:var(--parch-2);display:flex;align-items:center;gap:.4rem}
+  nav .foot{padding:.5rem .2rem 0;font-size:.88rem;color:var(--parch);display:flex;align-items:center;gap:.4rem}
+  nav .gap{margin-top:auto}
+  /* display options: two brass switches at the foot of the cabinet */
+  #display-toggles{display:flex;flex-direction:column;gap:.45rem;padding:1rem .3rem 0}
+  #display-toggles .opt{display:flex;align-items:center;gap:.4rem}
+  nav .switch{font-size:.95rem;color:var(--parch);min-height:1.75rem}
+  #cabinet-close{display:none}
   nav .shelf{display:none}
   #cab-scrim{display:none}
 
   /* ---------- the bench and blotter ---------- */
-  main{position:relative;z-index:2;overflow:auto;overscroll-behavior:contain;padding:1.3rem 2.2rem 4rem 1.8rem;scroll-padding-top:1rem}
+  main{position:relative;z-index:2;overflow:auto;overscroll-behavior:contain;padding:1.3rem 2.2rem 4rem 1.8rem;scroll-padding:1.5rem 0 3rem}
+  html{scroll-padding:1.5rem 0 3rem}
+  nav{scroll-padding:1rem 0 2rem}
   .blotter{position:relative;max-width:78rem;min-height:calc(100% - 1rem);padding:1.3rem 3rem 2.6rem;display:grid;gap:1rem 1.6rem;align-content:start;
     grid-template-columns:minmax(0,1fr) 16.5rem;grid-template-rows:auto 1fr;grid-template-areas:"head loose" "leaf loose";
-    background:var(--nap),radial-gradient(60rem 30rem at 78% -8%,rgba(255,215,160,.16),transparent 70%),linear-gradient(180deg,#234231,var(--felt) 40%,var(--felt-lo));
+    background:var(--nap),radial-gradient(64rem 34rem at 80% -8%,rgba(255,215,160,.24),transparent 70%),radial-gradient(120% 110% at 62% 18%,transparent 48%,rgba(5,10,7,.55) 100%),linear-gradient(180deg,#234231,var(--felt) 40%,var(--felt-lo));
     box-shadow:inset 0 0 0 1px rgba(0,0,0,.6),inset 0 2px 0 rgba(255,255,255,.05),0 3px 0 #0b0603,0 14px 22px rgba(0,0,0,.6)}
   /* leather side panels with a stitched edge */
   .blotter::before,.blotter::after{content:"";position:absolute;top:0;bottom:0;width:1.7rem;pointer-events:none;
@@ -152,16 +175,17 @@
   .blotter::before{left:0;border-right:1px dashed rgba(232,217,181,.4)}
   .blotter::after{right:0;border-left:1px dashed rgba(232,217,181,.4)}
   .head{grid-area:head;min-width:0;padding-left:.2rem}
-  .kicker{display:flex;align-items:center;gap:.5rem;font-family:var(--caps);font-size:.95rem;letter-spacing:.16em;color:var(--brass-hi);text-shadow:0 1px 0 rgba(0,0,0,.6)}
-  h2{margin:.15rem 0 0;font-family:var(--display);font-weight:400;font-size:2.1rem;line-height:1.12;color:var(--parch);text-shadow:0 2px 0 rgba(0,0,0,.45);overflow-wrap:anywhere}
+  .kicker{display:flex;align-items:center;gap:.5rem;font-family:var(--caps);font-size:1rem;letter-spacing:.16em;color:#ffe9b0;text-shadow:0 1px 0 rgba(0,0,0,.6)}
+  h2{margin:.15rem 0 0;font-family:var(--display);font-weight:400;font-size:2.1rem;line-height:1.15;color:var(--parch);text-shadow:0 2px 0 rgba(0,0,0,.45);overflow-wrap:anywhere}
+  .head h2:focus-visible{outline-offset:6px}
   /* loose things on the felt: the pinned note, the envelope, a brass plate */
   .loose{grid-area:loose;display:flex;flex-direction:column;gap:1.3rem;align-items:stretch;min-width:0;padding-top:.5rem}
   .loose .plate{justify-content:center}
-  .note{position:relative;align-self:flex-start;max-width:100%;color:var(--ink);font-size:.86rem;line-height:1.4;padding:.75rem .7rem .55rem;transform:rotate(-1.4deg);
-    background:var(--fibre),linear-gradient(180deg,#d8cfbd,#cbc0a8);box-shadow:0 0 0 1px rgba(42,29,20,.35),2px 3px 0 rgba(0,0,0,.4)}
+  .note{position:relative;align-self:flex-start;max-width:100%;color:var(--ink);font-size:.92rem;line-height:1.5;padding:.75rem .7rem .55rem;transform:rotate(-1.4deg);
+    background:var(--fibre),linear-gradient(180deg,#e6dcc6,#dcd0b6);box-shadow:0 0 0 1px rgba(42,29,20,.35),2px 3px 0 rgba(0,0,0,.4)}
   .note::before{content:"";position:absolute;left:50%;top:-.42rem;width:.85rem;height:.85rem;margin-left:-.42rem;border-radius:50%;
     background:radial-gradient(circle at 35% 30%,#f6e0a4,#b08a3e 55%,#5a4317);box-shadow:0 0 0 1px #2b1d08,1px 3px 2px rgba(0,0,0,.55)}
-  .note button{display:flex;gap:.5rem;align-items:baseline;width:100%}
+  .note button{display:flex;flex-wrap:wrap;gap:.1rem .5rem;align-items:baseline;width:100%;min-height:1.6rem}
   .note button .more{margin-left:auto;font-family:var(--caps);letter-spacing:.08em;text-decoration:underline;text-underline-offset:.2em;white-space:nowrap}
   .note p{margin:.5rem 0 .1rem;padding-top:.45rem;border-top:1px dashed var(--rule)}
   /* the sealed envelope */
@@ -173,7 +197,8 @@
   .answerkey summary svg.env .lid{fill:rgba(203,172,125,.9);transform-origin:50% 0;transform-box:fill-box}
   .answerkey[open] summary svg.env .lid{transform:scaleY(-.82);fill:#d2b688}
   .answerkey summary .lbl{position:absolute;left:.7rem;bottom:.45rem;font-family:var(--caps);letter-spacing:.12em;font-size:.95rem}
-  .answerkey summary .act{position:absolute;right:.7rem;bottom:.5rem;font-size:.78rem;text-decoration:underline;text-underline-offset:.2em}
+  .answerkey summary .act{position:absolute;right:.7rem;bottom:.5rem;font-size:.88rem;text-decoration:underline;text-underline-offset:.2em}
+  .answerkey summary .lbl,.answerkey summary .act{background:rgba(214,186,140,.9);padding:0 .25rem;color:#1c120a}
   .answerkey summary .act::after{content:"break the seal"}
   .answerkey[open] summary .act::after{content:"put it away"}
   .wax{display:grid;place-items:center;color:#f3c9bf;border-radius:48% 52% 51% 49%/53% 47% 52% 48%;
@@ -183,9 +208,9 @@
   .answerkey[open]{margin-top:3.4rem}
   .answerkey[open] summary{box-shadow:inset 0 12px 12px -6px rgba(40,25,8,.7),0 0 0 1px rgba(40,25,8,.75),2px 4px 0 rgba(0,0,0,.45)}
   .answerkey[open] summary .wax{top:-40%;transform:rotate(-14deg) scale(.9);filter:brightness(.85)}
-  .keycard{position:relative;margin:-.5rem .45rem 0;padding:1rem .8rem .7rem;font-size:.86rem;line-height:1.45;transform:rotate(.5deg);
+  .keycard{position:relative;margin:-.5rem .45rem 0;padding:1rem .8rem .7rem;font-size:.92rem;line-height:1.5;transform:rotate(.5deg);
     background:var(--fibre),linear-gradient(180deg,#f1e7cf,#e4d6b6);box-shadow:0 0 0 1px rgba(42,29,20,.4),2px 4px 0 rgba(0,0,0,.4)}
-  .keycard .only{font-family:var(--caps);letter-spacing:.14em;font-size:.8rem;color:var(--red-ink);border-bottom:1px solid var(--red-ink);padding-bottom:.2rem;margin-bottom:.4rem}
+  .keycard .only{font-family:var(--caps);letter-spacing:.14em;font-size:.88rem;color:var(--red-ink);border-bottom:1px solid var(--red-ink);padding-bottom:.2rem;margin-bottom:.4rem}
   .keycard ul{margin:0;padding:0;list-style:none}
   .keycard li{padding:.28rem 0;border-bottom:1px solid var(--rule);overflow-wrap:anywhere}
   .keycard li:last-child{border-bottom:0}
@@ -193,14 +218,14 @@
 
   /* ---------- the sheet, with index tabs ---------- */
   .leaf{grid-area:leaf;min-width:0}
-  .tabs{display:flex;gap:.25rem;padding:0 .9rem;position:relative;z-index:1;overflow-x:auto;scrollbar-width:none}
-  .tabs::-webkit-scrollbar{display:none}
-  .tabs button{flex:none;font-family:var(--caps);font-size:.95rem;letter-spacing:.09em;color:#3a2a14;padding:.35rem 1rem .3rem;margin-top:.4rem;border-radius:3px 3px 0 0;
-    background:var(--fibre),linear-gradient(180deg,#bd9c60,#a88748);box-shadow:inset 0 1px 0 rgba(255,236,190,.5),inset 0 -3px 4px -2px rgba(40,25,8,.55),0 0 0 1px rgba(40,25,8,.6)}
+  .tabs{display:flex;flex-wrap:wrap;align-items:flex-end;gap:.25rem;padding:0 .9rem;position:relative;z-index:1}
+  .tabs button{flex:none;font-family:var(--caps);font-size:1rem;letter-spacing:.09em;color:#1c120a;padding:.35rem 1rem .3rem;margin-top:.4rem;border-radius:3px 3px 0 0;
+    background:var(--fibre),linear-gradient(180deg,#c9a96c,#b79657);box-shadow:inset 0 1px 0 rgba(255,236,190,.5),inset 0 -3px 4px -2px rgba(40,25,8,.55),0 0 0 1px rgba(40,25,8,.6)}
   .tabs button:hover{filter:brightness(1.08)}
   .tabs button[aria-selected=true]{margin-top:0;padding:.55rem 1.1rem .5rem;color:var(--ink);background:var(--fibre),linear-gradient(180deg,#f1e7cf,#ece0c5);
     box-shadow:inset 0 1px 0 #fff6de,1px 0 0 rgba(42,29,20,.45),-1px 0 0 rgba(42,29,20,.45),0 -1px 0 rgba(42,29,20,.45)}
-  .tabs button:focus-visible{outline:2px solid var(--ring);outline-offset:-4px}
+  .tabs button[aria-selected=true]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.3em}
+  .tabs button:focus-visible{outline:3px solid var(--ink);outline-offset:-5px}
   .paper{position:relative;color:var(--ink);padding:1.5rem 1.9rem 1.8rem;min-height:18rem;
     background:var(--fox),var(--fibre),linear-gradient(100deg,#e3d5b6,#ece0c5 30%,#f0e5cc 70%,#e9dcc0);
     box-shadow:0 0 0 1px rgba(42,29,20,.45),inset 0 0 40px rgba(120,84,36,.14),3px 5px 0 rgba(0,0,0,.42)}
@@ -208,21 +233,21 @@
   .paper h3{margin:1.6rem 0 .2rem;font-family:var(--caps);font-weight:400;font-size:1.05rem;letter-spacing:.14em;color:var(--ink);display:flex;align-items:center;gap:.5rem}
   .paper h3::after{content:"";flex:1;border-top:3px double var(--rule)}
   .paper h3 .tip{order:2}
-  .typed{font-size:.9rem;color:var(--ink-2);margin:.6rem 0}
+  .typed{font-size:.95rem;color:var(--ink);margin:.6rem 0;max-width:42rem}
 
   /* ---------- fields: a typed label over a ruled line ---------- */
   .field{display:flex;flex-wrap:wrap;align-items:center;gap:.1rem .35rem;margin:1rem 0 0;min-width:0}
     .field>label,.field>.lbl{font-family:var(--caps);font-size:1rem;letter-spacing:.11em;color:var(--ink);line-height:1.3}
   .field>input,.field>textarea{flex:1 0 100%}
-  input[type=text],input[type=number],textarea{font-family:var(--type);font-size:1rem;color:var(--ink);background:transparent;border:0;border-bottom:1.5px solid rgba(42,29,20,.6);border-radius:0;width:100%;min-width:0;
+  input[type=text],input[type=number],textarea{font-family:var(--read);font-size:1.05rem;color:var(--ink);background:transparent;border:0;border-bottom:2px solid var(--line);border-radius:0;width:100%;min-width:0;
     padding:.28rem .1rem .12rem;min-height:2rem;-webkit-appearance:none;appearance:none}
-  input[type=number]{max-width:6rem;flex:0 0 6rem!important;font-size:1.1rem;-moz-appearance:textfield}
+  input[type=number]{max-width:6rem;flex:0 0 6rem!important;font-family:var(--type);font-size:1.1rem;-moz-appearance:textfield}
   input[type=number]::-webkit-inner-spin-button{opacity:.6}
   textarea{resize:none;overflow:hidden;display:block;line-height:1.75rem;padding:0 .1rem;border-bottom:0;min-height:1.75rem;
-    background-image:linear-gradient(transparent calc(1.75rem - 1.5px),rgba(42,29,20,.42) calc(1.75rem - 1.5px));background-size:100% 1.75rem;background-attachment:local}
+    background-image:linear-gradient(transparent calc(1.75rem - 2px),var(--line) calc(1.75rem - 2px));background-size:100% 1.75rem;background-attachment:local}
   input[type=text]:hover,input[type=number]:hover{border-bottom-color:var(--ink)}
-  input[type=text]:focus,input[type=number]:focus,textarea:focus{outline:0;background-color:rgba(255,226,150,.3);box-shadow:0 2px 0 var(--ink)}
-  input::placeholder,textarea::placeholder{color:rgba(42,29,20,.62);font-style:italic}
+  input[type=text]:focus-visible,input[type=number]:focus-visible,textarea:focus-visible{outline:3px solid var(--ink);outline-offset:2px;background-color:rgba(255,236,170,.45)}
+  input::placeholder,textarea::placeholder{color:#4b382a;opacity:1;font-style:italic}
   .row{display:flex;gap:0 1.25rem;flex-wrap:wrap;align-items:flex-end}
   .row>.field{flex:1 1 8rem}
   .row>.field.narrow{flex:0 1 6.5rem}
@@ -237,22 +262,24 @@
   .field.pick>.lblrow{display:flex;align-items:center;gap:.35rem}
   .field.pick>.lblrow .lbl,.choices .lbl{font-family:var(--caps);font-size:1rem;letter-spacing:.11em}
   .rotary label{position:relative;display:flex;cursor:pointer}
-  .rotary label>span{display:flex;align-items:center;gap:.4rem;padding:.3rem .8rem;min-height:2rem;font-family:var(--caps);font-size:.9rem;letter-spacing:.07em;color:#21150a;border-right:1px solid rgba(60,40,10,.5);text-shadow:0 1px 0 rgba(255,236,180,.5)}
+  .rotary label>span{display:flex;align-items:center;gap:.4rem;padding:.3rem .8rem;min-height:2rem;font-family:var(--caps);font-size:.95rem;letter-spacing:.07em;color:#140c04;border-right:1px solid rgba(60,40,10,.5);text-shadow:0 1px 0 rgba(255,236,180,.5)}
   .rotary label:last-child>span{border-right:0}
   .rotary label>span::before{content:"";width:.5rem;height:.5rem;border-radius:50%;background:#2b1d08;box-shadow:inset 0 1px 1px #000,0 1px 0 rgba(255,236,180,.6);flex:none}
-  .rotary input:checked+span{background:linear-gradient(180deg,#140d07,#2a1c10);color:var(--brass-hi);text-shadow:none;box-shadow:inset 0 2px 4px #000}
+  .rotary input:checked+span{background:linear-gradient(180deg,#140d07,#2a1c10);color:#ffe9b0;text-shadow:none;box-shadow:inset 0 2px 4px #000}
   .rotary input:checked+span::before{background:radial-gradient(circle at 40% 35%,#fff3c9,#ffb54a 55%,#a85b12);box-shadow:0 0 6px rgba(255,190,90,.9)}
   .rotary label:hover input:not(:checked)+span{background:rgba(255,240,196,.28)}
-  .rotary input:focus-visible+span{outline:2px solid var(--ink);outline-offset:2px}
+  .rotary input:focus-visible+span{outline:3px solid var(--ink);outline-offset:-4px}
+  .rotary input:checked:focus-visible+span{outline-color:#ffe9b0}
   /* ⓘ */
   .tip{display:inline-flex;position:relative}
-  .i{display:inline-grid;place-items:center;width:1.25rem;height:1.25rem;border-radius:50%;font-family:var(--display);font-style:italic;font-size:.85rem;line-height:1;color:var(--ink);box-shadow:inset 0 0 0 1.2px currentColor;position:relative}
-  .i::after{content:"";position:absolute;inset:-.5rem}
-  .i:hover,.i[aria-expanded=true]{background:var(--ink);color:var(--paper)}
-  nav .i,.head .i,.pbar .i{color:var(--brass-hi)}
-  nav .i:hover,nav .i[aria-expanded=true],.head .i:hover,.head .i[aria-expanded=true]{background:var(--brass-hi);color:var(--night)}
-  .pop{position:fixed;z-index:60;max-width:min(21rem,calc(100vw - 1.5rem));padding:.6rem .75rem;font-family:var(--type);font-size:.84rem;line-height:1.45;color:var(--ink);text-transform:none;letter-spacing:0;white-space:normal;
-    background:var(--fibre),#f1e7cf;box-shadow:0 0 0 1px var(--ink),3px 4px 0 rgba(0,0,0,.5)}
+  .i{display:inline-grid;place-items:center;width:1.75rem;height:1.75rem;border-radius:50%;line-height:1;color:var(--ink);position:relative;--on:var(--paper)}
+  .i::before{content:"";position:absolute;inset:.2rem;border-radius:50%;border:1.5px solid currentColor}
+  .i span{position:relative} .i svg.ic{width:1.05rem;height:1.05rem;stroke-width:2.2;vertical-align:0;display:block}
+  .i:hover::before,.i[aria-expanded=true]::before{background:currentColor}
+  .i:hover span,.i[aria-expanded=true] span{color:var(--on)}
+  nav .i,.head .i{color:var(--brass-hi);--on:var(--night)}
+  .pop{position:fixed;z-index:60;max-width:min(22rem,calc(100vw - 1.5rem));padding:.65rem .8rem;font-family:var(--read);font-style:normal;font-weight:400;font-size:.95rem;line-height:1.5;color:var(--ink);text-transform:none;letter-spacing:0;white-space:normal;text-shadow:none;
+    background:var(--fibre),#f1e7cf;border:1px solid var(--ink);box-shadow:3px 4px 0 rgba(0,0,0,.5)}
   .pop pre{margin:.4rem 0 0;font:inherit;white-space:pre-wrap}
 
   /* ---------- ledger entries ---------- */
@@ -260,21 +287,21 @@
   .entry{display:grid;grid-template-columns:4.3rem minmax(0,1fr);border-top:1px solid var(--rule)}
   .entry:first-child{border-top:3px double var(--rule)}
   .entry .gut{display:flex;flex-direction:column;align-items:center;gap:.1rem;padding:.9rem .3rem .6rem 0;border-right:1.5px solid rgba(125,23,23,.5)}
-  .entry .gut strong{display:flex;flex-direction:column;align-items:center;font-weight:400;font-family:var(--caps);font-size:.7rem;letter-spacing:.08em;line-height:1.1;color:var(--ink-2)}
+  .entry .gut strong{display:flex;flex-direction:column;align-items:center;font-weight:400;font-family:var(--caps);font-size:.85rem;letter-spacing:.04em;line-height:1.15;color:var(--ink)}
   .entry .gut strong b{font-family:var(--type);font-weight:400;font-size:1.5rem;color:var(--ink);line-height:1.2}
   .entry .body{padding:0 0 1rem 1.1rem;min-width:0}
   .verify{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem;align-items:flex-end;margin-top:.3rem}
   .verify .field{flex:1 1 12rem}
   /* wax-seal toggle (a real checkbox underneath) */
-  .verify label.chk{position:relative;display:flex;align-items:center;gap:.6rem;min-height:2.9rem;cursor:pointer;font-family:var(--caps);font-size:.9rem;letter-spacing:.08em;color:var(--ink-2)}
+  .verify label.chk{position:relative;display:flex;align-items:center;gap:.6rem;min-height:2.9rem;cursor:pointer;font-family:var(--caps);font-size:.95rem;letter-spacing:.08em;color:var(--ink)}
   .verify label.chk input{position:absolute;left:0;top:0;width:2.7rem;height:100%;opacity:0;margin:0;cursor:pointer}
-  .verify label.chk .spot{width:2.7rem;height:2.7rem;flex:none;display:grid;place-items:center;border-radius:50%;border:1.5px dashed rgba(42,29,20,.55);color:transparent}
+  .verify label.chk .spot{width:2.7rem;height:2.7rem;flex:none;display:grid;place-items:center;border-radius:50%;border:2px dashed var(--line)}
   .verify label.chk .spot .wax{width:100%;height:100%;font-size:1.15rem;transform:scale(0)}
   .verify label.chk input:checked~.spot{border-color:transparent}
   .verify label.chk input:checked~.spot .wax{transform:none}
   .verify label.chk input:checked~.w{color:var(--red-ink)}
   .verify label.chk:hover .spot{border-style:solid}
-  .verify label.chk input:focus-visible~.spot{outline:2px solid var(--ink);outline-offset:3px}
+  .verify label.chk input:focus-visible~.spot{outline:3px solid var(--ink);outline-offset:3px}
   /* choices: an inked ring marks the right one */
   .choices{flex-direction:column;align-items:stretch}
   .choices .lblrow{display:flex;align-items:center;gap:.35rem}
@@ -282,9 +309,11 @@
   .choice input[type=text]{flex:1}
   .ring{position:relative;display:grid;place-items:center;width:1.9rem;height:1.9rem;flex:none;cursor:pointer}
   .ring input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer}
-  .ring span{width:1.25rem;height:1.25rem;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--ink);display:grid;place-items:center;color:transparent;font-size:1.5rem}
-  .ring input:checked+span{color:var(--red-ink);box-shadow:inset 0 0 0 1.5px var(--red-ink)}
-  .ring input:focus-visible+span{outline:2px solid var(--ink);outline-offset:3px}
+  .ring span{width:1.35rem;height:1.35rem;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;color:transparent;font-size:1.5rem}
+  .ring span{color:var(--red-ink)} .ring span .icw{opacity:0}
+  .ring input:checked+span{border-color:var(--red-ink)} .ring input:checked+span .icw{opacity:1}
+  .ring input:focus-visible+span{outline:3px solid var(--ink);outline-offset:3px}
+  .choice label.n{font-family:var(--type);min-width:1.2rem;text-align:right}
   /* brass two-way switch */
   .switch{display:inline-flex;align-items:center;gap:.7rem;cursor:pointer;font-family:var(--caps);font-size:1rem;letter-spacing:.1em;user-select:none;position:relative}
   .switch input{position:absolute;left:0;top:0;width:3.4rem;height:100%;opacity:0;margin:0;cursor:pointer}
@@ -292,29 +321,41 @@
   .switch .track::after{content:"";position:absolute;top:2px;left:2px;width:1.5rem;height:calc(100% - 4px);border-radius:1px;background:var(--brassfill);box-shadow:inset 0 1px 0 rgba(255,240,196,.9),inset 0 -2px 0 rgba(70,48,12,.7),2px 0 3px rgba(0,0,0,.6)}
   .switch input:checked+.track::after{transform:translateX(1.65rem);box-shadow:inset 0 1px 0 rgba(255,240,196,.9),inset 0 -2px 0 rgba(70,48,12,.7),-2px 0 3px rgba(0,0,0,.6)}
   .switch input:checked+.track{background:linear-gradient(180deg,#3a2408,#6b4510);box-shadow:inset 0 2px 4px #000,inset 0 0 8px rgba(255,180,70,.75),0 0 0 1px #3d2c0e,0 0 0 3px #b08a3e,0 0 0 4px #3d2c0e,0 3px 2px rgba(0,0,0,.4)}
-  .switch input:focus-visible+.track{outline:2px solid var(--ring);outline-offset:6px}
+  .switch input:focus-visible+.track{outline:3px solid var(--ring);outline-offset:6px}
+  .switch .state{font-family:var(--read);font-size:.92rem;letter-spacing:0}
+  .switch .state::after{content:"off"} .switch input:checked~.state::after{content:"on"}
   /* red-ink margin notes (hint give-aways, problems) */
-  .inknote{display:flex;gap:.45rem;align-items:baseline;color:var(--red-ink);font-size:.88rem;margin:.5rem 0 0;font-style:italic}
+  .inknote{display:flex;gap:.45rem;align-items:baseline;color:var(--red-ink);font-size:.95rem;margin:.5rem 0 0;font-style:italic;max-width:44rem}
   .inknote::before{content:"!";font-family:var(--display);font-style:normal;font-size:1.1rem;line-height:1;width:1.15rem;height:1.15rem;flex:none;display:inline-grid;place-items:center;border-radius:50%;box-shadow:inset 0 0 0 1.2px currentColor}
   .errors{color:var(--red-ink);margin:.6rem 0 0}
   .errors ul{margin:.3rem 0 0;padding:0;list-style:none}
   .errors li{padding:.4rem 0 .4rem 1.4rem;border-bottom:1px solid var(--rule);position:relative}
   .errors li::before{content:"×";position:absolute;left:.1rem;font-family:var(--display);font-size:1.2rem;line-height:1.2}
-  .mono{font-family:var(--type);font-size:.95rem}
+  .mono{font-family:var(--mono);font-size:.95rem}
   .crib{margin:.9rem 0 .2rem}
   .crib summary::-webkit-details-marker{display:none}
-  .crib summary{list-style:none;cursor:pointer;font-family:var(--caps);letter-spacing:.1em;font-size:.9rem;width:fit-content;text-decoration:underline;text-underline-offset:.2em}
-  .crib pre{margin:.5rem 0 0;padding:.2rem 0 .2rem 1.2rem;font:inherit;font-size:.86rem;white-space:pre-wrap;color:var(--ink-2)}
+  .crib summary{list-style:none;cursor:pointer;font-family:var(--caps);letter-spacing:.1em;font-size:.95rem;width:fit-content;min-height:1.75rem;display:flex;align-items:center;text-decoration:underline;text-underline-offset:.2em}
+  .crib pre{margin:.5rem 0 0;padding:.2rem 0 .2rem 1.2rem;font-family:var(--mono);font-size:.9rem;line-height:1.5;white-space:pre-wrap;color:var(--ink)}
+
+  /* ---------- the accessibility check: notes in the margin of a ledger ---------- */
+  .notes{margin:.4rem 0 0;padding:0;list-style:none;max-width:46rem}
+  .notes li{padding:.7rem 0 .8rem;border-top:1px solid var(--rule)}
+  .notes li:first-child{border-top:3px double var(--rule)}
+  .notes .where{font-size:1rem}
+  .notes p{margin:.2rem 0 0;line-height:1.55}
+  .notes .quote{font-style:italic}
+  .plain{margin:.5rem 0 0;padding-left:1.2rem;max-width:44rem;line-height:1.55}
+  .plain li{margin:.35rem 0}
 
   /* ---------- documents laid on the bench (export, new, problems, answer sheet) ---------- */
-  .overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-start;justify-content:flex-start;padding:5.2rem 1.5rem 2rem max(1.5rem,14vw);overflow:auto;overscroll-behavior:contain;
+  .overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-start;justify-content:flex-start;padding:5.6rem 1.5rem 2rem max(1.5rem,14vw);overflow:auto;overscroll-behavior:contain;
     background:radial-gradient(60rem 40rem at 60% 10%,rgba(18,13,9,.72),rgba(8,5,3,.93))}
   .folder{position:relative;width:min(44rem,100%);color:var(--ink);padding:1rem 1rem 1.2rem;transform:rotate(-.35deg);
     background:var(--fibre),linear-gradient(180deg,#cfae72,var(--manila) 30%,#b6935a);box-shadow:0 0 0 1px rgba(40,25,8,.8),inset 0 1px 0 rgba(255,236,190,.5),5px 8px 0 rgba(0,0,0,.5)}
-  .folder.wide{width:min(56rem,100%);height:calc(100vh - 7.2rem);display:flex;flex-direction:column;transform:none}
-  .folder .bar{position:absolute;left:1.2rem;bottom:100%;display:flex;align-items:center;gap:1rem;max-width:calc(100% - 2.4rem);padding:.45rem 1rem .35rem;border-radius:3px 3px 0 0;
+  .folder.wide{width:min(56rem,100%);height:calc(100vh - 7.6rem);min-height:22rem;display:flex;flex-direction:column;transform:none}
+  .folder .bar{display:flex;flex-wrap:wrap;align-items:center;gap:.1rem 1rem;width:fit-content;max-width:calc(100% - .4rem);margin:-3.2rem 0 .7rem .2rem;min-height:2.5rem;padding:.3rem 1rem .25rem;border-radius:3px 3px 0 0;
     background:var(--fibre),linear-gradient(180deg,#d8b97f,#cfae72);box-shadow:0 0 0 1px rgba(40,25,8,.8),inset 0 1px 0 rgba(255,236,190,.6)}
-  .folder .bar>span{font-family:var(--caps);letter-spacing:.12em;font-size:1rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .folder .bar>span{font-family:var(--caps);letter-spacing:.12em;font-size:1rem;min-width:0;overflow-wrap:anywhere}
   .folder .sheet{padding:1.2rem 1.5rem 1.5rem;background:var(--fox),var(--fibre),linear-gradient(100deg,#e6d8ba,#f0e5cc 60%,#e9dcc0);box-shadow:0 0 0 1px rgba(42,29,20,.4),2px 3px 0 rgba(0,0,0,.3)}
   .folder .sheet h2{color:var(--ink);text-shadow:none;font-size:1.6rem;margin:0 0 .3rem}
   .folder iframe{flex:1;border:0;width:100%;background:#f4ecd8;box-shadow:0 0 0 1px rgba(42,29,20,.4),2px 3px 0 rgba(0,0,0,.3)}
@@ -322,32 +363,41 @@
   .slip{padding:1rem 0 .2rem;min-width:0}
   .slip+.slip{border-left:1px dashed var(--rule);padding-left:1.6rem}
   .slip h3{margin:0 0 .15rem;font-family:var(--caps);font-weight:400;letter-spacing:.12em;font-size:1.05rem;display:flex;align-items:center;gap:.45rem}
-  .slip .to{font-size:.84rem;color:var(--ink-2);border-bottom:1px dotted var(--rule);padding-bottom:.25rem;margin-bottom:.6rem}
+  .slip .to{font-size:.92rem;color:var(--ink);border-bottom:1px dotted var(--rule);padding-bottom:.25rem;margin-bottom:.6rem}
   .slip h3{margin-bottom:.8rem!important}
 
   /* ---------- student preview: a slim brass rail over the real game ---------- */
   .preview{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;background:var(--night)}
-  .pbar{display:flex;flex-wrap:wrap;gap:.3rem .9rem;align-items:center;padding:.22rem .8rem;min-height:2.6rem;color:#21150a;position:relative;z-index:1;--ring:#120d09;
+  .pbar{display:flex;flex-wrap:wrap;gap:.3rem .9rem;align-items:center;padding:.22rem .8rem;min-height:2.6rem;color:#120a03;position:relative;z-index:1;--ring:#120d09;
     background:var(--brassfill);box-shadow:inset 0 1px 0 rgba(255,240,196,.85),inset 0 -2px 0 rgba(70,48,12,.7),0 1px 0 #0d0704,0 6px 12px rgba(0,0,0,.6)}
   .pbar .badge{font-family:var(--caps);letter-spacing:.16em;font-size:.95rem;text-shadow:0 1px 0 rgba(255,236,180,.55)}
   .pbar .rooms{display:flex;gap:.3rem;flex-wrap:wrap;flex:1;align-items:center}
-  .pbar .rooms button{width:1.9rem;height:1.9rem;padding:0;display:inline-grid;place-items:center;font-family:var(--type);font-size:.9rem;border-radius:50%;color:#21150a;
+  .pbar .rooms button{width:1.9rem;height:1.9rem;padding:0;display:inline-grid;place-items:center;font-family:var(--type);font-size:.9rem;border-radius:50%;color:#120a03;
     background:radial-gradient(circle at 40% 28%,#f8e6b0,#c19a4a 60%,#8a6a2c);box-shadow:0 0 0 1px #3d2c0e,0 2px 2px rgba(40,25,5,.55)}
   .pbar .rooms button:hover:not(:disabled){filter:brightness(1.1)}
   .pbar .rooms button[aria-current=step]{background:linear-gradient(180deg,#140d07,#2a1c10);color:var(--brass-hi);box-shadow:inset 0 2px 4px #000,0 0 0 1px #3d2c0e,0 1px 0 rgba(255,236,180,.6)}
   .pbar .ctrl{display:flex;gap:.2rem 1rem;align-items:center;flex-wrap:wrap}
   .pbar .eng{display:inline-flex;align-items:center;gap:.35rem;min-height:1.9rem;font-family:var(--caps);letter-spacing:.09em;font-size:.95rem;text-shadow:0 1px 0 rgba(255,236,180,.55);border-bottom:1px solid transparent}
-  .pbar .eng:hover{border-bottom-color:#21150a}
-  .pbar .switch{font-size:.95rem;letter-spacing:.09em;gap:.55rem;text-shadow:0 1px 0 rgba(255,236,180,.55)}
+  .pbar .eng:hover{border-bottom-color:#120a03}
+  .pbar .switch{font-size:.95rem;letter-spacing:.09em;gap:.55rem;min-height:1.9rem;text-shadow:0 1px 0 rgba(255,236,180,.55)}
   .pbar .switch .track{width:2.7rem;height:1.25rem;box-shadow:inset 0 2px 4px #000,0 0 0 1px #3d2c0e}
   .pbar .switch input{width:2.7rem}
   .pbar .switch .track::after{width:1.15rem}
   .pbar .switch input:checked+.track{box-shadow:inset 0 2px 4px #000,inset 0 0 8px rgba(255,180,70,.75),0 0 0 1px #3d2c0e}
   .pbar .switch input:checked+.track::after{transform:translateX(1.3rem)}
+  .pbar .rooms button[aria-current=step]{text-decoration:underline;text-underline-offset:.2em}
   .preview iframe{flex:1;border:0;width:100%;background:var(--night)}
   /* a typed strip, like a telegram */
-  .toast{position:fixed;left:1.2rem;bottom:1.2rem;z-index:40;max-width:calc(100vw - 2.4rem);padding:.5rem .9rem;color:var(--ink);font-size:.9rem;transform:rotate(-.6deg);
-    background:var(--fibre),#f1e7cf;box-shadow:0 0 0 1px var(--ink),3px 4px 0 rgba(0,0,0,.55)}
+  #toasts{position:fixed;left:1.2rem;bottom:1.2rem;z-index:65;max-width:calc(100vw - 2.4rem);pointer-events:none}
+  .toast{padding:.5rem .9rem;color:var(--ink);font-size:.98rem;transform:rotate(-.6deg);pointer-events:auto;
+    background:var(--fibre),#f1e7cf;border:1px solid var(--ink);box-shadow:3px 4px 0 rgba(0,0,0,.55)}
+  /* a slip that asks before anything is thrown away */
+  .modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:1rem;overflow:auto;overscroll-behavior:contain;background:rgba(8,5,3,.84)}
+  .slipbox{width:min(31rem,100%);color:var(--ink);padding:1.2rem 1.4rem 1.3rem;transform:rotate(-.3deg);
+    background:var(--fibre),linear-gradient(180deg,#f1e7cf,#e6d9bb);border:1px solid var(--ink);box-shadow:5px 7px 0 rgba(0,0,0,.55)}
+  .slipbox h2{color:var(--ink);text-shadow:none;font-size:1.55rem;margin:0 0 .5rem}
+  .slipbox p{margin:.45rem 0;line-height:1.55}
+  .slipbox .actions{justify-content:flex-end;margin-top:1.2rem}
 
   /* ---------- motion (only when the reader hasn't asked for less) ---------- */
   @media (prefers-reduced-motion: no-preference){
@@ -359,9 +409,11 @@
     .answerkey[open] .keycard{animation:card-out .3s var(--ease)}
     .verify label.chk .spot .wax{transition:transform .26s cubic-bezier(.3,1.6,.5,1)}
     .verify label.chk input:checked~.spot .wax{animation:press .32s cubic-bezier(.3,1.4,.5,1)}
-    .overlay{animation:fade .16s ease-out} .folder{animation:lay .24s var(--ease)}
+    .overlay,.modal{animation:fade .16s ease-out} .folder,.slipbox{animation:lay .24s var(--ease)}
     .preview{animation:fade .16s ease-out} .toast{animation:strip .25s var(--ease)}
-    nav,#cab-scrim{transition:transform .26s var(--ease),opacity .2s,visibility .26s}
+    /* opening: visible at once (so the keyboard can move in); closing: hidden only after the slide */
+    nav,#cab-scrim{transition:transform .26s var(--ease),opacity .2s,visibility 0s .26s}
+    body.cab-open nav,body.cab-open #cab-scrim{transition:transform .26s var(--ease),opacity .2s,visibility 0s}
     .light{transition:transform .5s ease-out}
   }
   @keyframes fade{from{opacity:0}}
@@ -373,28 +425,33 @@
 
   /* ---------- fingers ---------- */
   @media (pointer:coarse){
-    .glyph{width:2.75rem;height:2.75rem} .plate,.cut,.stamp,.inkline{min-height:2.75rem}
-    input[type=text],input[type=number]{min-height:2.75rem} .rotary label>span{min-height:2.75rem}
-    nav .acts{flex-direction:row} nav .stud{width:2.6rem;height:2.6rem;opacity:1} .ring{width:2.75rem;height:2.75rem}
+    .glyph{width:2.75rem;height:2.75rem} .plate,.cut,.stamp,.inkline{min-height:2.75rem} .inkline{min-width:2.75rem}
+    input[type=text],input[type=number]{min-height:2.75rem} textarea{min-height:3.5rem} .rotary label>span{min-height:2.75rem}
+    nav .acts{flex-direction:row} nav .stud{width:2.75rem;height:2.75rem} .ring{width:2.75rem;height:2.75rem}
+    .i{width:2.75rem;height:2.75rem} .i::before{inset:.7rem} .field>.tip,.lblrow>.tip{margin:-.45rem 0}
+    nav .pull .holder{min-height:2.75rem} #add-room,#cabinet-close{min-height:2.75rem} nav .switch{min-height:2.75rem} .addmenu button{min-height:2.75rem}
+    .note button{min-height:2.75rem} .crib summary{min-height:2.75rem} .switch,.pbar .switch{min-height:2.75rem} .tabs button{min-height:2.75rem}
+    .verify label.chk{min-height:2.9rem}
     .pbar .rooms button{width:2.75rem;height:2.75rem} .pbar .eng{min-height:2.75rem}
     .tabs button{padding-top:.7rem;padding-bottom:.6rem} .tabs button[aria-selected=true]{padding-top:.85rem;padding-bottom:.7rem}
   }
   /* ---------- narrower benches: loose things move above the sheet ---------- */
-  @media (max-width:1180px){
+  @media (max-width:73.75em){
     .blotter{grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-template-areas:"head" "loose" "leaf";padding:1.1rem 2.6rem 2rem}
     .loose{flex-direction:row;flex-wrap:wrap;align-items:flex-start;gap:.9rem 1.2rem;padding-top:0}
     .note{flex:1 1 15rem;max-width:26rem} .answerkey{flex:1 1 15rem;max-width:22rem} .loose .plate{align-self:flex-start}
     .answerkey summary{height:4.2rem} .answerkey[open]{margin-top:2.4rem}
   }
-  @media (max-width:1240px){ header h1{display:none} header{gap:.4rem .7rem;flex-wrap:wrap} }
+  @media (max-width:77.5em){ header h1{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap} header{gap:.4rem .7rem;flex-wrap:wrap} }
   /* ---------- phones: the cabinet slides out from a brass handle ---------- */
-  @media (max-width:820px){
+  @media (max-width:51.25em){
     body{grid-template-columns:minmax(0,1fr)}
     header{padding:.35rem .55rem;gap:.45rem}
-    #cabinet-handle{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:4.4rem;min-height:2.75rem;padding:.15rem .6rem;font-family:var(--caps);font-size:.8rem;letter-spacing:.14em;color:#21150a;
+    #cabinet-handle{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:4.4rem;min-height:2.75rem;padding:.15rem .6rem;font-family:var(--caps);font-size:.8rem;letter-spacing:.14em;color:#120a03;
       background:var(--brassfill);border:1px solid #3d2c0e;border-radius:2px 2px 1.3rem 1.3rem;box-shadow:inset 0 1px 0 rgba(255,240,196,.85),inset 0 -3px 0 rgba(70,48,12,.6),0 3px 0 #0d0704,0 6px 8px rgba(0,0,0,.6)}
     #cabinet-handle::before{content:"";width:2.2rem;height:.34rem;border-radius:.2rem;background:linear-gradient(180deg,#3d2c0e,#120b06);box-shadow:0 1px 0 rgba(255,240,196,.7)}
     #btn-more{display:inline-grid;place-items:center;width:2.75rem;height:2.75rem;color:var(--parch);font-size:1.25rem}
+    #cabinet-close{display:inline-flex;align-self:flex-start;color:var(--parch)}
     header .tools{display:none;position:absolute;right:.5rem;top:calc(100% + .3rem);z-index:8;flex-direction:column;align-items:stretch;padding:.3rem .8rem;color:var(--ink);
       background:var(--fibre),var(--paper);box-shadow:0 0 0 1px var(--ink),4px 5px 0 rgba(0,0,0,.55)}
     header .tools.open{display:flex}
@@ -415,10 +472,119 @@
     h2{font-size:1.55rem} .kicker{font-size:.85rem}
     .paper{padding:1.1rem .9rem 1.4rem} .tabs{padding:0 .4rem}
     .row>.field:not(.narrow){flex:1 1 100%} .row>.field.narrow{flex:1 1 6.5rem} .rotary{width:auto}
-    .entry{grid-template-columns:3.6rem minmax(0,1fr)} .entry .body{padding-left:.7rem} .entry .gut strong{font-size:.6rem;letter-spacing:.02em}
+    .entry{grid-template-columns:3.6rem minmax(0,1fr)} .entry .body{padding-left:.7rem} .entry .gut strong{font-size:.8rem;letter-spacing:0}
     .loose{gap:.9rem} .note,.answerkey{flex-basis:100%;max-width:none} .answerkey summary{height:3.6rem} .answerkey[open]{margin-top:2.1rem} .answerkey summary .wax{width:1.7rem;height:1.7rem;margin:-.85rem 0 0 -.85rem}
-    .overlay{padding:4.2rem .6rem 1.5rem} .folder .sheet{padding:1rem .9rem 1.2rem} .slips{grid-template-columns:1fr} .slip+.slip{border-left:0;padding-left:0;border-top:1px dashed var(--rule)}
-    .folder.wide{height:calc(100vh - 5.7rem)} .pbar .rooms{order:3;flex-basis:100%}
+    .overlay{padding:4.4rem .6rem 1.5rem} .folder .sheet{padding:1rem .9rem 1.2rem} .slips{grid-template-columns:1fr} .slip+.slip{border-left:0;padding-left:0;border-top:1px dashed var(--rule)}
+    .folder.wide{height:calc(100vh - 5.9rem)} .pbar .rooms{order:3;flex-basis:100%}
+  }
+  /* very small or heavily zoomed windows: nothing is pinned, the whole page scrolls */
+  @media (max-width:51.25em) and (max-height:30em){
+    html,body{height:auto} body{display:block;overflow:visible;min-height:100%}
+    main{overflow:visible} .blotter{min-height:0}
+    .folder.wide{height:auto} .folder.wide iframe{height:28rem;flex:none} .preview iframe{min-height:20rem}
+    .preview{overflow:auto}
+  }
+
+  /* ---------- Readable text: a plain, larger face with more room, in place of the old-book lettering ---------- */
+  html[data-readable=on]{font-size:112.5%;--display:var(--sans);--caps:var(--sans);--type:var(--sans);--read:var(--sans)}
+  html[data-readable=on] body{line-height:1.65;letter-spacing:.012em;word-spacing:.05em}
+  html[data-readable=on] :is(.plate,.cut,.stamp,.tabs button,.kicker,nav .bay,.field>label,.lbl,.rotary label>span,.switch,header h1,.pbar .badge,.pbar .eng,.verify label.chk,.paper h3,.entry .gut strong,.keycard .only,.crib summary,#add-room,#cabinet-handle,.slip h3,.addmenu button b,.folder .bar>span,.note button .more){letter-spacing:.02em;font-weight:600}
+  html[data-readable=on] h2{letter-spacing:0;font-weight:600}
+  html[data-readable=on] nav .bay{letter-spacing:.06em}
+  html[data-readable=on] .inknote,html[data-readable=on] input::placeholder,html[data-readable=on] textarea::placeholder{font-style:normal}
+
+  /* ---------- High contrast: plain surfaces, black on white paper, white on black wood, real 2px edges.
+     Switched on in the cabinet, and by the system (prefers-contrast: more, forced colours). ---------- */
+  html[data-contrast=more]{--paper:#fff;--paper-lo:#fff;--ink:#000;--ink-2:#000;--rule:#000;--line:#000;--red-ink:#8a0000;--green-ink:#004d1c;--parch:#fff;--parch-2:#fff;--brass:#ffd876;--brass-hi:#ffe9a8;--ring:#fff;--night:#000;
+    --grain:none;--grain-v:none;--fibre:none;--fox:none;--nap:none;--brush:none;--brassfill:linear-gradient(#ffd876,#ffd876)}
+  html[data-contrast=more] :is(.paper,.pop,.folder,.keycard,.addmenu,.note,.slipbox,.toast,.tabs,.pbar){--ring:#000}
+  html[data-contrast=more] :is(.light,.shade,nav .knob){display:none}
+  html[data-contrast=more] .blotter::before,html[data-contrast=more] .blotter::after,html[data-contrast=more] nav .bay::after{display:none}
+  html[data-contrast=more] *{text-shadow:none!important}
+  html[data-contrast=more] :is(body,header,nav,nav .item,#add-room,.blotter){background:#000;box-shadow:none}
+  html[data-contrast=more] header{border-bottom:2px solid #fff}
+  html[data-contrast=more] nav{border-right:2px solid #fff}
+  html[data-contrast=more] nav .item{border:2px solid #fff;filter:none}
+  html[data-contrast=more] nav .item.sel{border-color:#ffd876;outline:3px solid #ffd876;outline-offset:-1px;filter:none;box-shadow:none}
+  html[data-contrast=more] nav .holder{background:#fff;border:2px solid #000;box-shadow:none}
+  html[data-contrast=more] nav .item.sel .holder{background:#fff;border-left:.5rem solid #000;font-weight:700}
+  html[data-contrast=more] nav .stud{background:#ffd876;border:2px solid #000;box-shadow:0 0 0 2px #fff;color:#000}
+  html[data-contrast=more] #add-room{border:2px dashed #fff;color:#fff}
+  html[data-contrast=more] #btn-more{border:2px solid #fff}
+  html[data-contrast=more] .addmenu button{border-bottom:2px solid #000}
+  html[data-contrast=more] :is(.paper,.addmenu,.note,.keycard,.pop,.toast,.slipbox,.folder .sheet){background:#fff;color:#000;box-shadow:none;border:2px solid #000}
+  html[data-contrast=more] :is(.note,.keycard,.folder,.slipbox,.toast){transform:none}
+  html[data-contrast=more] :is(.slipbox,.toast,.pop){outline:2px solid #fff}
+  html[data-contrast=more] .kicker{color:#ffe9a8}
+  html[data-contrast=more] .tabs button{background:#000;color:#fff;border:2px solid #fff;border-bottom:0;box-shadow:none}
+  html[data-contrast=more] .tabs button[aria-selected=true]{background:#fff;color:#000;font-weight:700}
+  html[data-contrast=more] .tabs button:focus-visible{outline-color:currentColor}
+  html[data-contrast=more] .answerkey summary{background:#ffd876;box-shadow:none;border:2px solid #fff;color:#000}
+  html[data-contrast=more] .answerkey summary :is(.lbl,.act){background:#ffd876;color:#000}
+  html[data-contrast=more] .answerkey summary svg.env{stroke:#000;stroke-width:2} html[data-contrast=more] .answerkey summary svg.env .lid{fill:#ffd876}
+  html[data-contrast=more] .wax{background:#8a0000;color:#fff;box-shadow:none;border:2px solid #000}
+  html[data-contrast=more] :is(.plate,#cabinet-handle){background:#ffd876;color:#000;border:2px solid #000;box-shadow:0 0 0 2px #fff}
+  html[data-contrast=more] .cut{color:#fff;border-bottom:2px solid #fff}
+  html[data-contrast=more] header .tools.open .cut{color:#000;border-bottom:2px solid #000}
+  html[data-contrast=more] header .tools.open{background:#fff;border:2px solid #000;box-shadow:0 0 0 2px #fff}
+  html[data-contrast=more] .stamp{background:#fff;box-shadow:none;border:2px solid currentColor}
+  html[data-contrast=more] .stamp:hover:not(:disabled){background:#000;color:#fff;border-color:#000;box-shadow:none}
+  html[data-contrast=more] .stamp.red:hover:not(:disabled){background:#8a0000;border-color:#8a0000}
+  html[data-contrast=more] .inkline{text-decoration-thickness:2px}
+  html[data-contrast=more] .glyph{border:2px solid currentColor}
+  html[data-contrast=more] :is(input[type=text],input[type=number],textarea){background:#fff;background-image:none;border:2px solid #000;padding-left:.45rem;padding-right:.45rem}
+  html[data-contrast=more] :is(input[type=text],input[type=number],textarea):focus-visible{background:#fff}
+  html[data-contrast=more] input::placeholder,html[data-contrast=more] textarea::placeholder{color:#333}
+  html[data-contrast=more] .rotary{background:none;border:0;box-shadow:none;padding:0}
+  html[data-contrast=more] .rotary label>span{color:#000;background:#fff;border:2px solid #000;margin:0 -2px 0 0}
+  html[data-contrast=more] .rotary label>span::before{background:#fff;border:2px solid #000;box-shadow:none;width:.7rem;height:.7rem}
+  html[data-contrast=more] .rotary input:checked+span{background:#000;color:#fff;box-shadow:none;font-weight:700}
+  html[data-contrast=more] .rotary input:checked+span::before{background:#fff;border-color:#fff;box-shadow:inset 0 0 0 2px #000}
+  html[data-contrast=more] .rotary label:hover input:not(:checked)+span{background:#ffe9a8}
+  html[data-contrast=more] .rotary input:checked:focus-visible+span{outline-color:#fff}
+  html[data-contrast=more] .verify label.chk .spot{border:2px dashed #000}
+  html[data-contrast=more] .switch{--knob:#fff}
+  html[data-contrast=more] :is(nav,.head) .switch{--knob:#000}
+  html[data-contrast=more] .pbar .switch{--knob:#ffd876}
+  html[data-contrast=more] .switch .track{background:transparent;border:2px solid currentColor;box-shadow:none}
+  html[data-contrast=more] .switch .track::after{background:currentColor;box-shadow:none;top:1px;left:1px;height:calc(100% - 2px)}
+  html[data-contrast=more] .switch input:checked+.track{background:currentColor;box-shadow:none}
+  html[data-contrast=more] .switch input:checked+.track::after{background:var(--knob);box-shadow:none}
+  html[data-contrast=more] .entry{border-top:2px solid #000} html[data-contrast=more] .entry .gut{border-right:2px solid #000}
+  html[data-contrast=more] :is(.overlay,.modal){background:rgba(0,0,0,.94)}
+  html[data-contrast=more] :is(.folder,.folder .bar){background:#ffd876;box-shadow:none;border:2px solid #fff}
+  html[data-contrast=more] .folder .bar{border-bottom:0}
+  html[data-contrast=more] .folder iframe{box-shadow:none;border:2px solid #000}
+  html[data-contrast=more] .pbar{background:#ffd876;color:#000;box-shadow:none;border-bottom:2px solid #000}
+  html[data-contrast=more] .pbar .rooms button{background:#fff;color:#000;box-shadow:none;border:2px solid #000}
+  html[data-contrast=more] .pbar .rooms button[aria-current=step]{background:#000;color:#fff}
+  html[data-contrast=more] .pbar .eng{border-bottom:2px solid #000}
+  html[data-contrast=more] .skip{border:3px solid #000;outline:2px solid #fff}
+
+  /* ---------- Forced colours (Windows High Contrast): the High contrast edges stay, in the system's own colours.
+     Pictures behind text go, and "on" states use the system highlight, so nothing depends on a shadow or a gradient. ---------- */
+  @media (forced-colors:active){
+    /* the palette itself becomes the system's, so what the page reports matches what is painted */
+    html[data-contrast=more]{--paper:Canvas;--paper-lo:Canvas;--ink:CanvasText;--ink-2:CanvasText;--rule:CanvasText;--line:CanvasText;--red-ink:CanvasText;--green-ink:CanvasText;--parch:CanvasText;--parch-2:CanvasText;--brass:CanvasText;--brass-hi:CanvasText;--ring:Highlight}
+    html[data-contrast=more] :is(.paper,.pop,.folder,.keycard,.addmenu,.note,.slipbox,.toast,.tabs,.pbar){--ring:Highlight}
+    *,*::before,*::after{background-image:none!important;text-shadow:none!important}
+    html[data-contrast=more] .kicker,html[data-contrast=more] #add-room,html[data-contrast=more] .cut{color:CanvasText}
+    .light,.shade{display:none}
+    html[data-contrast=more] svg.ic{stroke:currentColor} html[data-contrast=more] .answerkey summary svg.env{stroke:CanvasText} html[data-contrast=more] .answerkey summary svg.env .lid{fill:Canvas}
+    html[data-contrast=more] .rotary input:checked+span,html[data-contrast=more] .tabs button[aria-selected=true],html[data-contrast=more] .pbar .rooms button[aria-current=step]{forced-color-adjust:none;background:Highlight;color:HighlightText;border-color:Highlight}
+    html[data-contrast=more] .rotary input:checked+span::before{forced-color-adjust:none;background:HighlightText;border-color:HighlightText;box-shadow:none}
+    html[data-contrast=more] .rotary label>span::before{forced-color-adjust:none;background:Canvas;border-color:CanvasText}
+    html[data-contrast=more] nav .item.sel{outline:3px solid Highlight} html[data-contrast=more] nav .item.sel .holder{border-left-color:Highlight}
+    html[data-contrast=more] .switch .track{forced-color-adjust:none;background:Canvas;border-color:ButtonText}
+    html[data-contrast=more] .switch .track::after{forced-color-adjust:none;background:ButtonText}
+    html[data-contrast=more] .switch input:checked+.track{background:Highlight;border-color:Highlight}
+    html[data-contrast=more] .switch input:checked+.track::after{background:HighlightText}
+    html[data-contrast=more] .verify label.chk input:checked~.spot .wax{forced-color-adjust:none;background:Highlight;color:HighlightText;border-color:Highlight}
+    html[data-contrast=more] .ring input:checked+span{forced-color-adjust:none;color:Highlight;border-color:Highlight}
+    html[data-contrast=more] .i:hover::before,html[data-contrast=more] .i[aria-expanded=true]::before{forced-color-adjust:none;background:Highlight;border-color:Highlight}
+    html[data-contrast=more] .i:hover span,html[data-contrast=more] .i[aria-expanded=true] span{forced-color-adjust:none;color:HighlightText}
+    html[data-contrast=more] button:disabled{opacity:1;color:GrayText;border-color:GrayText}
+    html[data-contrast=more] :focus-visible,html[data-contrast=more] .rotary input:focus-visible+span,html[data-contrast=more] .verify label.chk input:focus-visible~.spot,html[data-contrast=more] .ring input:focus-visible+span,html[data-contrast=more] .switch input:focus-visible+.track{outline-color:Highlight}
   }
   @media print{ .light,.shade{display:none} }
 </style>
@@ -436,9 +602,9 @@
 <body>
 <a class="skip" href="#main">Skip to the editing area</a>
 <header>
-  <button id="cabinet-handle" aria-controls="nav" aria-expanded="false" aria-label="Open the cabinet of rooms">Rooms</button>
+  <button id="cabinet-handle" aria-controls="nav" aria-expanded="false" aria-haspopup="dialog" aria-label="Rooms: open the cabinet of rooms">Rooms</button>
   <h1>The Curator’s Workshop <span class="sr">(escape room editor)</span></h1>
-  <div class="plate meter" id="meter" title="Items you have checked against your sources"></div>
+  <p class="plate meter" id="meter" title="Items you have checked against your sources"></p>
   <span class="spacer"></span>
   <div class="tools" id="tools">
     <button class="cut" id="btn-new" data-ic="page">New…</button>
@@ -447,16 +613,19 @@
     <button class="cut" id="btn-review" data-ic="sheet" title="Every room with its answers, for checking against your sources">Answer sheet</button>
   </div>
   <div class="run">
-    <button class="plate" id="btn-preview" data-ic="play"><span class="w">Preview as student</span></button>
-    <button class="plate" id="btn-export" data-ic="export"><span class="w">Export</span></button>
+    <button class="plate" id="btn-preview" data-ic="play" title="Preview as student"><span class="w">Preview as student</span></button>
+    <button class="plate" id="btn-export" data-ic="export" title="Export"><span class="w">Export</span></button>
     <button id="btn-more" aria-controls="tools" aria-expanded="false" aria-label="File: new, open, save, answer sheet" data-ic="more"></button>
   </div>
-  <input type="file" id="file" accept=".json,.html,.htm" hidden>
+  <input type="file" id="file" accept=".json,.html,.htm" hidden aria-label="Open a project or an exported game">
 </header>
-<nav id="nav" aria-label="Cabinet of rooms"></nav>
+<nav id="nav" aria-label="Cabinet of rooms"><div id="cab"></div></nav>
 <main id="main" tabindex="-1"></main>
-<div id="cab-scrim"></div>
-<div class="light" aria-hidden="true"></div><div class="shade" aria-hidden="true"></div>
+<div id="cab-scrim" data-keep aria-hidden="true"></div>
+<div class="light" data-keep aria-hidden="true"></div><div class="shade" data-keep aria-hidden="true"></div>
+<!-- What changed is said here for screen readers (seals, moves, deletions); the typed strips of #toasts are read too. -->
+<div id="live" class="sr" data-keep role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="toasts" data-keep role="status" aria-live="polite"></div>
 
 <script>
 /* Shared logic for the escape-room game and the teacher editor.
@@ -801,6 +970,70 @@ const tabOf = new Map();          // which index tab is open on each page (keyed
 let addOpen = false;              // the "add a drawer" list in the cabinet
 let noteOpen = false;             // the pinned not-checked note, unfolded
 
+/* ===================== Display options: High contrast and Readable text =====================
+   Remembered in this browser under the same keys as the game, so the student preview follows them.
+   High contrast also follows the system (prefers-contrast: more, and forced colours) until the teacher chooses. */
+const PREF = { contrast: "escape-room-contrast", readable: "escape-room-readable" };
+const prefGet = k => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+const prefSet = (k, v) => { try { localStorage.setItem(k, v); } catch(e){} };
+const mqContrast = matchMedia("(prefers-contrast: more)"), mqForced = matchMedia("(forced-colors: active)");
+function contrastOn(){ const s = prefGet(PREF.contrast); return s === "on" || mqForced.matches || (s !== "off" && mqContrast.matches); }
+function readableOn(){ return prefGet(PREF.readable) === "on"; }
+function applyDisplay(){
+  const d = document.documentElement;
+  if (contrastOn()) d.dataset.contrast = "more"; else delete d.dataset.contrast;
+  if (readableOn()) d.dataset.readable = "on"; else delete d.dataset.readable;
+  const c = document.getElementById("contrast-toggle"), r = document.getElementById("readable-toggle");
+  if (c) c.checked = contrastOn(); if (r) r.checked = readableOn();
+  document.querySelectorAll("main textarea").forEach(grow);
+}
+[mqContrast, mqForced].forEach(m => m.addEventListener && m.addEventListener("change", applyDisplay));
+
+/* Said quietly to screen readers when something changes that sighted teachers simply see. */
+let sayTimer = 0;
+function say(text){ const live = document.getElementById("live"); clearTimeout(sayTimer); live.textContent = ""; sayTimer = setTimeout(() => { live.textContent = text; }, 80); }
+
+/* Modal layers (folders, confirm slips, the preview, the phone cabinet). While one is open everything behind it is
+   inert, Tab stays inside it, Esc closes the top one, and focus goes back to whatever opened it. */
+const modals = [];
+function modalOpen(el, onEsc, opener){
+  const behind = [...document.body.children].filter(n => n !== el && !n.inert && !n.hasAttribute("data-keep") && n.tagName !== "SCRIPT");
+  behind.forEach(n => { n.inert = true; });
+  const m = { el, onEsc, back: opener || document.activeElement, behind };
+  modals.push(m); return m;
+}
+function modalClose(m, refocus = true){
+  const i = modals.indexOf(m); if (i < 0) return;
+  modals.splice(i, 1); m.behind.forEach(n => { n.inert = false; });
+  if (refocus) focusBack(m.back);
+}
+const canFocus = el => el && el.isConnected && !el.disabled && !el.closest("[inert]") && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
+function focusBack(el){
+  if (canFocus(el)) return el.focus();
+  const top = modals[modals.length - 1];
+  if (top) return (top.el.querySelector("#overlay-close,#cabinet-close,button") || top.el).focus();
+  if (el && el.closest && el.closest("#tools") && canFocus(more)) return more.focus();     // the file list on a phone has folded away
+  document.getElementById("page-title")?.focus();
+}
+const TABBABLE = "a[href],button:not(:disabled),input:not(:disabled):not([type=hidden]),textarea:not(:disabled),summary,iframe,[tabindex]:not([tabindex='-1'])";
+document.addEventListener("keydown", e => {
+  if (e.key === "Tab") {
+    const top = modals[modals.length - 1]; if (!top || top.el.querySelector("iframe")) return;
+    const stops = [...top.el.querySelectorAll(TABBABLE)].filter(el => canFocus(el) && !(el.type === "radio" && !el.checked && top.el.querySelector(`input[type=radio][name="${el.name}"]:checked`)));
+    if (!stops.length) return;
+    const first = stops[0], last = stops[stops.length - 1];
+    if (e.shiftKey && (document.activeElement === first || !top.el.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (document.activeElement === last || !top.el.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
+    return;
+  }
+  if (e.key !== "Escape") return;
+  if (tipClose) { tipClose(); e.preventDefault(); return; }                                 // a help slip goes first, whatever is under it
+  if (addOpen) { addOpen = false; renderNav(); document.getElementById("add-room").focus(); e.preventDefault(); return; }
+  const top = modals[modals.length - 1];
+  if (top) { e.preventDefault(); top.onEsc(); return; }
+  if (tools.classList.contains("open")) { closeTools(); more.focus(); }
+});
+
 function load(){ try { const s = localStorage.getItem(STORE); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
 let saveTimer = null;
 function changed(){ clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(cfg)); } catch(e){} }, 300); refreshStatus(); refreshAnswerKey(); }
@@ -830,6 +1063,7 @@ const ICONS = {
   mirror: '<ellipse cx="12" cy="9.8" rx="5.6" ry="6.8"/><ellipse cx="12" cy="9.8" rx="4" ry="5.1"/><path d="M12 16.6v3.9M8.5 20.5h7M10 7.4c.8-1.2 1.6-1.7 2.6-1.8"/>',
   rosette: '<circle cx="12" cy="9.3" r="5.6"/><circle cx="12" cy="9.3" r="2.6"/><path d="M9 14.1 7.6 21l4.4-2.4 4.4 2.4-1.4-6.9"/>',
   door: '<path d="M6.5 20.5v-17h11v17M4 20.5h16M9 6h6v5.5H9zM9 14h6v6.5"/><circle cx="14.2" cy="12.8" r=".6"/>',
+  info: '<path d="M12 11v6.2M12 6.8v.3"/>',
   up: '<path d="M12 18.5V6M7 10.8l5-5 5 5"/>', down: '<path d="M12 5.5V18M7 13.2l5 5 5-5"/>',
   left: '<path d="M14.5 6l-6 6 6 6"/>', right: '<path d="M9.5 6l6 6-6 6"/>', back: '<path d="M19 12H5.5M10.5 7l-5 5 5 5"/>',
   x: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>', plus: '<path d="M12 5.5v13M5.5 12h13"/>', tick: '<path d="M5 12.8l4.4 4.6L19 6.6"/>',
@@ -847,39 +1081,52 @@ function icon(name){ const s = h("span", { class: "icw", "aria-hidden": "true" }
 document.querySelectorAll("[data-ic]").forEach(b => b.prepend(icon(b.dataset.ic)));
 let uid = 0;
 
-/* A small ⓘ that shows a typed slip of help. Opens on hover and on keyboard focus; Enter or a tap pins it; Esc puts it away. */
-let tipClose = null;
+/* A small ⓘ that shows a slip of help. It opens on hover and on keyboard focus, stays while the pointer is on the mark
+   or on the slip itself, pins on click or Enter, and Esc puts it away without moving the pointer or the focus
+   (WCAG 1.4.13). The slip is always in the page, so the mark's description is read as soon as it gets focus. */
+let tipClose = null, tipPlace = null;
 function tip(text, about){
   const id = "tip" + (++uid);
-  const pop = h("span", { class: "pop", role: "tooltip", id }, text);
-  const btn = h("button", { type: "button", class: "i", "aria-label": "Help: " + about, "aria-expanded": "false" }, "i");
-  let pinned = false;
+  const pop = h("span", { class: "pop", role: "tooltip", id, hidden: true }, text);
+  const btn = h("button", { type: "button", class: "i", "aria-label": "Help: " + about, "aria-expanded": "false", "aria-describedby": id }, icon("info"));
+  const wrap = h("span", { class: "tip" }, btn, pop);
+  let pinned = false, over = false, timer = 0;
   const place = () => {
     const r = btn.getBoundingClientRect(), w = pop.offsetWidth, ht = pop.offsetHeight, vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
     pop.style.left = Math.max(8, Math.min(r.left - 8, vw - w - 10)) + "px";
-    pop.style.top = (r.bottom + 8 + ht > vh - 6 && r.top - ht - 8 > 6 ? r.top - ht - 8 : r.bottom + 8) + "px";
+    pop.style.top = (r.bottom + 4 + ht > vh - 6 && r.top - ht - 4 > 6 ? r.top - ht - 4 : r.bottom + 4) + "px";
   };
-  const open = () => pop.isConnected;
-  const hide = () => { pinned = false; pop.remove(); btn.setAttribute("aria-expanded", "false"); btn.removeAttribute("aria-describedby"); if (tipClose === hide) tipClose = null; };
-  const show = () => { if (open()) return; if (tipClose) tipClose(); tipClose = hide; document.body.append(pop); btn.setAttribute("aria-expanded", "true"); btn.setAttribute("aria-describedby", id); place(); };
-  btn.addEventListener("mouseenter", show);
-  btn.addEventListener("mouseleave", () => { if (!pinned && document.activeElement !== btn) hide(); });
+  const open = () => !pop.hidden;
+  const hide = () => { clearTimeout(timer); pinned = false; pop.hidden = true; wrap.append(pop); btn.setAttribute("aria-expanded", "false"); if (tipClose === hide) { tipClose = null; tipPlace = null; } };
+  const show = () => {
+    clearTimeout(timer); if (open()) return; if (tipClose) tipClose(); tipClose = hide; tipPlace = place;
+    // The slip is laid in the nearest landmark or dialog (never inside a tilted or sliding piece), so it stays inside a region.
+    (btn.closest(".modal,.overlay,.preview,main,#cab,header") || document.body).append(pop);
+    pop.hidden = false; btn.setAttribute("aria-expanded", "true"); place();
+  };
+  const later = () => { clearTimeout(timer); timer = setTimeout(() => { if (!pinned && !over && document.activeElement !== btn) hide(); }, 350); };      // time to cross from the mark to the slip
+  btn.addEventListener("mouseenter", () => { over = true; show(); });
+  btn.addEventListener("mouseleave", () => { over = false; later(); });
+  pop.addEventListener("mouseenter", () => { over = true; clearTimeout(timer); });
+  pop.addEventListener("mouseleave", () => { over = false; later(); });
   btn.addEventListener("focus", show);
-  btn.addEventListener("blur", hide);
+  btn.addEventListener("blur", () => { if (over) { pinned = false; return; } hide(); });
   btn.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); if (!open()) { show(); pinned = true; } else if (pinned) hide(); else pinned = true; });
-  btn.addEventListener("keydown", e => { if (e.key === "Escape" && open()) { e.stopPropagation(); hide(); } });
-  return h("span", { class: "tip" }, btn);
+  wrap.popId = id;
+  return wrap;
 }
 document.addEventListener("pointerdown", e => { if (tipClose && !e.target.closest(".i,.pop")) tipClose(); });
-document.addEventListener("scroll", () => { if (tipClose) tipClose(); }, true);
+document.addEventListener("scroll", () => { if (tipPlace) tipPlace(); }, true);
+addEventListener("resize", () => { if (tipPlace) tipPlace(); });
 
 /* A typed label over a ruled line, bound to obj[key]. opts: {type, help, rows, placeholder, item (editing it un-verifies the item), onChange, narrow} */
 function grow(ta){ ta.style.height = "auto"; ta.style.height = Math.max(ta.scrollHeight, 28 * (Number(ta.getAttribute("rows")) || 1)) + "px"; }
 function field(label, obj, key, opts = {}){
   const id = "f" + (++uid);
   const tag = opts.type === "textarea" ? "textarea" : "input";
+  const help = opts.help ? tip(opts.help, label) : null;
   const input = h(tag, { id, type: tag === "input" ? (opts.type || "text") : null, rows: opts.rows, placeholder: opts.placeholder,
-    value: obj[key] ?? "", min: opts.min, max: opts.max, autocomplete: "off",
+    value: obj[key] ?? "", min: opts.min, max: opts.max, autocomplete: "off", "aria-describedby": help ? help.popId : null,
     oninput: e => {
       obj[key] = opts.type === "number" ? Number(e.target.value) : e.target.value;
       if (tag === "textarea") grow(e.target);
@@ -887,7 +1134,7 @@ function field(label, obj, key, opts = {}){
       opts.onChange && opts.onChange(e);
       changed();
     }});
-  return h("div", { class: "field" + (opts.narrow ? " narrow" : ""), "data-key": String(key) }, h("label", { for: id }, label), opts.help ? tip(opts.help, label) : null, input);
+  return h("div", { class: "field" + (opts.narrow ? " narrow" : ""), "data-key": String(key) }, h("label", { for: id }, label), help, input);
 }
 /* A brass selector: one of a few positions is switched in. Real radio buttons underneath. options: [value, text, icon?] */
 function select(label, obj, key, options, opts = {}){
@@ -899,7 +1146,7 @@ function select(label, obj, key, options, opts = {}){
     h("div", { class: "rotary" }, options.map(([v, t, ic]) => h("label", {},
       h("input", { type: "radio", class: "sr", name, value: v, checked: String(v) === String(cur), onchange: () => {
         obj[key] = opts.number ? Number(v) : v;
-        if (opts.item && opts.item.verified) { opts.item.verified = false; }
+        if (opts.item && opts.item.verified) { opts.item.verified = false; say("You changed this item, so its seal is lifted. Check it again."); }
         changed(); opts.rerender ? render() : null; } }),
       h("span", {}, ic ? icon(ic) : null, t)))));
 }
@@ -907,29 +1154,57 @@ function select(label, obj, key, options, opts = {}){
 function unverify(item, el){
   if (!item.verified) return; item.verified = false;
   const box = el.closest(".entry"); if (box) { box.classList.remove("verified"); const c = box.querySelector(".verify input[type=checkbox]"); if (c) c.checked = false; }
+  say("You changed this item, so its seal is lifted. Check it again when you have finished.");
 }
 /* Source + the wax seal ("I checked this is correct") on every gradable item. */
-function verifyRow(item){
+function verifyRow(item, name){
   return h("div", { class: "verify" },
     field("Source", item, "source", { placeholder: "e.g. Textbook ch. 3, p. 45" }),
     h("label", { class: "chk" }, h("input", { type: "checkbox", checked: item.verified === true, onchange: e => {
-      item.verified = e.target.checked; e.target.closest(".entry").classList.toggle("verified", item.verified); changed(); } }),
+      item.verified = e.target.checked; e.target.closest(".entry").classList.toggle("verified", item.verified); changed();
+      const st = ER.reviewStatus(cfg); say(`${name || "Item"} ${item.verified ? "marked as checked" : "is no longer marked as checked"}. ${st.verified} of ${st.total} checked.`); } }),
       h("span", { class: "spot", "aria-hidden": "true" }, h("span", { class: "wax" }, icon("tick"))),
-      h("span", { class: "w" }, "I checked this is correct")));
+      h("span", { class: "w" }, "I checked this is correct", name ? h("span", { class: "sr" }, ` (${name})`) : null)));
 }
 /* Ledger of entries: number in the margin, with move / delete marks; add at the foot. */
 function listEditor(list, renderItem, opts){
   const wrap = h("div", { class: "ledger" });
+  const noun = opts.noun, lower = noun.toLowerCase();
+  // After a move the keyboard stays with the entry that moved, so it can be moved again.
+  const move = (i, d, lid) => {
+    [list[i + d], list[i]] = [list[i], list[i + d]]; changed(); render();
+    const entry = document.querySelectorAll(`[data-ledger="${lid}"] > .entry`)[i + d];
+    const btns = entry ? entry.querySelectorAll(".gut button") : [];
+    const b = [btns[d < 0 ? 0 : 1], btns[d < 0 ? 1 : 0]].find(x => x && !x.disabled); if (b) b.focus();
+    say(`${noun} ${i + 1} moved ${d < 0 ? "up" : "down"}. It is now ${lower} ${i + d + 1} of ${list.length}.`);
+  };
+  const lid = opts.id || lower.replace(/\W+/g, "-"); wrap.setAttribute("data-ledger", lid);
   list.forEach((it, i) => {
-    const gradable = opts.gradable !== false;
-    wrap.append(h("div", { class: "entry" + (gradable && it.verified ? " verified" : "") },
-      h("div", { class: "gut" }, h("strong", {}, opts.noun, " ", h("b", {}, i + 1)),
-        h("button", { class: "glyph", title: "Move up", "aria-label": `Move ${opts.noun} ${i+1} up`, disabled: i === 0, onclick: () => { [list[i-1], list[i]] = [list[i], list[i-1]]; changed(); render(); } }, icon("up")),
-        h("button", { class: "glyph", title: "Move down", "aria-label": `Move ${opts.noun} ${i+1} down`, disabled: i === list.length - 1, onclick: () => { [list[i+1], list[i]] = [list[i], list[i+1]]; changed(); render(); } }, icon("down")),
-        h("button", { class: "glyph red", title: "Delete", "aria-label": `Delete ${opts.noun} ${i+1}`, onclick: () => { if (confirm(`Delete ${opts.noun.toLowerCase()} ${i+1}?`)) { list.splice(i, 1); changed(); render(); } } }, icon("x"))),
-      h("div", { class: "body" }, renderItem(it, i), gradable ? verifyRow(it) : null)));
+    const gradable = opts.gradable !== false, name = `${noun} ${i + 1}`;
+    wrap.append(h("div", { class: "entry" + (gradable && it.verified ? " verified" : ""), role: "group", "aria-label": name },
+      h("div", { class: "gut" }, h("strong", {}, noun, " ", h("b", {}, i + 1)),
+        h("button", { class: "glyph", title: "Move up", "aria-label": `Move ${noun} ${i+1} up`, disabled: i === 0, onclick: () => move(i, -1, lid) }, icon("up")),
+        h("button", { class: "glyph", title: "Move down", "aria-label": `Move ${noun} ${i+1} down`, disabled: i === list.length - 1, onclick: () => move(i, 1, lid) }, icon("down")),
+        h("button", { class: "glyph red", title: "Delete", "aria-label": `Delete ${noun} ${i+1}`, onclick: async () => {
+          const what = String(it.term || it.prompt || it.text || it.name || "").trim();
+          if (!(await ask(`Delete ${lower} ${i+1}?`, [what ? `“${what.length > 90 ? what.slice(0, 90) + "…" : what}”` : null, "This can't be undone."], { ok: `Delete ${lower}`, danger: true }))) return;
+          list.splice(i, 1); changed(); render();
+          const left = document.querySelectorAll(`[data-ledger="${lid}"] > .entry`);
+          (left.length ? left[Math.min(i, left.length - 1)].querySelector(".gut button.red") : document.querySelector(`[data-add="${lid}"]`))?.focus();
+          say(`${name} deleted. ${list.length} left.`);
+        } }, icon("x"))),
+      h("div", { class: "body" }, renderItem(it, i), gradable ? verifyRow(it, name) : null)));
   });
-  return [wrap, h("div", { class: "actions" }, h("button", { class: "stamp", onclick: () => { list.push(opts.blank()); changed(); render(); } }, icon("plus"), `Add ${opts.noun.toLowerCase()}`))];
+  return [wrap, h("div", { class: "actions" }, h("button", { class: "stamp", "data-add": lid, onclick: () => {
+    list.push(opts.blank()); changed(); render();
+    const added = [...document.querySelectorAll(`[data-ledger="${lid}"] > .entry`)].pop();
+    added?.querySelector(".body input,.body textarea")?.focus(); say(`${noun} ${list.length} added.`);
+  } }, icon("plus"), `Add ${lower}`))];
+}
+/* A brass two-way switch (a real checkbox with the switch role underneath). */
+function toggle(id, label, on, onchange, opts = {}){
+  return h("label", { class: "switch" }, h("input", { type: "checkbox", role: "switch", id, checked: !!on, "aria-describedby": opts.describedby, onchange: e => onchange(e.target.checked, e) }),
+    h("span", { class: "track", "aria-hidden": "true" }), h("span", { class: "sl" }, label), opts.state === false ? null : h("span", { class: "state", "aria-hidden": "true" }));
 }
 function hintsTab(room){
   if (!ER.HINT_ROOMS.includes(room.type)) return null;      // reflection rooms have no wrong answers
@@ -939,9 +1214,7 @@ function hintsTab(room){
   const showWarnings = () => warn.replaceChildren(...ER.hintWarnings(room).map(w => h("div", { class: "inknote", role: "status" }, w.message + " Try pointing students toward how to find it instead.")));
   const kept = (room.hints || []).some(x => String(x).trim());
   const body = [
-    h("label", { class: "switch" }, h("input", { type: "checkbox", id: "hints-toggle", checked: !!room.hintsEnabled,
-      onchange: e => { room.hintsEnabled = e.target.checked; changed(); render(); } }), h("span", { class: "track", "aria-hidden": "true" }),
-      room.hintsEnabled ? "Hints on" : "Hints off"),
+    toggle("hints-toggle", "Hints in this room", room.hintsEnabled, on => { room.hintsEnabled = on; changed(); render(); say(on ? "Hints are on in this room." : "Hints are off in this room."); }),
     room.hintsEnabled ? [
       field("Hint 1: a gentle nudge", room.hints, 0, { type: "textarea", rows: 2, placeholder: "e.g. Look for one key idea in each description…", onChange: showWarnings }),
       field("Hint 2: a stronger nudge", room.hints, 1, { type: "textarea", rows: 2, placeholder: "e.g. Start with the ones you're surest about…", onChange: showWarnings }),
@@ -1027,13 +1300,16 @@ function quizTabs(room, r){
 }
 function choicesEditor(q){
   q.choices = q.choices || [];
-  const name = "c" + (++uid);
-  return h("div", { class: "field choices" }, h("div", { class: "lblrow" }, h("span", { class: "lbl" }, "Choices"), tip("Ring the correct one.", "Choices")),
-    q.choices.map((c, j) => h("div", { class: "choice" },
-      h("label", { class: "ring", title: "Correct answer" }, h("input", { type: "radio", name, checked: q.correct === j, "aria-label": `Choice ${j+1} is correct`, onchange: () => { q.correct = j; q.verified = false; changed(); render(); } }), h("span", { "aria-hidden": "true" }, icon("tick"))),
-      h("input", { type: "text", value: c, "aria-label": `Choice ${j+1}`, oninput: e => { q.choices[j] = e.target.value; unverify(q, e.target); changed(); } }),
-      h("button", { class: "glyph red", title: "Delete choice", "aria-label": `Delete choice ${j+1}`, onclick: () => { q.choices.splice(j, 1); if (j < q.correct) q.correct--; else if (j === q.correct) q.correct = -1; q.verified = false; changed(); render(); } }, icon("x")))),
-    h("div", {}, h("button", { class: "inkline", onclick: () => { q.choices.push(""); changed(); render(); } }, icon("plus"), "Add choice")));
+  const name = "c" + (++uid), lid = name + "l";
+  const help = tip("Ring the correct one.", "Choices");
+  return h("div", { class: "field choices", role: "group", "aria-labelledby": lid, "aria-describedby": help.popId }, h("div", { class: "lblrow" }, h("span", { class: "lbl", id: lid }, "Choices"), help),
+    q.choices.map((c, j) => { const id = name + "i" + j; return h("div", { class: "choice" },
+      h("label", { class: "ring", title: "Correct answer" }, h("input", { type: "radio", name, checked: q.correct === j, "aria-label": `Choice ${j+1} is the correct answer`, onchange: () => { q.correct = j; if (q.verified) say("You changed this item, so its seal is lifted. Check it again."); q.verified = false; changed(); render(); } }), h("span", { "aria-hidden": "true" }, icon("tick"))),
+      h("label", { class: "n", for: id }, h("span", { class: "sr" }, "Choice "), String(j + 1), h("span", { "aria-hidden": "true" }, ".")),
+      h("input", { type: "text", id, value: c, autocomplete: "off", oninput: e => { q.choices[j] = e.target.value; unverify(q, e.target); changed(); } }),
+      h("button", { class: "glyph red", title: "Delete choice", "aria-label": `Delete choice ${j+1}`, onclick: () => { q.choices.splice(j, 1); if (j < q.correct) q.correct--; else if (j === q.correct) q.correct = -1; q.verified = false; changed(); render(); say(`Choice ${j+1} deleted.`); } }, icon("x"))); }),
+    h("div", {}, h("button", { class: "inkline", onclick: e => { const box = e.target.closest(".entry"), at = [...document.querySelectorAll("#panel .entry")].indexOf(box); q.choices.push(""); changed(); render();
+      const now = document.querySelectorAll("#panel .entry")[at]; [...(now ? now.querySelectorAll(".choice input[type=text]") : [])].pop()?.focus(); } }, icon("plus"), "Add choice")));
 }
 /* Plain-text quiz format:
    Q: question            A: answer | other accepted answer
@@ -1067,13 +1343,13 @@ function textToQuiz(text){
   return { questions: out, problems };
 }
 function quizTextEditor(room, r){
-  const ta = h("textarea", { class: "mono", rows: 12, "aria-label": "Questions as text", value: quizToText(room.questions), spellcheck: "false", oninput: e => grow(e.target) });
+  const ta = h("textarea", { class: "mono", id: "quiz-text", rows: 12, value: quizToText(room.questions), spellcheck: "false", oninput: e => grow(e.target) });
   const msg = h("div", {});
   return h("div", {},
     h("details", { class: "crib" }, h("summary", {}, "How to type the questions"),
       h("pre", {}, "One question per paragraph, with a blank line between questions.\nQuestions you add or change here come back without their seal;\npress the seal in the form view after checking them.\n\n" +
         "Q: Who wrote Democracy and Education (1916)?\nA: John Dewey | Dewey\nSource: Ch. 3, p. 45\n\nQ: Which philosophy focuses on the \"Great Books\"?\n- Essentialism\n* Perennialism\n- Existentialism\nVerified: yes")),
-    ta, msg,
+    h("div", { class: "field" }, h("label", { for: "quiz-text" }, "Questions as text"), ta), msg,
     h("div", { class: "actions" },
       h("button", { class: "stamp", onclick: () => {
         const { questions, problems } = textToQuiz(ta.value);
@@ -1082,7 +1358,7 @@ function quizTextEditor(room, r){
           : a.answers === b.answers);
         questions.forEach(q => { if (q.verified) q.verified = room.questions.some(old => old.verified && same(q, old)); });
         msg.replaceChildren(problems.length ? h("div", { class: "errors", role: "alert" }, "Please fix:", h("ul", {}, problems.map(p => h("li", {}, p)))) : "");
-        if (problems.length) return;
+        if (problems.length) { ta.setAttribute("aria-invalid", "true"); ta.focus(); return; }
         room.questions = questions; changed(); toast(`Saved ${questions.length} questions.`); quizText.delete(room); render();
       } }, icon("tick"), "Use this text")));
 }
@@ -1103,8 +1379,12 @@ function sortingTabs(room){
     { id: "items", label: "Groups & items", body: [
       h("h3", { style: "margin-top:.2rem" }, "Categories"),
       room.categories.map((c, j) => h("div", { class: "row" }, field(`Category ${j+1}`, room.categories, j, { onChange: () => {} }),
-        room.categories.length > 2 ? h("button", { class: "inkline red", "aria-label": `Remove category ${j+1}`, onclick: () => { room.categories.splice(j, 1); room.items.forEach(it => { if (it.category === j) { it.category = -1; it.verified = false; } else if (it.category > j) it.category--; }); changed(); render(); } }, "Remove") : null)),
-      h("div", { class: "actions" }, h("button", { class: "inkline", onclick: () => { room.categories.push(""); changed(); render(); } }, "+ Add category")),
+        room.categories.length > 2 ? h("button", { class: "inkline red", "aria-label": `Remove category ${j+1}`, onclick: async () => {
+          const used = room.items.filter(it => it.category === j).length;
+          if (used && !(await ask(`Remove category ${j+1}?`, [`“${c || "Category " + (j + 1)}” is the answer for ${used} ${used === 1 ? "item" : "items"}. They will need a new answer.`], { ok: "Remove category", danger: true }))) return;
+          room.categories.splice(j, 1); room.items.forEach(it => { if (it.category === j) { it.category = -1; it.verified = false; } else if (it.category > j) it.category--; }); changed(); render();
+          document.querySelector("#panel .actions .inkline")?.focus(); say(`Category ${j+1} removed.`); } }, "Remove") : null)),
+      h("div", { class: "actions" }, h("button", { class: "inkline", onclick: () => { room.categories.push(""); changed(); render(); [...document.querySelectorAll("#panel .row > .field input")].filter(i => i.closest(".ledger") == null).pop()?.focus(); } }, icon("plus"), "Add category")),
       h("h3", {}, "Items to sort"),
       listEditor(room.items, it => h("div", { class: "row" },
         h("div", { class: "grow3" }, field("Item", it, "text", { type: "textarea", rows: 2, item: it })),
@@ -1185,7 +1465,7 @@ function pageRoom(r){
 let keyOpen = false;
 function answerKeyBox(room){
   const env = h("span", { "aria-hidden": "true" });
-  env.innerHTML = '<svg class="env" viewBox="0 0 100 40" preserveAspectRatio="none"><path d="M0 40 39 19M100 40 61 19" vector-effect="non-scaling-stroke"/><path class="lid" d="M0 0 50 24 100 0Z" vector-effect="non-scaling-stroke"/></svg>';
+  env.innerHTML = '<svg class="env" aria-hidden="true" focusable="false" viewBox="0 0 100 40" preserveAspectRatio="none"><path d="M0 40 39 19M100 40 61 19" vector-effect="non-scaling-stroke"/><path class="lid" d="M0 0 50 24 100 0Z" vector-effect="non-scaling-stroke"/></svg>';
   const d = h("details", { class: "answerkey", id: "answer-key", open: keyOpen, ontoggle: e => { keyOpen = e.target.open; } },
     h("summary", {}, env.firstChild, h("span", { class: "wax", "aria-hidden": "true" }, "K"), h("span", { class: "lbl" }, "Answer key"), h("span", { class: "act", "aria-hidden": "true" })),
     h("div", { class: "keycard" }, h("div", { class: "only" }, "For your eyes only"), h("ul", {})));
@@ -1204,64 +1484,243 @@ function draftNote(st){
   return h("div", { class: "note" }, btn, more);
 }
 
+/* ===================== Accessibility check =====================
+   Advice about the content the teacher wrote: things that commonly shut students out. It never blocks preview or
+   export, and every note says where it is, what was found, and what to do, in plain words.
+   a11yCheck(config) returns [{ rule, page, tab, where, text, quote }]; page is "settings", "intro", "finish" or a room index. */
+const A11Y_LIMITS = { dials: 8, cards: 12, clue: 300, story: 900, prompt: 300, item: 200, hint: 300, answer: 40, choices: 6, orderItems: 8, sortItems: 14, roomWords: 500 };
+const A11Y_THING = "(?:books?|cards?|buttons?|box(?:es)?|ones?|portraits?|frames?|pictures?|keys?|stamps?|slips?|levers?|doors?|locks?|labels?|text|letters?|words?|lines?|circles?|squares?|dots?|marks?|tabs?|drawers?|spines?|items?|clues?|answers?|options?|arrows?|icons?|lights?|numbers?|codes?|sections?|parts?|areas?|shapes?|stars?|rows?|columns?|shel(?:f|ves)|dials?)";
+const A11Y_WORDS = {
+  colour: [
+    new RegExp("\\b(?:the|a|an|this|that|these|those|each|every|which|what|any)\\s+(?:(?:bright|dark|light|pale)\\s+)?(?:red|green|blue|yellow|orange|purple|pink|brown|gr[ae]y|black|white|gold(?:en)?|silver)\\s+" + A11Y_THING + "\\b", "i"),
+    /\b(?:marked|shown|written|highlighted|printed|painted|circled|underlined|glow(?:s|ing)?)\s+in\s+(?:red|green|blue|yellow|orange|purple|pink|gold|silver)\b/i,
+    /\b(?:colou?r[- ]coded|the same colou?r|different colou?rs?|by (?:its |their )?colou?r|matching colou?rs?|the colou?r of the)\b/i ],
+  position: [
+    /\b(?:on|to|at|in|from)\s+(?:the|your)\s+(?:far\s+|upper\s+|lower\s+)?(?:left|right|top|bottom)\b(?!\s+(?:to|of way)\b)/i,
+    /\b(?:top|bottom|upper|lower)[ -](?:left|right)\b/i, /\b(?:left|right)[- ]hand (?:side|column|corner|panel|page|shelf)\b/i,
+    /\b(?:first|second|third|fourth|fifth|last|left|right|top|bottom|middle|leftmost|rightmost)\s+(?:shel(?:f|ves)|rows?|columns?|books?|cards?|portraits?|frames?|pictures?|drawers?|slips?|levers?|stamps?|dials?|box(?:es)?|buttons?|tabs?|spines?|icons?)\b/i,
+    new RegExp("\\b(?:above|below|beneath|underneath|beside|next to|to the side of)\\s+(?:the|this|each|that)\\s+" + A11Y_THING + "\\b", "i"),
+    /\b(?:shown|listed|pictured|seen|see|the (?:cards?|clues?|list|picture|image|table|boxe?s?))\s+(?:above|below)\b/i ],
+  shape: [ new RegExp("\\b(?:round|square|circular|triangular|oval|biggest|largest|smallest|bigger|larger|smaller|tallest|shortest)\\s+" + A11Y_THING + "\\b", "i") ],
+  sound: [ /\b(?:listen (?:for|to)|when you hear|until you hear|you(?:'ll| will) hear|after the (?:sound|chime|beep|bell|click)|wait for the (?:sound|chime|beep|bell|click))\b/i ],
+  device: [ /\b(?:double|right)[- ]click/i, /\bclick(?:ing)?\s+(?:on|the|a|an|each|every|any|here|to|and|or|it|them)\b/i, /\b(?:drag(?:ging)?|swip(?:e|ing))\s+(?:the|a|an|each|every|it|them|and|to|left|right|up|down)\b/i,
+    /\btap(?:ping)?\s+(?:on|the|a|an|each|every|any|here|to|it|them)\b/i, /\bhover(?:ing)?\s+(?:over|on)\b/i, /\b(?:your|the|with a|with the) mouse\b/i ],
+  time: [ /\b(?:\d+|one|two|three|five|ten|fifteen|twenty|thirty|sixty)[- ]?(?:minutes?|mins?|seconds?|secs?)\b/i,
+    /\b(?:hurry|race against|against the clock|beat the clock|before (?:the )?time runs out|time is running out|running out of time|time limit|countdown|as fast as you can|be quick|quickly now)\b/i ],
+  caps: [ /(?:\b[A-Z]{2,}\b[\s,;:!?'’.-]+){3,}\b[A-Z]{2,}\b/ ],
+  above: [ /\b(?:all|none|any|both) of the above\b/i, /\ball of these\b/i, /\bboth [a-d] (?:and|&) [a-d]\b/i ]
+};
+const A11Y_ADVICE = {
+  colour: "This points to something by its colour. Students who are colour-blind, or who use a screen reader, can't tell which one is meant. Name it instead (its title, or its code).",
+  position: "This points to something by where it sits on the screen. The layout changes on phones, when zoomed in, and for screen readers. Name the thing instead.",
+  shape: "This points to something by its shape or size. That doesn't reach students who can't see the screen well. Name the thing instead.",
+  sound: "This relies on hearing something. Sound can be switched off, and some students can't hear it. Say the same thing in words.",
+  device: "This names one way of working (“click”, “drag”, “tap”). Students may be using a keyboard, a switch or their voice. “Choose”, “select” or “enter” fits everyone.",
+  time: "This sounds like a time limit. The game has none, and time pressure shuts out students who need longer. Leave it out, or say there is no rush.",
+  caps: "A long run of capital letters is slower to read, and some screen readers spell it out letter by letter. Use ordinary capitals, and **bold** for emphasis.",
+  above: "This choice depends on the order of the choices. Students who listen to the choices one at a time can't see what is “above”. Write out what it stands for."
+};
+function a11yCheck(c){
+  const out = [], L = A11Y_LIMITS;
+  const str = v => String(v == null ? "" : v);
+  const note = (rule, page, tab, where, text, quote) => out.push({ rule, page, tab, where, text, quote: str(quote) });
+  const count = s => (str(s).trim().match(/\S+/g) || []).length;
+  const noWords = s => str(s).trim() !== "" && !/[\p{L}\p{N}]/u.test(str(s));
+  const short = s => { s = str(s).replace(/\s+/g, " ").trim(); return s.length > 70 ? s.slice(0, 70) + "…" : s; };
+  const hit = (s, list) => { for (const re of list) { const m = str(s).match(re); if (m) return m[0]; } return null; };
+  const wording = (s, page, tab, where, kinds = ["colour", "position", "shape", "sound", "device", "time", "caps"]) => {
+    if (!str(s).trim()) return;
+    for (const k of kinds) { const m = hit(s, A11Y_WORDS[k]); if (m) note(k, page, tab, where, A11Y_ADVICE[k], short(m)); }
+  };
+  const long = (s, max, page, tab, where, what) => { if (str(s).length > max) note("long-text", page, tab, where,
+    `This ${what} is long (${count(s)} words). Long passages are hard going for students with dyslexia, students reading in a second language and anyone on a phone. Try shorter sentences, or split it.`); };
+  const alike = s => { s = str(s); return /[A-Za-z]/.test(s) && /\d/.test(s) && ((/O/i.test(s) && /0/.test(s)) || (/[Il]/.test(s) && /1/.test(s))); };
+
+  const meta = c.meta || {}, intro = c.intro || {}, finish = c.finish || {};
+  if (!str(meta.title).trim()) note("missing-text", "settings", "about", "Settings · Escape room title", "There is no title. It names the browser tab and the certificate, and it is the first thing a screen reader says.");
+  if (!str(intro.story).trim()) note("missing-text", "intro", "intro", "Story & intro · Story", "There is no opening story. Students, and especially students using a screen reader, need to be told what this is and what to do.");
+  wording(intro.heading, "intro", "intro", "Story & intro · Heading"); wording(intro.story, "intro", "intro", "Story & intro · Story");
+  long(intro.story, L.story * 1.5, "intro", "intro", "Story & intro · Story", "story");
+  wording(finish.instructions, "finish", "cert", "Finish · Instructions under the certificate");
+  if (alike(finish.exitPassword)) note("look-alike", "finish", "cert", "Finish · Exit password", "The exit password mixes characters that look alike (O and 0, or I, l and 1). Students copying it by eye will mistype it. Swap those characters for clearer ones.", finish.exitPassword);
+
+  (c.rooms || []).forEach((room, r) => {
+    const R = `Room ${r + 1}`;
+    let total = count(room.story);
+    if (!str(room.title).trim()) note("missing-text", r, "text", `${R} · Room title`, "This room has no title. The title is its heading, and it is how students using a screen reader know they have moved on.");
+    if (!str(room.story).trim()) note("missing-text", r, "text", `${R} · Story / instructions`, "This room has no story or instructions. Say what students have to do here; not everyone can work it out from the picture.");
+    wording(room.story, r, "text", `${R} · Story / instructions`); long(room.story, L.story, r, "text", `${R} · Story / instructions`, "story");
+    wording(room.reference, r, "text", `${R} · Reading reference`, ["colour", "position", "device"]);
+    if (ER.HINT_ROOMS.includes(room.type)) {
+      const hints = (room.hints || []).map(str).filter(x => x.trim());
+      if (!room.hintsEnabled) note("no-hints", r, "hints", `${R} · Hints`, "Hints are off in this room, so a student who is stuck has no help. One or two nudges make the room fairer for students who need more support.");
+      else if (!hints.length) note("no-hints", r, "hints", `${R} · Hints`, "Hints are switched on, but nothing is written yet.");
+      if (room.hintsEnabled) hints.forEach((x, i) => { wording(x, r, "hints", `${R} · Hint ${i + 1}`); long(x, L.hint, r, "hints", `${R} · Hint ${i + 1}`, "hint"); });
+    }
+    if (room.type === "matching") {
+      const cards = room.cards || [];
+      let answer = ""; try { answer = str(ER.matching(room).answer); } catch(e){}
+      if (answer.length > L.dials) note("long-code", r, "items", `${R} · Lock`, `The lock has ${answer.length} dials, one for each clue. More than ${L.dials} is slow and tiring with a keyboard, a switch or a screen reader. Give fewer cards a clue (the rest become decoys), or split the room in two.`);
+      if (alike(answer)) note("look-alike", r, "lock", `${R} · Lock`, "The combination mixes characters that look alike (O and 0, or I, l and 1). Use codes that can't be confused.", answer);
+      if (cards.length > L.cards) note("many-items", r, "items", `${R} · Cards`, `There are ${cards.length} cards. That is a lot to keep in mind, and a long way to travel by keyboard. Around ${L.cards} or fewer works better.`);
+      cards.forEach((card, i) => {
+        const W = `${R} · Card ${i + 1}`;
+        if (str(card.icon).trim() && !str(card.term).trim()) note("symbol-only", r, "items", W, "This card has an icon but no name. A picture on its own means nothing to a screen reader, and little to many students. Give the card a name in words.", card.icon);
+        else if (noWords(card.term)) note("symbol-only", r, "items", W, "This card's name is only a symbol or emoji. Screen readers may skip it or read something odd. Use words; keep the symbol in the Icon box if you like it.", card.term);
+        wording(card.term, r, "items", W, ["caps"]); wording(card.clue, r, "items", `${W} · Clue`); long(card.clue, L.clue, r, "items", `${W} · Clue`, "clue");
+        total += count(card.clue) + count(card.term);
+      });
+    }
+    if (room.type === "quiz") (room.questions || []).forEach((q, i) => {
+      const W = `${R} · Question ${i + 1}`;
+      wording(q.prompt, r, "items", W); long(q.prompt, L.prompt, r, "items", W, "question"); total += count(q.prompt);
+      if (q.kind === "choice") {
+        const filled = (q.choices || []).map(str).filter(x => x.trim());
+        if (filled.length > L.choices) note("many-items", r, "items", W, `There are ${filled.length} choices. More than ${L.choices} is a lot to hold in mind when they are read out one at a time.`);
+        filled.forEach(x => { if (noWords(x)) note("symbol-only", r, "items", W, "One choice is only a symbol or emoji. Use words, so every student gets the same meaning.", x); wording(x, r, "items", W, ["above", "colour", "position"]); total += count(x); });
+      } else {
+        const accepted = str(q.answers).split("|").map(x => x.trim()).filter(Boolean);
+        if (!accepted.length) note("answer-list", r, "items", W, "No accepted answer is written yet, so nothing a student types can be right.");
+        else {
+          const longest = accepted.reduce((a, b) => a.length >= b.length ? a : b);
+          if (accepted.every(x => x.length > L.answer)) note("answer-list", r, "items", W, `Every accepted answer is long (over ${L.answer} characters). A typed answer has to match, so long answers punish typing slips. Ask for a name or a term, or make it multiple choice.`, short(longest));
+          else if (accepted.length === 1 && /\s/.test(accepted[0])) note("answer-list", r, "items", W, "Only one way of typing the answer is accepted, and it is more than one word. Add the other ways students might fairly type it, separated by | (a surname alone, a common spelling, with or without “the”).", accepted[0]);
+        }
+      }
+    });
+    if (room.type === "ordering") {
+      const items = room.items || [];
+      if (items.length > L.orderItems) note("many-items", r, "items", `${R} · Items`, `There are ${items.length} items to put in order. Each move takes a key press, and a wrong try gives little to go on. ${L.orderItems} or fewer is kinder.`);
+      items.forEach((it, i) => { const W = `${R} · Item ${i + 1}`; if (noWords(it.text)) note("symbol-only", r, "items", W, "This item is only a symbol or emoji. Use words.", it.text); wording(it.text, r, "items", W); long(it.text, L.item, r, "items", W, "item"); total += count(it.text); });
+    }
+    if (room.type === "sorting") {
+      (room.categories || []).forEach((cat, j) => { if (!str(cat).trim()) note("missing-text", r, "items", `${R} · Category ${j + 1}`, "This category has no name. Its stamp would be blank."); else if (noWords(cat)) note("symbol-only", r, "items", `${R} · Category ${j + 1}`, "This category's name is only a symbol or emoji. Use words.", cat); });
+      const items = room.items || [];
+      if (items.length > L.sortItems) note("many-items", r, "items", `${R} · Items`, `There are ${items.length} items to sort. That is a long task in one go. Around ${L.sortItems} or fewer works better.`);
+      items.forEach((it, i) => { const W = `${R} · Item ${i + 1}`; if (noWords(it.text)) note("symbol-only", r, "items", W, "This item is only a symbol or emoji. Use words.", it.text); wording(it.text, r, "items", W); long(it.text, L.item, r, "items", W, "item"); total += count(it.text); });
+    }
+    if (room.type === "reflection") (room.questions || []).forEach((q, i) => {
+      const W = `${R} · Question ${i + 1}`;
+      wording(q.prompt, r, "questions", W); long(q.prompt, L.prompt, r, "questions", W, "question"); total += count(q.prompt);
+      (q.options || []).forEach(o => { if (noWords(o.text)) note("symbol-only", r, "questions", W, "One option is only a symbol or emoji. Use words.", o.text); wording(o.text, r, "questions", W, ["above", "colour", "position"]); total += count(o.text); });
+    });
+    if (total > L.roomWords) note("reading-load", r, "text", `${R} · The whole room`, `This room asks students to read about ${Math.round(total / 10) * 10} words. That is a heavy load for students with dyslexia or who read slowly. Consider trimming the text or splitting the room.`);
+  });
+  return out;
+}
+const A11Y_BY_HAND = [
+  "Open the preview and read each room's story on its own. Would a student who can't see the picture know what to do?",
+  "Use plain words and short sentences. Spell out abbreviations the first time.",
+  "For typed answers, accept every fair spelling (with and without accents, initials, “the”).",
+  "Card icons and emoji are decoration. Make sure nothing depends on recognising them.",
+  "Hints should point to how to find the answer, in different words from the story.",
+  "Tell students at the start that there is no time limit, and how to ask you for help."
+];
+function a11yGroups(notes){
+  const groups = new Map();
+  notes.forEach(n => { const k = typeof n.page === "number" ? `Room ${n.page + 1}: ${cfg.rooms[n.page]?.title || "Untitled"}` : ({ settings: "Settings", intro: "Story & intro", finish: "Finish & grading" })[n.page]; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(n); });
+  return groups;
+}
+function a11yGo(n){ sel = n.page; const key = typeof n.page === "number" ? cfg.rooms[n.page] : n.page; if (key != null && n.tab) tabOf.set(key, n.tab); choose(sel); }
+function pageA11y(){
+  const notes = a11yCheck(cfg), groups = a11yGroups(notes);
+  const list = [
+    h("p", { class: "typed", id: "a11y-summary" }, notes.length
+      ? `${notes.length} ${notes.length === 1 ? "note" : "notes"} on what you have written. These are advice, not errors: nothing here stops you previewing or exporting.`
+      : "Nothing flagged in what you have written. This check only looks for common problems, so the By hand tab is still worth a read."),
+    ...[...groups].flatMap(([title, items]) => [h("h3", {}, title), h("ul", { class: "notes" }, items.map(n => h("li", { "data-rule": n.rule },
+      h("button", { class: "inkline where", onclick: () => a11yGo(n) }, icon("right"), n.where.replace(/^Room \d+ · /, "")),
+      h("p", {}, n.quote ? h("span", { class: "quote" }, `“${n.quote}” `) : null, n.text))))]) ];
+  return { key: "a11y", icon: "eye", kicker: "Before you publish", title: "Accessibility check",
+    help: "This reads what you wrote and points out things that often shut students out: directions that depend on colour or position, very long locks, missing instructions, heavy reading. It can't judge everything, and it never blocks you.",
+    tabs: [ { id: "notes", label: "Notes", body: list },
+      { id: "byhand", label: "By hand", help: "Things no automatic check can see.", body: [h("p", { class: "typed" }, "Worth a look before you share the game:"), h("ul", { class: "plain" }, A11Y_BY_HAND.map(x => h("li", {}, x)))] } ] };
+}
+
 /* ===================== The cabinet (navigation) & status ===================== */
 function roomStatus(r){ const items = ER.reviewItems({ rooms: [cfg.rooms[r]] }); const left = items.filter(x => x.item.verified !== true).length; return { left, total: items.length }; }
-function choose(key){ sel = key; closeCabinet(); render(); const m = document.getElementById("main"); m.scrollTop = 0; m.focus({ preventScroll: true }); }
+function choose(key){
+  sel = key; closeCabinet(); render();
+  const m = document.getElementById("main"); m.scrollTop = 0; if (getComputedStyle(m).overflowY === "visible") scrollTo(0, 0);
+  document.getElementById("page-title").focus({ preventScroll: true });      // the new page's heading is read out
+}
 function renderNav(){
-  const nav = document.getElementById("nav");
+  const nav = document.getElementById("cab");
   const drawer = (key, ic, label, mark, acts) => h("div", { class: "item" + (sel === key ? " sel" : ""), onclick: e => { if (!e.target.closest(".acts")) choose(key); } },
     h("button", { class: "pull", "aria-current": sel === key ? "page" : null },
       h("span", { class: "holder" }, icon(ic), h("span", { class: "t" }, label), mark || null)),
     acts || h("span", { class: "knob", "aria-hidden": "true" }));
-  const addList = addOpen ? h("div", { class: "addmenu", id: "add-menu" }, Object.entries(TYPES).map(([k, t]) =>
-    h("button", { "data-type": k, onclick: () => { addOpen = false; cfg.rooms.push(t.blank()); changed(); choose(cfg.rooms.length - 1); } }, icon(t.icon), h("b", {}, t.name), h("span", {}, t.desc)))) : null;
+  const addList = addOpen ? h("div", { class: "addmenu", id: "add-menu", role: "group", "aria-label": "Kinds of room" }, Object.entries(TYPES).map(([k, t]) =>
+    h("button", { "data-type": k, onclick: () => { addOpen = false; cfg.rooms.push(t.blank()); changed(); choose(cfg.rooms.length - 1); say(`Room ${cfg.rooms.length} added: ${t.name}.`); } }, icon(t.icon), h("b", {}, t.name), h("span", {}, t.desc)))) : null;
+  const notes = a11yCheck(cfg).length;
+  const sig = JSON.stringify([sel, addOpen, notes, cfg.rooms.map((room, r) => [room.title, room.type, roomStatus(r)])]);
+  if (sig === navSig && nav.childElementCount) return;
+  navSig = sig;
   nav.replaceChildren(...[
+    h("button", { id: "cabinet-close", class: "cut", onclick: () => closeCabinet(true) }, icon("x"), "Close the cabinet"),
     drawer("settings", "gear", "Settings"), drawer("intro", "page", "Story & intro"),
-    h("div", { class: "bay" }, "Rooms"),
+    h("h2", { class: "bay" }, "Rooms"),
     ...cfg.rooms.map((room, r) => {
       const st = roomStatus(r);
       const mark = st.total ? h("span", { class: "mark" + (st.left ? "" : " ok"), title: `${st.total - st.left} of ${st.total} checked` },
         st.left ? [h("span", { "aria-hidden": "true" }, `${st.total - st.left}/${st.total}`), h("span", { class: "sr" }, ` ${st.left} to check`)] : [icon("tick"), h("span", { class: "sr" }, " all checked")]) : null;
       return drawer(r, TYPES[room.type]?.icon || "door", `${r+1}. ${room.title || "Untitled"}`, mark, h("span", { class: "acts" },
-        h("button", { class: "stud", title: "Move up", "aria-label": `Move room ${r+1} up`, disabled: r === 0, onclick: () => { [cfg.rooms[r-1], cfg.rooms[r]] = [cfg.rooms[r], cfg.rooms[r-1]]; if (sel === r) sel = r - 1; else if (sel === r - 1) sel = r; changed(); render(); const b = document.querySelector(`#nav [aria-label="Move room ${r} up"]`); (b && !b.disabled ? b : document.querySelectorAll("#nav .item .pull")[r + 1])?.focus(); } }, icon("up")),
-        h("button", { class: "stud", title: "Delete room", "aria-label": `Delete room ${r+1}`, onclick: () => { if (confirm(`Delete room ${r+1} "${room.title}"? This can't be undone.`)) { cfg.rooms.splice(r, 1); sel = "settings"; changed(); render(); } } }, icon("x"))));
+        h("button", { class: "stud", title: "Move up", "aria-label": `Move room ${r+1} up`, disabled: r === 0, onclick: () => { [cfg.rooms[r-1], cfg.rooms[r]] = [cfg.rooms[r], cfg.rooms[r-1]]; if (sel === r) sel = r - 1; else if (sel === r - 1) sel = r; changed(); render(); const b = document.querySelector(`#nav [aria-label="Move room ${r} up"]`); (b && !b.disabled ? b : document.querySelectorAll("#nav .item .pull")[r + 1])?.focus(); say(`Room ${r+1} moved up. It is now room ${r}.`); } }, icon("up")),
+        h("button", { class: "stud", title: "Delete room", "aria-label": `Delete room ${r+1}: ${room.title || "Untitled"}`, onclick: async () => {
+          if (!(await ask(`Delete room ${r+1}?`, [`“${room.title || "Untitled"}” and everything in it will be removed.`, "This can't be undone."], { ok: "Delete room", danger: true }))) return;
+          cfg.rooms.splice(r, 1); sel = "settings"; changed(); render();
+          (document.body.classList.contains("cab-open") ? document.getElementById("add-room") : document.getElementById("page-title")).focus(); say(`Room ${r+1} deleted.`);
+        } }, icon("x"))));
     }),
-    h("button", { id: "add-room", "aria-expanded": String(addOpen), "aria-controls": "add-menu", onclick: () => { addOpen = !addOpen; renderNav(); if (addOpen) { document.getElementById("add-menu").scrollIntoView({ block: "nearest" }); document.querySelector("#add-menu button").focus(); } else document.getElementById("add-room").focus(); } }, icon("plus"), "Add a room"),
+    h("button", { id: "add-room", "aria-expanded": String(addOpen), "aria-controls": addOpen ? "add-menu" : null, onclick: () => { addOpen = !addOpen; renderNav(); if (addOpen) { document.getElementById("add-menu").scrollIntoView({ block: "nearest" }); document.querySelector("#add-menu button").focus(); } else document.getElementById("add-room").focus(); } }, icon("plus"), "Add a room"),
     addList,
-    h("div", { class: "bay" }, "End"), drawer("finish", "rosette", "Finish & grading"),
+    h("h2", { class: "bay" }, "End"), drawer("finish", "rosette", "Finish & grading"),
+    drawer("a11y", "eye", "Accessibility check", h("span", { class: "mark adv" + (notes ? "" : " ok"), title: notes ? `${notes} ${notes === 1 ? "note" : "notes"} to read` : "Nothing flagged" },
+      notes ? [h("span", { "aria-hidden": "true" }, String(notes)), h("span", { class: "sr" }, ` ${notes} ${notes === 1 ? "note" : "notes"}`)] : [icon("tick"), h("span", { class: "sr" }, " nothing flagged")])),
+    h("div", { id: "display-toggles", class: "gap", role: "group", "aria-label": "Display" },
+      h("div", { class: "opt" }, toggle("contrast-toggle", "High contrast", contrastOn(), on => { prefSet(PREF.contrast, on ? "on" : "off"); applyDisplay(); say(`High contrast ${contrastOn() ? "on" : "off"}.`); }),
+        tip("Plain backgrounds, black on white, and heavier outlines, here and in the student preview. It follows your system's contrast setting until you choose.", "High contrast")),
+      h("div", { class: "opt" }, toggle("readable-toggle", "Readable text", readableOn(), on => { prefSet(PREF.readable, on ? "on" : "off"); applyDisplay(); say(`Readable text ${on ? "on" : "off"}.`); }),
+        tip("A plain, larger typeface with more room between letters and lines, in place of the old-book lettering.", "Readable text"))),
     h("div", { class: "foot" }, "Saved in this browser as you type", tip(["Changes save automatically in this browser. Use Save project or Export to keep a file you can share or reopen."], "saving"))].filter(Boolean));
 }
+let meterText = "", navSig = "";
 function refreshStatus(){
-  const st = ER.reviewStatus(cfg);
-  document.getElementById("meter").replaceChildren(h("b", {}, st.verified), " / ", h("b", {}, st.total), " ", h("span", { class: "w" }, "checked"));
-  clearTimeout(refreshStatus.t); refreshStatus.t = setTimeout(() => { if (!document.getElementById("nav").contains(document.activeElement)) renderNav(); refreshNote(); }, 400);
+  const st = ER.reviewStatus(cfg), text = `${st.verified}/${st.total}`;
+  if (text !== meterText) { meterText = text; document.getElementById("meter").replaceChildren(h("b", {}, st.verified), " / ", h("b", {}, st.total), " ", h("span", { class: "w" }, "checked")); }
+  clearTimeout(refreshStatus.t); refreshStatus.t = setTimeout(() => { if (!document.getElementById("nav").contains(document.activeElement) && !(tipClose && document.querySelector("#nav .i[aria-expanded=true]"))) renderNav(); refreshNote(); }, 400);
 }
 function refreshNote(){
   const st = ER.reviewStatus(cfg), line = document.getElementById("draft-line");
-  if (!st.unverified) { document.querySelector(".note")?.remove(); return; }
+  if (!st.unverified) { const n = document.querySelector(".note"); if (n) { if (n.contains(document.activeElement)) document.getElementById("page-title")?.focus(); n.remove(); } return; }
   if (line) line.textContent = `${st.unverified} of ${st.total} items not checked yet.`;
   else document.querySelector(".loose")?.prepend(draftNote(st));
 }
 const FOCUSABLE = "input,textarea,button,summary";
+const PAGES = { settings: () => pageSettings(), intro: () => pageIntro(), finish: () => pageFinish(), a11y: () => pageA11y() };
 function render(){
   if (typeof sel === "number" && !cfg.rooms[sel]) sel = "settings";
   if (tipClose) tipClose();
   const main = document.getElementById("main");
   // Remember where the keyboard was, so switching a selector or moving an entry doesn't drop focus.
   const had = main.contains(document.activeElement) ? [...main.querySelectorAll(FOCUSABLE)].indexOf(document.activeElement) : -1;
+  const hadTitle = document.activeElement && document.activeElement.id === "page-title";
   renderNav(); refreshStatus();
   const st = ER.reviewStatus(cfg);
-  const page = sel === "settings" ? pageSettings() : sel === "intro" ? pageIntro() : sel === "finish" ? pageFinish() : pageRoom(sel);
+  const page = typeof sel === "number" ? pageRoom(sel) : PAGES[sel]();
   let cur = page.tabs.find(t => t.id === tabOf.get(page.key)) || page.tabs[0];
+  // Index tabs: a real tablist. Left and Right (Home, End) move and open; Tab goes on into the sheet.
   const tabBtns = page.tabs.map(t => h("button", { role: "tab", id: "tab-" + t.id, "aria-selected": String(t === cur), "aria-controls": "panel", tabindex: t === cur ? 0 : -1,
     onclick: () => { tabOf.set(page.key, t.id); render(); document.getElementById("tab-" + t.id).focus(); },
     onkeydown: e => { const i = page.tabs.indexOf(t), n = page.tabs.length;
       const to = e.key === "ArrowRight" ? (i + 1) % n : e.key === "ArrowLeft" ? (i + n - 1) % n : e.key === "Home" ? 0 : e.key === "End" ? n - 1 : -1;
       if (to >= 0) { e.preventDefault(); tabOf.set(page.key, page.tabs[to].id); render(); document.getElementById("tab-" + page.tabs[to].id).focus(); } } }, t.label));
+  const kickTip = page.help ? tip(page.help, page.title) : null;
+  document.title = `${page.title}${typeof sel === "number" ? ` (room ${sel + 1})` : ""} · ${cfg.meta?.title || "Untitled"} · Escape Room Editor`;
   main.replaceChildren(h("div", { class: "blotter" },
     h("div", { class: "head" },
-      h("div", { class: "kicker" }, icon(page.icon), page.kicker, page.help ? tip(page.help, page.kicker) : null),
-      h("h2", {}, page.title)),
+      h("div", { class: "kicker" }, icon(page.icon), h("span", { id: "page-kicker" }, page.kicker), kickTip),
+      h("h2", { id: "page-title", tabindex: "-1", "aria-describedby": "page-kicker" }, page.title)),
     h("div", { class: "loose" }, draftNote(st), page.room ? answerKeyBox(page.room) : null,
       page.room ? h("button", { class: "plate", id: "preview-room", onclick: () => openPreview(page.r + 1) }, icon("play"), "Preview this room") : null),
     h("div", { class: "leaf" },
@@ -1270,20 +1729,39 @@ function render(){
         cur.help ? tip(cur.help, cur.label) : null, ...[cur.body].flat(Infinity)))));
   main.querySelectorAll("textarea").forEach(grow);
   if (had >= 0) { const list = main.querySelectorAll(FOCUSABLE); const el = list[Math.min(had, list.length - 1)]; if (el && !el.disabled) el.focus({ preventScroll: true }); }
+  else if (hadTitle) document.getElementById("page-title").focus({ preventScroll: true });
 }
 
-/* ===================== Phone: the cabinet slides out from the brass handle ===================== */
-const handle = document.getElementById("cabinet-handle");
-function openCabinet(){ document.body.classList.add("cab-open"); handle.setAttribute("aria-expanded", "true"); handle.setAttribute("aria-label", "Close the cabinet of rooms"); (document.querySelector("#nav .item.sel .pull") || document.querySelector("#nav .pull")).focus(); }
-function closeCabinet(focusHandle){ if (!document.body.classList.contains("cab-open")) return; document.body.classList.remove("cab-open"); handle.setAttribute("aria-expanded", "false"); handle.setAttribute("aria-label", "Open the cabinet of rooms"); if (focusHandle) handle.focus(); }
+/* ===================== Phone: the cabinet slides out from the brass handle =====================
+   While it is out it is a dialog: the bench behind it is inert, Tab stays in the cabinet, and Esc, the Close button,
+   the dark bench, or choosing a drawer puts it away. */
+const handle = document.getElementById("cabinet-handle"), navEl = document.getElementById("nav"), cabEl = document.getElementById("cab");
+let cabModal = null;
+function openCabinet(){
+  document.body.classList.add("cab-open"); handle.setAttribute("aria-expanded", "true");
+  cabEl.setAttribute("role", "dialog"); cabEl.setAttribute("aria-modal", "true"); cabEl.setAttribute("aria-label", "Cabinet of rooms");
+  cabModal = modalOpen(navEl, () => closeCabinet(true), handle);
+  (document.querySelector("#nav .item.sel .pull") || document.querySelector("#nav .pull")).focus();
+}
+function closeCabinet(focusHandle){
+  if (!document.body.classList.contains("cab-open")) return;
+  document.body.classList.remove("cab-open"); handle.setAttribute("aria-expanded", "false");
+  ["role", "aria-modal", "aria-label"].forEach(a => cabEl.removeAttribute(a));
+  if (addOpen) { addOpen = false; renderNav(); }
+  if (cabModal) { modalClose(cabModal, false); cabModal = null; }
+  if (focusHandle) handle.focus();
+}
 handle.onclick = () => document.body.classList.contains("cab-open") ? closeCabinet(true) : openCabinet();
 document.getElementById("cab-scrim").onclick = () => closeCabinet(true);
+const benchMq = matchMedia("(max-width:51.25em)");
+benchMq.addEventListener && benchMq.addEventListener("change", () => { closeCabinet(false); closeTools(); });
+/* The file list behind the three dots (phones): a disclosure. Opening it moves to its first entry; Esc or leaving closes it. */
 const more = document.getElementById("btn-more"), tools = document.getElementById("tools");
 const closeTools = () => { tools.classList.remove("open"); more.setAttribute("aria-expanded", "false"); };
-more.onclick = () => { const on = tools.classList.toggle("open"); more.setAttribute("aria-expanded", String(on)); };
+more.onclick = () => { const on = tools.classList.toggle("open"); more.setAttribute("aria-expanded", String(on)); if (on) tools.querySelector("button").focus(); };
 tools.addEventListener("click", closeTools);
+tools.addEventListener("focusout", e => { if (tools.classList.contains("open") && e.relatedTarget && !tools.contains(e.relatedTarget) && e.relatedTarget !== more) closeTools(); });
 document.addEventListener("pointerdown", e => { if (tools.classList.contains("open") && !e.target.closest("#tools,#btn-more")) closeTools(); });
-document.addEventListener("keydown", e => { if (e.key !== "Escape") return; if (document.body.classList.contains("cab-open")) closeCabinet(true); else if (tools.classList.contains("open")) { closeTools(); more.focus(); } });
 /* A little parallax on the lamp glow (2D shift only), skipped when motion is reduced. */
 if (matchMedia("(prefers-reduced-motion: no-preference)").matches && matchMedia("(hover:hover)").matches) {
   let raf = 0;
@@ -1297,29 +1775,58 @@ function download(name, data, type){
   const a = h("a", { href: url, download: name }); document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
-function toast(text){ document.querySelectorAll(".toast").forEach(t => t.remove()); const t = h("div", { class: "toast", role: "status" }, text); document.body.append(t); setTimeout(() => t.remove(), 2600); }
-function checkReady(action){
+/* A typed strip that says what just happened. It is read out (the tray is a live region), stays six seconds, and waits while pointed at. */
+function toast(text){
+  const tray = document.getElementById("toasts"); tray.replaceChildren();
+  const t = h("div", { class: "toast" }, text); tray.append(t);
+  let timer = setTimeout(() => t.remove(), 6000);
+  t.addEventListener("mouseenter", () => clearTimeout(timer)); t.addEventListener("mouseleave", () => { timer = setTimeout(() => t.remove(), 2000); });
+}
+/* A slip that asks before anything is thrown away (in place of the browser's own confirm and alert boxes).
+   It is an alert dialog: named by its heading, described by its text, Esc or Cancel backs out, and the keyboard starts on
+   Cancel, never on the action that destroys something. Resolves true only when the action is chosen. */
+function ask(title, lines, opts = {}){
+  return new Promise(resolve => {
+    const id = "ask" + (++uid);
+    let m = null;
+    const done = v => { box.remove(); modalClose(m); resolve(v); };
+    const cancel = opts.info ? null : h("button", { class: "stamp", id: "ask-cancel", onclick: () => done(false) }, opts.cancel || "Cancel");
+    const ok = h("button", { class: "stamp" + (opts.danger ? " red" : ""), id: "ask-ok", onclick: () => done(true) }, opts.ok || "OK");
+    const box = h("div", { class: "modal", role: "alertdialog", "aria-modal": "true", "aria-labelledby": id + "t", "aria-describedby": id + "d", onclick: e => { if (e.target === box) done(false); } },
+      h("div", { class: "slipbox" }, h("h2", { id: id + "t" }, title),
+        h("div", { id: id + "d" }, [lines].flat().filter(Boolean).map(l => h("p", {}, l))),
+        h("div", { class: "actions" }, cancel, ok)));
+    m = modalOpen(box, () => done(false));
+    document.body.append(box);
+    (cancel || ok).focus();
+  });
+}
+const tell = (title, lines) => ask(title, lines, { info: true, ok: "Close" });
+async function checkReady(action){
   const errs = ER.validate(cfg);
   if (errs.length) { showErrors(errs); return false; }
   const st = ER.reviewStatus(cfg);
-  if (st.unverified && action === "export" && !confirm(`${st.unverified} of ${st.total} items haven't been checked yet.\n\nStudents will see a "Draft" notice saying answers may contain errors.\n\nExport anyway?`)) return false;
+  if (st.unverified && action === "export") return ask("Export a draft?",
+    [`${st.unverified} of ${st.total} items haven't been checked yet.`, "Students will see a “Draft” notice saying answers may contain errors."], { ok: "Export anyway", cancel: "Go back" });
   return true;
 }
 function showErrors(errs){
-  overlay("Returned: needs fixing", h("div", { class: "sheet" }, h("h2", {}, "Fix these before previewing or exporting"),
-    h("div", { class: "errors" }, h("ul", {}, errs.map(e => h("li", {}, e))))));
+  overlay("Returned: needs fixing", h("div", { class: "sheet" }, h("h2", { id: "errors-title" }, "Fix these before previewing or exporting"),
+    h("div", { class: "errors", id: "errors-list" }, h("ul", {}, errs.map(e => h("li", {}, e))))), [], false, "errors-list");
 }
-/* A folder laid on the bench. Esc, the Close mark, or a click on the dark bench puts it away. */
-function overlay(title, content, extraButtons = [], wide = false){
-  document.querySelector(".overlay")?.remove();
-  const back = document.activeElement;
-  const close = () => { o.remove(); document.removeEventListener("keydown", onKey); if (back && back.isConnected) back.focus(); };
-  const onKey = e => { if (e.key === "Escape") close(); };
-  const o = h("div", { class: "overlay", role: "dialog", "aria-modal": "true", "aria-label": title, onclick: e => { if (e.target === o) close(); } },
+/* A folder laid on the bench: a modal dialog. Esc, the Close mark, or a click on the dark bench puts it away, and the
+   keyboard goes back to whatever opened it. */
+function overlay(title, content, extraButtons = [], wide = false, describedby = null){
+  document.querySelector(".overlay")?.close();
+  const tid = "ov" + (++uid);
+  let m = null;
+  const close = () => { if (!o.isConnected) return; o.remove(); modalClose(m); };
+  const o = h("div", { class: "overlay", role: describedby ? "alertdialog" : "dialog", "aria-modal": "true", "aria-labelledby": tid, "aria-describedby": describedby, onclick: e => { if (e.target === o) close(); } },
     h("div", { class: "folder" + (wide ? " wide" : "") },
-      h("div", { class: "bar" }, h("span", {}, title), ...extraButtons, h("button", { class: "inkline", onclick: close, id: "overlay-close" }, icon("x"), "Close")), content));
+      h("div", { class: "bar" }, h("span", { id: tid }, title), ...extraButtons, h("button", { class: "inkline", onclick: close, id: "overlay-close" }, icon("x"), "Close")), content));
   o.close = close;
-  document.body.append(o); document.addEventListener("keydown", onKey);
+  m = modalOpen(o, close);
+  document.body.append(o);
   o.querySelector("#overlay-close").focus();
   return o;
 }
@@ -1327,56 +1834,67 @@ const gameHtml = () => ER.buildGame(GAME_TEMPLATE, cfg);
 const slug = () => ER.fileSlug(cfg.meta?.title);
 
 /* ===================== Student preview ===================== */
-/* Full-screen "student view" of the game. The brass rail on top is the teacher's: jump to any room,
+/* Full-screen "student view" of the game: a modal dialog. The brass rail on top is the teacher's: jump to any room,
    show the answers, restart, or exit (button or Esc). Nothing is saved or graded. */
-function openPreview(startRoom = 0){
-  if (!checkReady("preview")) return;
+async function openPreview(startRoom = 0){
+  const opener = document.activeElement;
+  if (!(await checkReady("preview"))) return;
   document.querySelector(".preview")?.remove();
   const n = cfg.rooms.length;
-  let current = 0, showKey = false;
+  let current = 0, showKey = false, m = null;
   const frame = h("iframe", { title: "Student view of the escape room" });
   const send = msg => frame.contentWindow && frame.contentWindow.postMessage(msg, "*");
+  const stepName = k => k === 0 ? "the intro" : k > n ? "the certificate" : `room ${k} of ${n}: ${cfg.rooms[k - 1].title || "Untitled"}`;
   const steps = [[icon("door"), 0], ...cfg.rooms.map((r, i) => [String(i + 1), i + 1, r.title]), [icon("rosette"), n + 1, "Certificate"]];
-  const roomBtns = steps.map(([label, k, title]) => h("button", { "data-room": k, title: title || (k === 0 ? "Intro" : ""), "aria-label": k === 0 ? "Go to intro" : k > n ? "Go to certificate" : `Go to room ${k}: ${title}`,
+  const roomBtns = steps.map(([label, k, title]) => h("button", { "data-room": k, title: title || (k === 0 ? "Intro" : ""), "aria-label": "Go to " + stepName(k),
     onclick: () => send({ er: "goto", room: k }) }, label));
-  const mark = () => roomBtns.forEach(b => b.setAttribute("aria-current", +b.dataset.room === current ? "step" : "false"));
+  const where = h("span", { class: "sr", role: "status" });
+  const mark = () => roomBtns.forEach(b => { if (+b.dataset.room === current) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current"); });
   const prev = h("button", { "aria-label": "Previous room", onclick: () => send({ er: "goto", room: Math.max(0, current - 1) }) }, icon("left"));
   const next = h("button", { "aria-label": "Next room", onclick: () => send({ er: "goto", room: Math.min(n + 1, current + 1) }) }, icon("right"));
-  const keyToggle = h("label", { class: "switch" }, h("input", { type: "checkbox", id: "preview-answers", onchange: e => { showKey = e.target.checked; send({ er: "key", on: showKey }); } }),
-    h("span", { class: "track", "aria-hidden": "true" }), "Show answers");
-  const exit = () => { layer.remove(); window.removeEventListener("message", onMsg); document.removeEventListener("keydown", onKey); document.getElementById("btn-preview").focus(); };
-  const onKey = e => { if (e.key === "Escape") exit(); };
+  const keyToggle = toggle("preview-answers", "Show answers", false, on => { showKey = on; send({ er: "key", on: showKey }); }, { state: false });
+  const exit = () => { if (!layer.isConnected) return; layer.remove(); window.removeEventListener("message", onMsg); modalClose(m); };
   const onMsg = e => {
     if (e.source !== frame.contentWindow) return;
     if (e.data?.er === "escape") return exit();
-    if (e.data?.er === "room") { current = e.data.room; mark(); prev.disabled = current === 0; next.disabled = current === n + 1; }
+    if (e.data?.er === "room") {
+      const moved = current !== e.data.room; current = e.data.room; mark();
+      // a disabled button can't keep the keyboard, so it moves to the other arrow before one is switched off
+      const at = document.activeElement; prev.disabled = current === 0; next.disabled = current === n + 1;
+      if (at === prev && prev.disabled) next.focus(); if (at === next && next.disabled) prev.focus();
+      if (moved) where.textContent = "The preview is showing " + stepName(current) + ".";
+    }
   };
   const load = (room) => {
     frame.onload = () => { if (showKey) send({ er: "key", on: true }); if (room) send({ er: "goto", room }); };
     frame.srcdoc = ER.buildGame(GAME_TEMPLATE, { ...cfg, __preview: true });
   };
-  const layer = h("div", { class: "preview", role: "dialog", "aria-label": "Student preview" },
+  const layer = h("div", { class: "preview", role: "dialog", "aria-modal": "true", "aria-label": "Student preview" },
     h("div", { class: "pbar" },
       h("div", { class: "badge" }, "Preview"),
       h("div", { class: "rooms", role: "group", "aria-label": "Jump to a room" }, prev, ...roomBtns, next),
       h("div", { class: "ctrl" }, keyToggle,
-        h("button", { class: "eng", onclick: () => load(0), title: "Start over from the intro" }, icon("restart"), "Restart"),
-        h("button", { class: "eng exit", id: "preview-exit", onclick: exit }, icon("x"), "Exit preview"))),
+        h("button", { class: "eng", onclick: () => { load(0); where.textContent = "The preview has started again from the intro."; }, title: "Start over from the intro" }, icon("restart"), "Restart"),
+        h("button", { class: "eng exit", id: "preview-exit", onclick: exit }, icon("x"), "Exit preview")), where),
     frame);
+  m = modalOpen(layer, exit, opener);
   document.body.append(layer);
-  window.addEventListener("message", onMsg); document.addEventListener("keydown", onKey);
+  window.addEventListener("message", onMsg);
   load(startRoom);
   layer.querySelector("#preview-exit").focus();
 }
 document.getElementById("btn-preview").onclick = () => openPreview(typeof sel === "number" ? sel + 1 : 0);
 document.getElementById("btn-export").onclick = () => {
+  const notes = a11yCheck(cfg).length;
   const box = h("div", { class: "sheet" },
     h("h2", {}, "Export for students"),
     h("div", { class: "slips" },
       h("div", { class: "slip" }, h("div", { class: "to" }, "To: Moodle or Canvas gradebook"), h("h3", {}, "SCORM package", tip("Moodle: Add an activity → SCORM package. Canvas: SCORM tool. Upload the zip without unzipping it.", "SCORM package")),
-        h("button", { id: "export-scorm", class: "stamp", onclick: () => { if (checkReady("export")) { download(`${slug()}-SCORM.zip`, ER.scorm(gameHtml(), cfg.meta.title), "application/zip"); toast("SCORM package downloaded."); } } }, icon("save"), "Download SCORM .zip")),
+        h("button", { id: "export-scorm", class: "stamp", onclick: async () => { if (await checkReady("export")) { download(`${slug()}-SCORM.zip`, ER.scorm(gameHtml(), cfg.meta.title), "application/zip"); toast("SCORM package downloaded."); } } }, icon("save"), "Download SCORM .zip")),
       h("div", { class: "slip" }, h("div", { class: "to" }, "To: anywhere, as one file"), h("h3", {}, "Web page", tip("Double-click it, upload it as a Moodle or Canvas file, or put it on a website. Pair it with the exit password and an LMS quiz for credit. You can also reopen this file in the editor later.", "Web page")),
-        h("button", { id: "export-html", class: "stamp", onclick: () => { if (checkReady("export")) { download(`${slug()}.html`, gameHtml(), "text/html"); toast("Game file downloaded."); } } }, icon("save"), "Download game .html"))));
+        h("button", { id: "export-html", class: "stamp", onclick: async () => { if (await checkReady("export")) { download(`${slug()}.html`, gameHtml(), "text/html"); toast("Game file downloaded."); } } }, icon("save"), "Download game .html"))),
+    h("p", { class: "typed", id: "export-a11y" }, notes ? `The accessibility check has ${notes} ${notes === 1 ? "note" : "notes"} on what you wrote. ` : "The accessibility check has nothing to flag. ",
+      notes ? h("button", { class: "inkline", onclick: () => { document.querySelector(".overlay")?.close(); choose("a11y"); } }, "Read the notes") : null));
   overlay("Export", box);
 };
 document.getElementById("btn-save").onclick = () => { download(`${slug()}-project.json`, JSON.stringify(cfg, null, 2), "application/json"); toast("Project saved. Open it again with Open…"); };
@@ -1387,18 +1905,18 @@ document.getElementById("file").onchange = async e => {
     const text = await f.text();
     const next = /\.html?$/i.test(f.name) ? ER.configFromHtml(text) : JSON.parse(text);
     if (!next || !Array.isArray(next.rooms)) throw new Error("This file doesn't contain an escape room.");
-    if (!confirm(`Open "${next.meta?.title || f.name}"? This replaces what's in the editor now (save it first if you need it).`)) return;
-    cfg = next; sel = "settings"; changed(); render(); toast("Opened " + f.name);
-  } catch (err) { alert("Couldn't open that file: " + err.message); }
+    if (!(await ask(`Open “${next.meta?.title || f.name}”?`, ["This replaces what's in the editor now.", "Save your project first if you need to keep it."], { ok: "Open it", cancel: "Keep what I have" }))) return;
+    cfg = next; sel = "settings"; tabOf.clear(); changed(); render(); toast("Opened " + f.name); document.getElementById("page-title").focus();
+  } catch (err) { tell("That file couldn't be opened", [err.message, "Choose a project file (.json) saved from this editor, or a game file (.html) exported from it."]); }
 };
 document.getElementById("btn-new").onclick = () => {
-  const start = (next, said) => { cfg = next; sel = "settings"; tabOf.clear(); changed(); document.querySelector(".overlay")?.close(); render(); toast(said); };
+  const start = (next, said) => { cfg = next; sel = "settings"; tabOf.clear(); changed(); document.querySelector(".overlay")?.close(); render(); toast(said); document.getElementById("page-title").focus(); };
   const box = h("div", { class: "sheet" },
     h("h2", {}, "Start a new escape room"),
-    h("div", { class: "inknote" }, "This replaces what's in the editor now. Save project first if you want to keep it."),
+    h("div", { class: "inknote", id: "new-warning" }, "This replaces what's in the editor now. Save project first if you want to keep it."),
     h("div", { class: "actions" },
-      h("button", { class: "stamp", id: "new-blank", onclick: () => start(blankConfig(), "Started a blank escape room.") }, "Blank (one question room)"),
-      h("button", { class: "stamp", id: "new-sample", onclick: () => start(clone(SAMPLE), "Loaded the sample escape room.") }, "Copy of the sample (Old Schoolhouse)")));
+      h("button", { class: "stamp", id: "new-blank", "aria-describedby": "new-warning", onclick: () => start(blankConfig(), "Started a blank escape room.") }, "Blank (one question room)"),
+      h("button", { class: "stamp", id: "new-sample", "aria-describedby": "new-warning", onclick: () => start(clone(SAMPLE), "Loaded the sample escape room.") }, "Copy of the sample (Old Schoolhouse)")));
   overlay("New", box);
 };
 function blankConfig(){
@@ -1410,46 +1928,60 @@ function blankConfig(){
 }
 
 /* ===================== Answer sheet (plain and printable) ===================== */
-document.getElementById("btn-review").onclick = () => {
+function answerSheetHtml(){
   const E = ER.esc, F = ER.fmt;
-  const chk = it => `<span class="ck${it.verified ? " on" : ""}" title="${it.verified ? "checked" : "not yet checked"}"></span>`;
-  const src = it => it.source ? `<div class="src">Source: ${E(it.source)}</div>` : `<div class="src none">Source: ________________________</div>`;
+  const chk = it => `<span class="ck${it.verified ? " on" : ""}" role="img" aria-label="${it.verified ? "Checked" : "Not yet checked"}"></span>`;
+  const src = it => it.source ? `<div class="src">Source: ${E(it.source)}</div>` : `<div class="src none">Source: <span aria-hidden="true">________________________</span><span class="sr">not written yet</span></div>`;
   const rooms = cfg.rooms.map((r, i) => {
     let body = "";
     if (r.type === "matching") { const m = ER.matching(r);
       body = `<p><strong>Lock combination:</strong> <code>${E(m.answer)}</code> · Cards shown as: ${({ books: "books on a shelf", portraits: "framed portraits" })[ER.look(r)] || "plain cards"}</p><ol>${r.cards.map(c => `<li>${chk(c)} <strong>${F(c.term)}</strong>${c.detail ? ` (${F(c.detail)})` : ""}, code <code>${E(m.code[r.cards.indexOf(c)])}</code><br>${c.clue ? "Clue: " + F(c.clue) : "<em>Decoy card (no clue)</em>"}${src(c)}</li>`).join("")}</ol>`; }
-    if (r.type === "quiz") body = `<ol>${r.questions.map(q => `<li>${chk(q)} ${F(q.prompt)}<br><strong>Answer:</strong> ${q.kind === "choice" ? (q.choices || []).filter(c=>String(c).trim()).map((c, j) => j === q.correct ? `<u><strong>${F(c)}</strong></u>` : F(c)).join(" · ") : E(q.answers)}${src(q)}</li>`).join("")}</ol>`;
+    if (r.type === "quiz") body = `<ol>${r.questions.map(q => `<li>${chk(q)} ${F(q.prompt)}<br><strong>Answer:</strong> ${q.kind === "choice" ? (q.choices || []).filter(c=>String(c).trim()).map((c, j) => j === q.correct ? `<u><strong>${F(c)}</strong></u> (correct)` : F(c)).join(" · ") : E(q.answers)}${src(q)}</li>`).join("")}</ol>`;
     if (r.type === "ordering") body = `<p>Correct order:</p><ol>${r.items.map(it => `<li>${chk(it)} ${F(it.text)}${it.label ? ` <strong>(${F(it.label)})</strong>` : ""}${src(it)}</li>`).join("")}</ol>`;
     if (r.type === "sorting") body = `<ol>${r.items.map(it => `<li>${chk(it)} ${F(it.text)} → <strong>${E(r.categories[it.category] || "?")}</strong>${src(it)}</li>`).join("")}</ol>`;
     if (r.type === "reflection") body = `<p>Results:</p><ol>${r.profiles.map(p => `<li>${chk(p)} <strong>${E(p.name)}</strong>: ${F(p.desc)}${p.who ? `<br>Thinkers: ${F(p.who)}` : ""}${p.next ? `<br>Next step: ${F(p.next)}` : ""}${src(p)}</li>`).join("")}</ol>
       <p>Questions:</p><ol>${r.questions.map(q => `<li>${chk(q)} ${F(q.prompt)}<ul>${(q.options||[]).map(o => `<li>${F(o.text)} → ${E((r.profiles.find(p => p.key === o.profile) || {}).name || "?")}</li>`).join("")}</ul>${src(q)}</li>`).join("")}</ol>`;
-    const hints = (r.hints || []).length ? `<p class="hints"><strong>Hints:</strong></p><ol class="hints">${r.hints.map(x => `<li>${F(x)}</li>`).join("")}</ol>` : "";
-    return `<section><h2><span>Room ${i+1}</span> ${E(r.title)}</h2><p class="story">${F(r.story || "")}</p>${r.reference ? `<p>Reference shown to students: ${F(r.reference)}</p>` : ""}${body}${hints}</section>`;
+    const hints = (r.hints || []).filter(x => String(x).trim()).length ? `<p class="hints"><strong>Hints${r.hintsEnabled ? "" : " (switched off)"}:</strong></p><ol class="hints">${r.hints.filter(x => String(x).trim()).map(x => `<li>${F(x)}</li>`).join("")}</ol>` : "";
+    return `<section><h2><span>Room ${i+1}</span> ${E(r.title || "Untitled")}</h2>${r.story ? `<p class="story">${F(r.story)}</p>` : ""}${r.reference ? `<p>Reference shown to students: ${F(r.reference)}</p>` : ""}${body}${hints}</section>`;
   }).join("");
   const st = ER.reviewStatus(cfg);
+  const notes = a11yCheck(cfg), groups = a11yGroups(notes);
+  const check = `<section id="a11y"><h2><span>Before you publish</span> Accessibility check</h2>` + (notes.length
+    ? `<p>${notes.length} ${notes.length === 1 ? "note" : "notes"} on what is written. These are advice, not errors.</p>` + [...groups].map(([title, items]) => `<h3>${E(title)}</h3><ul class="notes">${items.map(n => `<li><strong>${E(n.where.replace(/^Room \d+ · /, ""))}</strong>${n.quote ? ` <em>“${E(n.quote)}”</em>` : ""}<br>${E(n.text)}</li>`).join("")}</ul>`).join("")
+    : `<p>Nothing flagged in what is written.</p>`) + `<h3>By hand</h3><ul class="notes">${A11Y_BY_HAND.map(x => `<li>${E(x)}</li>`).join("")}</ul></section>`;
   const fonts = document.getElementById("fonts")?.textContent || "";
-  const doc = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Answer sheet: ${E(cfg.meta.title)}</title><style>${fonts}</style><style>
-    body{font-family:"Special Elite","Courier New",monospace;max-width:44rem;margin:2rem auto 3rem;padding:0 1.5rem;color:#1b140d;background:#f4ecd8;line-height:1.55;font-size:.98rem}
-    h1{font-family:"IM Fell English","Special Elite",Georgia,serif;font-weight:400;font-size:2rem;line-height:1.15;margin:0 0 .5rem;padding-bottom:.6rem;border-bottom:3px double #1b140d}
-    h2{font-family:"IM Fell English","Special Elite",Georgia,serif;font-weight:400;font-size:1.45rem;line-height:1.2;margin:2.4rem 0 .5rem;padding-bottom:.25rem;border-bottom:1px solid #1b140d;break-after:avoid}
-    h2 span{font-family:"IM Fell English SC","Special Elite",serif;font-size:.95rem;letter-spacing:.14em;display:block}
-    ol{padding-left:1.7rem} li{margin:.7rem 0;break-inside:avoid} ul li{margin:.2rem 0}
-    .ck{display:inline-block;width:.95em;height:.95em;border:1.5px solid #1b140d;vertical-align:-.12em;margin-right:.25em;position:relative}
-    .ck.on::after{content:"";position:absolute;left:.22em;top:-.18em;width:.36em;height:.8em;border:solid #7d1717;border-width:0 2.5px 2.5px 0;transform:rotate(40deg)}
-    .src{font-size:.86rem;color:#4a3d2e;margin-top:.15rem} .src.none{color:#6d5f4c}
-    .story{font-style:italic;color:#4a3d2e} .hints{font-size:.9rem;color:#4a3d2e}
-    code{font-family:inherit;font-size:1.05em;letter-spacing:.08em;text-decoration:underline;text-underline-offset:.2em}
-    strong{font-weight:400;text-decoration:underline;text-underline-offset:.18em} u{text-decoration-style:double}
-    @media print{body{margin:0;max-width:none;padding:0;font-size:10.5pt;background:none}}</style></head><body>
+  const hc = contrastOn(), big = readableOn();
+  const READ = big ? `"Atkinson Hyperlegible",Verdana,"Segoe UI","Helvetica Neue","DejaVu Sans",Arial,sans-serif` : `Georgia,"Iowan Old Style","Palatino Linotype","Book Antiqua","DejaVu Serif","Times New Roman",serif`;
+  const HEAD = big ? READ : `"IM Fell English",Georgia,serif`, CAPS = big ? READ : `"IM Fell English SC",Georgia,serif`;
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Answer sheet: ${E(cfg.meta.title)}</title><style>${fonts}</style><style>
+    html{color-scheme:light}
+    body{font-family:${READ};max-width:44rem;margin:2rem auto 3rem;padding:0 1.5rem;color:${hc ? "#000" : "#1b140d"};background:${hc ? "#fff" : "#f4ecd8"};line-height:${big ? 1.7 : 1.6};font-size:${big ? "1.15rem" : "1.02rem"}${big ? ";letter-spacing:.02em;word-spacing:.06em" : ""}}
+    h1{font-family:${HEAD};font-weight:400;font-size:2rem;line-height:1.2;margin:0 0 .5rem;padding-bottom:.6rem;border-bottom:3px double currentColor}
+    h2{font-family:${HEAD};font-weight:400;font-size:1.45rem;line-height:1.25;margin:2.4rem 0 .5rem;padding-bottom:.25rem;border-bottom:1px solid currentColor;break-after:avoid}
+    h2 span{font-family:${CAPS};font-size:.95rem;letter-spacing:.14em;display:block}
+    h3{font-family:${CAPS};font-weight:400;font-size:1.05rem;letter-spacing:.1em;margin:1.4rem 0 .2rem;break-after:avoid}
+    ol{padding-left:1.7rem} li{margin:.7rem 0;break-inside:avoid} ul li{margin:.3rem 0} ul.notes{padding-left:1.2rem} ul.notes li{margin:.6rem 0}
+    .ck{display:inline-block;width:.95em;height:.95em;border:2px solid currentColor;vertical-align:-.12em;margin-right:.25em;position:relative}
+    .ck.on::after{content:"";position:absolute;left:.2em;top:-.2em;width:.36em;height:.8em;border:solid ${hc ? "#000" : "#7d1717"};border-width:0 3px 3px 0;transform:rotate(40deg)}
+    .src{font-size:.92rem;color:${hc ? "#000" : "#3d3124"};margin-top:.15rem}
+    .story{font-style:italic;color:${hc ? "#000" : "#3d3124"}} .hints{font-size:.95rem;color:${hc ? "#000" : "#3d3124"}}
+    .sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+    code{font-family:"Special Elite",ui-monospace,Menlo,Consolas,"Courier New",monospace;font-size:1.05em;letter-spacing:.08em;text-decoration:underline;text-underline-offset:.2em}
+    strong{font-weight:${big || hc ? 700 : 400};text-decoration:underline;text-underline-offset:.18em} u{text-decoration-style:double}
+    :focus-visible{outline:3px solid currentColor;outline-offset:2px}
+    @media print{body{margin:0;max-width:none;padding:0;font-size:10.5pt;background:none}}</style></head><body><main>
     <h1>Answer sheet: ${E(cfg.meta.title)}</h1>
-    <p>${E(cfg.meta.course || "")} · ${st.verified} of ${st.total} items checked · empty box = not yet checked<br>
+    <p>${cfg.meta.course ? E(cfg.meta.course) + " · " : ""}${st.verified} of ${st.total} items checked · an empty box means not yet checked · ${notes.length} accessibility ${notes.length === 1 ? "note" : "notes"} (at the end)<br>
     Exit password: <code>${E(cfg.finish?.exitPassword || "(none)")}</code> · Grading: ${cfg.scoring?.mode === "deductions" ? "accuracy" : "completion"}</p>
     <p><em>Check every item against your textbook or sources. Content written with AI help can contain mistakes. Mark items as checked in the editor.</em></p>
-    ${rooms}</body></html>`;
-  const frame = h("iframe", { title: "Answer sheet" }); frame.srcdoc = doc;
-  overlay("Answer sheet: for instructors only", frame, [h("button", { class: "inkline", onclick: () => frame.contentWindow.print() }, icon("print"), "Print")], true);
+    ${rooms}${check}</main></body></html>`;
+}
+document.getElementById("btn-review").onclick = () => {
+  const frame = h("iframe", { title: "Answer sheet" }); frame.srcdoc = answerSheetHtml();
+  overlay("Answer sheet: for instructors only", frame, [h("button", { class: "inkline", id: "sheet-print", onclick: () => frame.contentWindow.print() }, icon("print"), "Print")], true);
 };
 
+applyDisplay();
 render();
 </script>
 </body>
