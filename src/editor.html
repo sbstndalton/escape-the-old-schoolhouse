@@ -152,6 +152,11 @@
   .addmenu button .icw{grid-row:1/3;font-size:1.15rem;color:var(--ink)}
   .addmenu button:hover b{text-decoration:underline}
   nav .foot{padding:.5rem .2rem 0;font-size:.88rem;color:var(--parch);display:flex;align-items:center;gap:.4rem}
+  /* where the work is saved: one line, a button to keep a copy, and the help mark */
+  nav .foot.save{flex-wrap:wrap;gap:.1rem .3rem;padding-top:.9rem;margin-top:.6rem;border-top:1px solid rgba(232,217,181,.28)}
+  nav .foot.save .line{flex:1 1 100%;margin:0;font-size:.92rem;line-height:1.45}
+  nav .foot.save .line span{display:block}
+  nav .foot.save .cut{font-size:.9rem;padding-left:0}
   nav .gap{margin-top:auto}
   /* display options: two brass switches at the foot of the cabinet */
   #display-toggles{display:flex;flex-direction:column;gap:.45rem;padding:1rem .3rem 0}
@@ -718,9 +723,71 @@ document.addEventListener("keydown", e => {
   if (tools.classList.contains("open")) { closeTools(); more.focus(); }
 });
 
+/* ===================== Saving =====================
+   Work is saved in this browser as the teacher types. Alongside it we keep a little bookkeeping (meta): how many
+   changes there have been, and how many there were when the last backup file was downloaded, so the page can say
+   plainly where the work is and warn before the tab is closed with changes that exist nowhere else. */
 function load(){ try { const s = localStorage.getItem(STORE); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
+const META = STORE + "-meta";
+let meta = (() => { try { return JSON.parse(localStorage.getItem(META)) || null; } catch(e){ return null; } })() || { rev: 0, backupRev: 0, backupAt: 0, savedAt: 0 };
+let stored = !!load();                // is anything of this escape room saved in this browser yet?
 let saveTimer = null;
-function changed(){ clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(cfg)); } catch(e){} }, 300); refreshStatus(); refreshAnswerKey(); }
+function saveNow(){
+  clearTimeout(saveTimer); saveTimer = null;
+  try { localStorage.setItem(STORE, JSON.stringify(cfg)); meta.savedAt = Date.now(); meta.failed = false; stored = true; }
+  catch(e){ meta.failed = true; }
+  try { localStorage.setItem(META, JSON.stringify(meta)); } catch(e){}
+  refreshSave();
+}
+function changed(){ meta.rev++; clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 300); refreshStatus(); refreshAnswerKey(); }
+// Changes that are only in this browser: nothing has been backed up since they were made.
+const unbacked = () => meta.rev > meta.backupRev;
+addEventListener("beforeunload", e => { if (saveTimer) saveNow(); if (unbacked()) { e.preventDefault(); e.returnValue = ""; } });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && saveTimer) saveNow(); });
+addEventListener("pagehide", () => { if (saveTimer) saveNow(); });
+const when = t => { const d = new Date(t), now = new Date(), time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return d.toDateString() === now.toDateString() ? "at " + time : "on " + d.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" }) + " at " + time; };
+/* The one line that says where the work is: "Saved in this browser at 3:42 pm. Not backed up yet." */
+function saveWords(){
+  if (meta.failed) return ["This browser couldn't save your work.", "Download a backup to keep it."];
+  if (!stored) return ["Nothing saved in this browser yet.", "If you worked on this before, open your saved file."];
+  const saved = meta.savedAt ? `Saved in this browser ${when(meta.savedAt)}.` : "Saved in this browser.";
+  if (!meta.backupAt) return [saved, "Not backed up yet."];
+  return [saved, unbacked() ? `Changed since your backup ${when(meta.backupAt)}.` : `Backup downloaded ${when(meta.backupAt)}.`];
+}
+const saveBoxes = new Set();         // every place the save line is shown (the cabinet, the guided steps)
+function refreshSave(){ saveBoxes.forEach(fill => fill()); }
+function saveStatus(id, cls){
+  const line = h("p", { class: "line", id: id + "-line" });
+  const help = tip("Your work is saved in this browser, on this computer only, as you type. Another browser or computer won't have it, and clearing your browsing history removes it. A backup is one file you keep: it plays as the game in any browser, and you can open it here to keep working.", "saving");
+  const openBtn = h("button", { type: "button", class: "cut", id: id + "-open", onclick: () => document.getElementById("file").click() }, icon("folder"), "Open your saved file");
+  const backBtn = h("button", { type: "button", class: "cut", id: id + "-backup", onclick: backup }, icon("save"), "Download a backup");
+  const box = h("div", { class: cls, id }, line, openBtn, backBtn, help);
+  const fill = () => {
+    const [a, b] = saveWords(); line.replaceChildren(h("span", {}, a), " ", h("span", {}, b));
+    const fresh = !stored && !meta.failed;
+    const moving = document.activeElement === (fresh ? backBtn : openBtn);
+    openBtn.hidden = !fresh; backBtn.hidden = fresh; if (moving) (fresh ? openBtn : backBtn).focus();
+  };
+  saveBoxes.add(fill); fill();
+  return box;
+}
+/* A backup is the game file itself: it plays in any browser, and it opens again in this editor. */
+const fileName = s => String(s || "").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "Escape room";
+function backedUp(){ meta.backupRev = meta.rev; meta.backupAt = Date.now(); saveNow(); }
+function backup(){
+  download(`${fileName(cfg.meta?.title)} (backup).html`, gameHtml(), "text/html"); backedUp();
+  toast("Backup downloaded to your Downloads folder. Keep it somewhere safe. To work on it again, open it in this editor.");
+}
+
+/* The sample was written with AI help; a teacher's own words were not. Items whose wording is still the sample's
+   (and that no one has checked) are the only ones the "written with AI help" warning is about. */
+const stripCheck = o => JSON.stringify(o, (k, v) => (k === "verified" || k === "source") ? undefined : v);
+let sampleSigs = null;
+function sampleUnchecked(c){
+  if (!sampleSigs) sampleSigs = new Set(ER.reviewItems(SAMPLE).map(x => stripCheck(x.item)));
+  return ER.reviewItems(c).filter(x => x.item.verified !== true && sampleSigs.has(stripCheck(x.item))).length;
+}
 
 /* ===================== Tiny DOM helper ===================== */
 function h(tag, props = {}, ...kids){
@@ -1162,7 +1229,8 @@ function refreshAnswerKey(){ const d = document.getElementById("answer-key"); if
 function draftNote(st){
   if (!st.unverified) return null;
   const more = h("p", { id: "draft-note-more", hidden: !noteOpen },
-    "Everything in the sample was written with AI help and may contain mistakes. Check each item against your textbook or sources, then press its seal (“I checked this is correct”). Students see a “Draft” notice until every item is checked. The Answer sheet lists everything with the answers, ready to print.");
+    sampleUnchecked(cfg) ? "Everything in the sample was written with AI help and may contain mistakes. " : null,
+    "Check each item against your textbook or sources, then press its seal (“I checked this is correct”). Students see a “Draft” notice until every item is checked. The Answer sheet lists everything with the answers, ready to print.");
   const btn = h("button", { id: "draft-note", "aria-expanded": String(noteOpen), "aria-controls": "draft-note-more", onclick: () => { noteOpen = !noteOpen; more.hidden = !noteOpen; btn.setAttribute("aria-expanded", String(noteOpen)); btn.querySelector(".more").textContent = noteOpen ? "fold" : "why?"; } },
     h("span", { id: "draft-line" }, `${st.unverified} of ${st.total} items not checked yet.`), h("span", { class: "more" }, noteOpen ? "fold" : "why?"));
   return h("div", { class: "note" }, btn, more);
@@ -1330,6 +1398,7 @@ function choose(key){
 }
 function renderNav(){
   const nav = document.getElementById("cab");
+  if (!cabSave) cabSave = saveStatus("save-status", "foot save");
   const drawer = (key, ic, label, mark, acts) => h("div", { class: "item" + (sel === key ? " sel" : ""), onclick: e => { if (!e.target.closest(".acts")) choose(key); } },
     h("button", { class: "pull", "aria-current": sel === key ? "page" : null },
       h("span", { class: "holder" }, icon(ic), h("span", { class: "t" }, label), mark || null)),
@@ -1366,9 +1435,9 @@ function renderNav(){
         tip("Plain backgrounds, black on white, and heavier outlines, here and in the student preview. It follows your system's contrast setting until you choose.", "High contrast")),
       h("div", { class: "opt" }, toggle("readable-toggle", "Readable text", readableOn(), on => { prefSet(PREF.readable, on ? "on" : "off"); applyDisplay(); say(`Readable text ${on ? "on" : "off"}.`); }),
         tip("A plain, larger typeface with more room between letters and lines, in place of the old-book lettering.", "Readable text"))),
-    h("div", { class: "foot" }, "Saved in this browser as you type", tip(["Changes save automatically in this browser. Use Save project or Export to keep a file you can share or reopen."], "saving"))].filter(Boolean));
+    cabSave].filter(Boolean));
 }
-let meterText = "", navSig = "";
+let meterText = "", navSig = "", cabSave = null;
 function refreshStatus(){
   const st = ER.reviewStatus(cfg), text = `${st.verified}/${st.total}`;
   if (text !== meterText) { meterText = text; document.getElementById("meter").replaceChildren(h("b", {}, st.verified), " / ", h("b", {}, st.total), " ", h("span", { class: "w" }, "checked")); }
@@ -1579,7 +1648,7 @@ document.getElementById("btn-export").onclick = () => {
       h("div", { class: "slip" }, h("div", { class: "to" }, "To: Moodle or Canvas gradebook"), h("h3", {}, "SCORM package", tip("Moodle: Add an activity → SCORM package. Canvas: SCORM tool. Upload the zip without unzipping it.", "SCORM package")),
         h("button", { id: "export-scorm", class: "stamp", onclick: async () => { if (await checkReady("export")) { download(`${slug()}-SCORM.zip`, ER.scorm(gameHtml(), cfg.meta.title), "application/zip"); toast("SCORM package downloaded."); } } }, icon("save"), "Download SCORM .zip")),
       h("div", { class: "slip" }, h("div", { class: "to" }, "To: anywhere, as one file"), h("h3", {}, "Web page", tip("Double-click it, upload it as a Moodle or Canvas file, or put it on a website. Pair it with the exit password and an LMS quiz for credit. You can also reopen this file in the editor later.", "Web page")),
-        h("button", { id: "export-html", class: "stamp", onclick: async () => { if (await checkReady("export")) { download(`${slug()}.html`, gameHtml(), "text/html"); toast("Game file downloaded."); } } }, icon("save"), "Download game .html"))),
+        h("button", { id: "export-html", class: "stamp", onclick: async () => { if (await checkReady("export")) { download(`${slug()}.html`, gameHtml(), "text/html"); backedUp(); toast("Game file downloaded. It is also your backup: open it here to keep working."); } } }, icon("save"), "Download game .html"))),
     h("p", { class: "typed", id: "export-a11y" }, notes ? `The accessibility check has ${notes} ${notes === 1 ? "note" : "notes"} on what you wrote. ` : "The accessibility check has nothing to flag. ",
       notes ? h("button", { class: "inkline", onclick: () => { document.querySelector(".overlay")?.close(); choose("a11y"); } }, "Read the notes") : null));
   overlay("Export", box);
@@ -1593,7 +1662,7 @@ document.getElementById("file").onchange = async e => {
     const next = /\.html?$/i.test(f.name) ? ER.configFromHtml(text) : JSON.parse(text);
     if (!next || !Array.isArray(next.rooms)) throw new Error("This file doesn't contain an escape room.");
     if (!(await ask(`Open “${next.meta?.title || f.name}”?`, ["This replaces what's in the editor now.", "Save your project first if you need to keep it."], { ok: "Open it", cancel: "Keep what I have" }))) return;
-    cfg = next; sel = "settings"; tabOf.clear(); changed(); render(); toast("Opened " + f.name); document.getElementById("page-title").focus();
+    cfg = next; sel = "settings"; tabOf.clear(); changed(); backedUp(); render(); toast("Opened " + f.name); document.getElementById("page-title").focus();
   } catch (err) { tell("That file couldn't be opened", [err.message, "Choose a project file (.json) saved from this editor, or a game file (.html) exported from it."]); }
 };
 document.getElementById("btn-new").onclick = () => {
@@ -1660,7 +1729,7 @@ function answerSheetHtml(){
     <h1>Answer sheet: ${E(cfg.meta.title)}</h1>
     <p>${cfg.meta.course ? E(cfg.meta.course) + " · " : ""}${st.verified} of ${st.total} items checked · an empty box means not yet checked · ${notes.length} accessibility ${notes.length === 1 ? "note" : "notes"} (at the end)<br>
     Exit password: <code>${E(cfg.finish?.exitPassword || "(none)")}</code> · Grading: ${cfg.scoring?.mode === "deductions" ? "accuracy" : "completion"}</p>
-    <p><em>Check every item against your textbook or sources. Content written with AI help can contain mistakes. Mark items as checked in the editor.</em></p>
+    <p><em>Check every item against your textbook or sources.${sampleUnchecked(cfg) ? " The sample content was written with AI help and can contain mistakes." : ""} Mark items as checked in the editor.</em></p>
     ${rooms}${check}</main></body></html>`;
 }
 document.getElementById("btn-review").onclick = () => {
