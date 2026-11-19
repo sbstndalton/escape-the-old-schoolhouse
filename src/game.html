@@ -796,11 +796,37 @@ h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
 .story .go{width:100%}
 .hint .hb{display:inline;margin-right:.3em}
 @supports selector(:has(a)){
-  :is(.story,.icard,.hint,.rules,.result,.grab):has(> button:is(:focus-visible,.kf:focus)){outline:3px solid var(--fo);outline-offset:3px;box-shadow:0 0 0 3px var(--fi)}
-  :is(.story,.icard,.hint,.rules,.result,.grab) > button:is(:focus-visible,.kf:focus){outline:none!important;box-shadow:none!important}
+  :is(.story,.icard,.hint,.rules,.result,.grab):has(> button:not(.listen):is(:focus-visible,.kf:focus)){outline:3px solid var(--fo);outline-offset:3px;box-shadow:0 0 0 3px var(--fi)}
+  :is(.story,.icard,.hint,.rules,.result,.grab) > button:not(.listen):is(:focus-visible,.kf:focus){outline:none!important;box-shadow:none!important}
 }
 .shackle{order:-1}
 .msg:empty{display:none}
+
+/* ---------- Read aloud: a small inked "Listen" label at the foot of a paper ----------
+   It is its own button and its own Tab stop, drawn above the paper's stretched heading button (z-index), so a
+   click on it never opens the paper. It is shown only while a voice on this device is ready and the notebook's
+   "Read aloud buttons" switch is on (html[data-read=on]). Reading: it is inked in, says "Stop", and shows a
+   square instead of the speaker ([data-reading]); the state is never colour alone. */
+.listen{display:none;position:relative;z-index:3;align-items:center;gap:.4rem;width:max-content;max-width:100%;min-width:2.75rem;min-height:2.75rem;margin:.4rem 0 0 auto;padding:.3rem .7rem .26rem .55rem;
+  font:400 .9rem/1.2 var(--f-d);letter-spacing:.12em;text-align:left;color:#6e1a12;background:transparent;border:1.5px solid rgba(110,26,18,.75);border-radius:.3rem;cursor:pointer}
+[data-read=on] .listen{display:flex}
+.listen svg{flex:none;width:1.15rem;height:1.15rem}
+.listen .sq,.listen[data-reading] .sp{display:none}
+.listen[data-reading] .sq{display:block}
+.listen:hover{background:rgba(110,26,18,.09)}
+.listen[data-reading]{color:#fbf1dc;background:#6e1a12;border-color:#4a0f09}
+.listen.dark{color:var(--parch);background:rgba(12,8,5,.84);border-color:rgba(232,217,181,.75)}
+.listen.dark:hover{background:rgba(40,28,16,.92)}
+.listen.dark[data-reading]{color:#1d1205;background:#f6dfa0;border-color:#f6dfa0}
+.story .listen,.rules .listen,.icard .listen,.hint .listen,.result .listen{margin-top:.45rem}
+.slip .listen{clear:both}
+.qcard .listen{margin-top:.6rem}
+.mech > .listen{margin:-.35rem auto 0}
+#mf > .listen{align-self:flex-start;margin:-.35rem 0 0}
+.sheet > .listen{margin:-.6rem 0 .7rem}
+.page #read-why{margin:.7rem .3rem .65rem}
+/* The sentence being read: dark ink on a pale lamp-yellow band, underlined (not colour alone). Nothing moves. */
+::highlight(er-read){color:#1d1205;background-color:#ffe7ae;text-decoration:underline 2px #1d1205;text-underline-offset:.2em}
 
 /* ---------- One column: phones held upright, narrow frames, and any window once the text is enlarged ---------- */
 [data-shape=tall] #stage,[data-shape=tall][data-screen] #stage{grid-template-columns:minmax(0,1fr);grid-template-rows:auto;grid-template-areas:"head" "obj" "mech";gap:1.1rem;padding:.5rem .9rem 3.6rem}
@@ -906,6 +932,10 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
 [data-contrast=more] .page li button{margin:.25rem 0;padding-left:.5rem;padding-right:.5rem;border:2px solid #000}
 [data-contrast=more] .doorway,[data-contrast=more] .dawn{opacity:1}
 [data-contrast=more][data-shape=tall] .doorway,[data-contrast=more][data-shape=tall] .dawn{display:none}
+[data-contrast=more] .listen{color:#000;background:#fffaf0;border:2px solid #000}
+[data-contrast=more] .listen[data-reading]{color:#fff;background:#000}
+[data-contrast=more] .listen.dark{color:#fff;background:#000;border-color:#fff}
+[data-contrast=more] .listen.dark[data-reading]{color:#000;background:#fff}
 
 /* ---------- Forced colours (Windows High Contrast and similar) ----------
    The system picks the colours. Drawn surfaces (gradients, shadows) disappear there, so every control, paper and
@@ -932,6 +962,9 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
   [aria-disabled=true],.stud:disabled{color:GrayText;border-color:GrayText;opacity:1}
   .lock.unlocked .lbody,.lock.unlocked .esc{border:3px double Highlight}
   .seal{border:2px solid CanvasText}
+  .listen,.listen.dark{color:ButtonText;background:ButtonFace;border:1px solid ButtonText}
+  .listen[data-reading],.listen.dark[data-reading]{color:HighlightText;background:Highlight;border:2px solid ButtonText}
+  ::highlight(er-read){color:HighlightText;background-color:Highlight}
   svg{forced-color-adjust:auto}
   #watch svg,.key svg,.shackle svg,.sitter svg{forced-color-adjust:none}
 }
@@ -1016,6 +1049,9 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
         <p class="why" id="motion-why" hidden>Your device asks for less motion, so animations stay off.</p></li>
       <li><button type="button" id="contrast-toggle" role="switch" aria-checked="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg><span class="lbl">High contrast</span><em class="st" aria-hidden="true">off</em></button></li>
       <li><button type="button" id="readable-toggle" role="switch" aria-checked="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 19 9.500 5h1L16 19M6 14.500h8M17 19v-6.500M17 12.500c.6-.9 1.400-1.300 2.300-1.300 1.200 0 1.700.8 1.700 2V19"/></svg><span class="lbl">Readable text</span><em class="st" aria-hidden="true">off</em></button></li>
+      <li id="read-row"><button type="button" id="read-toggle" role="switch" aria-checked="true" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 9.500h3.500L12 5.500v13l-4.500-4H4z"/><path d="M15.500 9a4 4 0 0 1 0 6M18 6.500a7.500 7.500 0 0 1 0 11"/></svg><span class="lbl">Read aloud buttons</span><em class="st" aria-hidden="true">on</em></button>
+        <p class="why" id="read-why">Read aloud isn’t available in this browser.</p></li>
+      <li id="read-rate-row" hidden><button type="button" id="read-rate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 17a8 8 0 1 1 16 0M12 17l4-5M4 17h2M18 17h2M12 9V7.500"/></svg><span class="lbl">Reading speed<span class="sr">:</span></span><em class="st" id="read-rate-v">normal</em></button></li>
       <li><button type="button" id="clock-toggle" role="switch" aria-checked="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="13" r="7.500"/><path d="M12 9v4l2.500 2M10 3h4M4 4l16 16"/></svg><span class="lbl">Hide the clock</span><em class="st" aria-hidden="true">off</em></button></li>
       <li><button type="button" id="restart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12a7 7 0 1 0 2.500-5.400M5 4v3.500h3.500"/></svg><span>Start over</span></button></li>
     </ul>
@@ -1026,6 +1062,7 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
       <li>Combination locks: take the clues in order; the codes they point to, in that order, open the lock. Set each dial with the arrows above and below it or the arrow keys, or type the whole code in the box labelled “Type the whole code instead”. Then press “Pull the shackle”.</li>
       <li>Other locks: press the button named on the handle’s tag (“Check answers”, “Check order” or “Submit”).</li>
       <li>Every room has a Describe this room button. It lists everything in the room as text.</li>
+      <li id="read-tip" hidden>Listen buttons read a paper aloud with a voice on this device; nothing is sent anywhere. Press the button again, or Esc, to stop. This is not a screen reader, and it works alongside one.</li>
       <li>Every sound comes with a message on screen, so the game plays the same with sound off.</li>
     </ul>
   </div></div>
@@ -1233,6 +1270,188 @@ const lockText = s => fmt(deco(s));
 const inline = (s, cls = "") => paras(s, cls).replace(/<p/g, "<span").replace(/<\/p>/g, "</span>");   // paragraphs that may sit inside a button
 const rot = i => (((i * 37) % 7) - 3) * .32;
 
+/* ===================== Read aloud: a Listen button on each paper ===================== */
+/* For players who would rather listen than read (dyslexic readers, tired eyes). It is NOT a screen reader and never
+   acts like one: nothing is read until a Listen button is pressed, it adds no live region, and a screen reader keeps
+   working as before (a player who presses Listen while one runs has chosen to hear both).
+   It uses the browser's own speech (speechSynthesis), and ONLY voices with localService === true: some browsers
+   also offer online voices (Chrome's "Google …" voices) that send the text to a server, and those are never used.
+   If there is no local voice for the content's language, or no speech at all, the buttons are not shown and the
+   notebook says so. Text is read a sentence at a time (Chrome stops long utterances), and the sentence being read
+   is marked with a CSS highlight (no change to the page, no motion) where the browser supports it.
+   Reading stops on a second press, another Listen, a room change, a sheet opening or closing, the notebook, Esc
+   (which opens or closes one of those), or leaving the page. */
+let READS = {};                         // what each Listen button on this screen reads: key -> (button) => [text or element, …]
+const SPEAKER = svg("0 0 20 20", `<path class="sp" d="M2.500 7.500h3L10 4v12l-4.500-3.500h-3z" fill="currentColor"/><path class="sp" d="M13 7.200a3.800 3.800 0 0 1 0 5.600M15.300 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.700" stroke-linecap="round"/><rect class="sq" x="5" y="5" width="10" height="10" rx="1.200" fill="currentColor"/>`);
+/* A Listen button. Its name is its visible word plus what it reads: "Listen to Clue 1", and while it reads, "Stop
+   reading Clue 1" (the word on it is then "Stop"). The name always contains the visible word, so voice control
+   finds it (WCAG 2.5.3); it is not a pressed/unpressed toggle, because a toggle must keep one name. A screen reader
+   user hears the change in the voice itself, so nothing is sent to the live region. */
+function listen(key, what, parts, cls = ""){
+  READS[key] = parts;
+  return `<button type="button" class="listen${cls ? " " + cls : ""}" data-key="${esc(key)}" data-what="${esc(what)}">${SPEAKER}<span class="lw">Listen</span><span class="sr lt2"> to ${esc(what)}</span></button>`;
+}
+const READ = (() => {
+  const KEY = "escape-room-read", RKEY = "escape-room-read-rate", RATES = { normal: 1, faster: 1.25, slower: .8 }, NEXT = { normal: "faster", faster: "slower", slower: "normal" };
+  let SS = null, U = null;
+  try { SS = window.speechSynthesis || null; U = window.SpeechSynthesisUtterance || null; } catch(e){}
+  if (!SS || typeof U !== "function" || typeof SS.speak !== "function") SS = null;
+  let on = store.get(KEY) !== "off", rate = RATES[store.get(RKEY)] ? store.get(RKEY) : "normal", voice = null, cur = null, dog = 0;
+  const HL = (() => { try { return !!(window.CSS && CSS.highlights && typeof window.Highlight === "function"); } catch(e){ return false; } })();
+  const norm = l => String(l || "").toLowerCase().replace(/_/g, "-");
+  /* Novelty voices (on Macs) are real local voices but poor for reading; they are used only if nothing else fits. */
+  const NOVELTY = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Deranged|Good News|Hysterical|Jester|Organ|Pipe Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox)\b/i;
+  function pick(){
+    let vs = []; try { vs = SS ? Array.from(SS.getVoices() || []) : []; } catch(e){}
+    const want = norm(root.lang || "en"), prim = want.split("-")[0];
+    const mine = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language]).map(norm);
+    const score = v => (norm(v.lang) === want ? 8 : 0) + (mine.includes(norm(v.lang)) ? 4 : 0) + (v.default ? 2 : 0) - (NOVELTY.test(v.name || "") ? 20 : 0);
+    /* localService === true only: an online voice would send the words to a server. */
+    const fit = vs.filter(v => v && v.localService === true && norm(v.lang).split("-")[0] === prim);
+    voice = fit.sort((a, b) => score(b) - score(a))[0] || null;
+    render();
+  }
+  function language(){ try { return new Intl.DisplayNames([root.lang || "en"], { type: "language" }).of(root.lang || "en") || root.lang; } catch(e){ return root.lang || "this language"; } }
+  function render(){
+    const ok = !!voice, t = $("#read-toggle"), w = $("#read-why");
+    root.dataset.read = ok && on ? "on" : "off";
+    setSwitch(t, on); t.hidden = !ok; w.hidden = ok;
+    $("#read-rate-row").hidden = !ok || !on; $("#read-rate-v").textContent = rate; $("#read-tip").hidden = !ok || !on;
+    w.textContent = SS ? `Read aloud isn’t available in this browser: this device has no ${language()} voice that works offline. (Only voices on the device are used, so the words are never sent anywhere.)`
+      : "Read aloud isn’t available in this browser.";
+    if (!ok || !on) stop();
+    paint();
+  }
+  /* The words to read, from the page itself: each part is a string or an element. Text hidden from everyone
+     (aria-hidden, the Listen button itself, screen-reader-only helpers) is left out. Blocks become separate
+     sentences. segs maps each piece of text back to its text node, so a sentence can be highlighted. */
+  const BLOCK = /^(P|LI|H[1-6]|DIV|UL|OL|LEGEND|LABEL|FIELDSET|BR|TD|TH|TR|BLOCKQUOTE)$/;
+  function collect(parts){
+    let T = ""; const segs = [];
+    const brk = () => { if (T && !T.endsWith("\n")) T += "\n"; };
+    const walk = el => { for (const n of el.childNodes) {
+      if (n.nodeType === 3) { if (n.nodeValue) { segs.push({ n, at: T.length }); T += n.nodeValue; } continue; }
+      if (n.nodeType !== 1 || n.matches(".listen,.sr,[aria-hidden=true],[hidden],script,style,svg")) continue;
+      const d = n.isConnected ? getComputedStyle(n).display : "";
+      if (d === "none") continue;
+      const b = BLOCK.test(n.tagName) || /^(block|flex|grid|list-item|table)/.test(d);
+      if (b) brk(); walk(n); if (b) brk();
+    } };
+    for (const p of parts || []) { if (p == null) continue; brk(); if (typeof p === "string") T += p; else walk(p); }
+    return { T, segs };
+  }
+  function sentences(s){
+    try { const sg = new Intl.Segmenter(root.lang || "en", { granularity: "sentence" }); return Array.from(sg.segment(s), x => [x.index, x.segment]); } catch(e){}
+    const out = [], re = /[^.!?…]+(?:[.!?…]+["'”’)\]]*)?\s*|[.!?…]+\s*/g; let m;
+    while ((m = re.exec(s)) && m[0]) out.push([m.index, m[0]]);
+    return out;
+  }
+  const MAX = 160;                       // a sentence longer than this is read in pieces, broken after a comma or a space
+  function pieces(s){
+    const out = []; let at = 0;
+    while (s.length - at > MAX) { const part = s.slice(at, at + MAX); let k = Math.max(part.search(/[,;:—–][^,;:—–]*$/) + 1, 0); if (k < 40) k = part.lastIndexOf(" ") + 1; if (k < 20) k = MAX; out.push([at, s.slice(at, at + k)]); at += k; }
+    out.push([at, s.slice(at)]); return out;
+  }
+  let PICTG = null, WORDY = /[A-Za-z0-9À-￿]/;
+  try { PICTG = new RegExp("[\\p{Extended_Pictographic}\\uFE0F\\u200D]", "gu"); WORDY = new RegExp("[\\p{L}\\p{N}]", "u"); } catch(e){}
+  /* What the voice is given: the same words, with marks that voices read badly smoothed out. */
+  function speakable(s){
+    let t = String(s); if (PICTG) t = t.replace(PICTG, " ");
+    t = t.replace(/[*|•·]+/g, ", ").replace(/\s[–—-]\s/g, ", ").replace(/\s+/g, " ").trim();
+    if (/^en\b/.test(norm(root.lang || "en"))) t = t.replace(/\b(Code|Clue|Dial|code|clue|dial|letter)\s+A\b/g, "$1 ay");   // a lone code letter A would be read as the word "a"
+    return t;
+  }
+  function chunk(parts){
+    const { T, segs } = collect(parts), out = [];
+    const node = (off, end) => { for (const s of segs) { const L = s.n.nodeValue.length; if (end ? off > s.at && off <= s.at + L : off >= s.at && off < s.at + L) return [s.n, off - s.at]; } return null; };
+    let pos = 0;
+    for (const block of T.split("\n")) {
+      for (const [i, sent] of sentences(block)) for (const [j, p] of pieces(sent)) {
+        const lead = p.length - p.trimStart().length, text = p.trim(); if (!WORDY.test(text)) continue;
+        const a = pos + i + j + lead, b = a + text.length, x = node(a, false), y = node(b, true);
+        let range = null; if (x && y) { try { range = document.createRange(); range.setStart(x[0], x[1]); range.setEnd(y[0], y[1]); } catch(e){ range = null; } }
+        out.push({ say: speakable(text), range });
+      }
+      pos += block.length + 1;
+    }
+    return out.filter(c => c.say);
+  }
+  function mark(c){
+    if (!HL) return;
+    try { if (!c.range || !c.range.startContainer.isConnected) return CSS.highlights.delete("er-read");
+      CSS.highlights.set("er-read", new Highlight(c.range));
+      /* In a sheet held up to the lamp (it scrolls), keep the sentence being read in sight. The room itself is never scrolled. */
+      const sh = c.range.startContainer.parentElement?.closest(".sheet");
+      if (sh) { const q = c.range.getBoundingClientRect(), a = sh.getBoundingClientRect(); if (q.height && (q.top < a.top || q.bottom > a.bottom)) sh.scrollTop += q.top - a.top - a.height / 3; }
+    } catch(e){}
+  }
+  function unmark(){ if (HL) { try { CSS.highlights.delete("er-read"); } catch(e){} } }
+  function paint(){ document.querySelectorAll(".listen").forEach(b => { const now = !!cur && cur.key === b.dataset.key;
+    if (now === b.hasAttribute("data-reading")) return;
+    b.toggleAttribute("data-reading", now); b.querySelector(".lw").textContent = now ? "Stop" : "Listen";
+    b.querySelector(".lt2").textContent = (now ? " reading " : " to ") + (b.dataset.what || ""); }); }
+  const alive = k => [...document.querySelectorAll(".listen")].some(b => b.dataset.key === k);
+  function next(){
+    const me = cur; if (!me) return;
+    if (me.i >= me.chunks.length || !alive(me.key)) return stop();       // finished, or the paper it reads has gone
+    const c = me.chunks[me.i], u = new U(c.say);
+    u.voice = voice; u.lang = voice.lang; u.rate = RATES[rate] || 1;
+    u.onstart = () => { if (cur === me && me.u === u) mark(c); };
+    u.onend = () => { if (cur !== me || me.u !== u) return; me.i++; next(); };
+    u.onerror = e => { if (cur !== me || me.u !== u) return; const k = e && e.error; stop();
+      if (k !== "interrupted" && k !== "canceled") say("Read aloud stopped: the voice didn’t work."); };
+    me.u = u; me.at = Date.now();                     // keeping a reference also stops Safari dropping the utterance early
+    try { if (SS.paused) SS.resume(); SS.speak(u); } catch(e){ stop(); }
+  }
+  /* Some engines now and then drop an utterance without an end event; if nothing is speaking or queued, go on. */
+  function watch(){ clearInterval(dog); dog = setInterval(() => { if (!cur) return clearInterval(dog);
+    try { if (!SS.speaking && !SS.pending && Date.now() - cur.at > 2500) { cur.i++; next(); } } catch(e){} }, 1000); }
+  function stop(){
+    const was = cur; cur = null; clearInterval(dog); unmark();
+    if (was || (SS && (SS.speaking || SS.pending))) { try { SS.cancel(); } catch(e){} }
+    paint();
+  }
+  function press(b){
+    if (!voice || !on) return;
+    const key = b.dataset.key;
+    if (cur && cur.key === key) return stop();
+    const fn = READS[key]; if (!fn) return;
+    let chunks = []; try { chunks = chunk(fn(b)); } catch(e){}
+    if (!chunks.length) return;
+    const busy = !!cur || SS.speaking || SS.pending;
+    stop();
+    const me = cur = { key, chunks, i: 0, at: Date.now() }; paint(); watch();
+    if (busy) setTimeout(() => { if (cur === me) next(); }, 60); else next();      // speak() straight after cancel() is dropped by some engines
+  }
+  function toggle(){ on = !on; store.set(KEY, on ? "on" : "off"); render(); say(on ? "Read aloud buttons are on: each paper has a Listen button." : "Read aloud buttons are off."); }
+  function speed(){ rate = NEXT[rate] || "normal"; store.set(RKEY, rate); render(); say(`Reading speed: ${rate}.`); }
+  if (SS) {
+    try { SS.cancel(); } catch(e){}                   // Chrome can still be reading from a page that was left or reloaded
+    try { if (SS.addEventListener) SS.addEventListener("voiceschanged", pick); else SS.onvoiceschanged = pick; } catch(e){}
+    [300, 1200, 3500].forEach(t => setTimeout(() => { if (!voice) pick(); }, t));     // voices load late, and not every browser says when
+    addEventListener("pagehide", stop);
+  }
+  return { pick, render, stop, press, toggle, speed, sync: paint, get voice(){ return voice; }, get reading(){ return cur ? cur.key : null; } };
+})();
+READ.pick();
+$("#read-toggle").onclick = READ.toggle; $("#read-rate").onclick = READ.speed;
+document.addEventListener("click", e => { const b = e.target.closest && e.target.closest(".listen"); if (b) { e.stopPropagation(); READ.press(b); } }, true);
+
+/* ===================== The first-visit accessibility prompt ===================== */
+/* Shared with the front page and the maker (ER.a11yAskOpen in shared.js; one flag, escape-room-a11y-asked). Here it
+   opens first thing on the title screen of a first visit (never in the editor's preview), and "Accessibility options"
+   on the title screen opens it again. Its switches drive the notebook's own switches, so every setting is stored,
+   applied and announced exactly as it is from the notebook, and shows at once behind the dialog. */
+const ASK_SW = { readable: "#readable-toggle", contrast: "#contrast-toggle", motion: "#motion-toggle", sound: "#sound-toggle-2", read: "#read-toggle", clock: "#clock-toggle" };
+function askA11y(opener){
+  READ.stop();
+  return ER.a11yAskOpen({ where: "game", opener,
+    later: "You can change them at any time with “Accessibility options” on the first screen, or in the notebook (the pocket watch).",
+    get: id => $(ASK_SW[id]).getAttribute("aria-checked") === "true",
+    set: (id, on) => { const b = $(ASK_SW[id]); if ((b.getAttribute("aria-checked") === "true") !== on) b.onclick(); },
+    locked: id => id === "motion" && RM.matches ? "Your device asks for less motion, so it stays off." : "" });
+}
+
 /* ===================== Clock (the pocket watch) ===================== */
 function fmtTime(sec){ return String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0"); }
 function elapsed(){ if (!S.start) return 0; const now = S.end || S.pausedAt || Date.now(); return Math.max(0, Math.floor((now - S.start - S.pausedMs)/1000)); }
@@ -1269,9 +1488,10 @@ let EX = [], exFrom = null;
 const ex = (html, opt = {}) => { EX.push({ html, opt }); return `data-ex="${EX.length-1}" aria-haspopup="dialog"`; };
 /* While a sheet or the notebook is open the scene behind it is inert: it can't be focused, clicked or read. */
 const modal = on => { try { scene.inert = !!on; } catch(e){} };
+const LISTEN_NAME = { "The note": "the note", "House rules": "the house rules", "Your result": "your result", "Room description": "the room description" };
 function examine(html, { cls = "", from = null, label = "Looking closely" } = {}){
-  const box = $("#examine"); exFrom = from || document.activeElement;
-  box.innerHTML = `<div class="sheet paper ${cls}"><button type="button" class="x" aria-label="Put it back">${ICON.x}</button><div id="ex-body">${html}</div><span class="foot" aria-hidden="true">Esc, or the close button, puts it back</span></div>`;
+  const box = $("#examine"); exFrom = from || document.activeElement; READ.stop();
+  box.innerHTML = `<div class="sheet paper ${cls}"><button type="button" class="x" aria-label="Put it back">${ICON.x}</button>${listen("sheet", LISTEN_NAME[label] || label, () => [$("#ex-body")])}<div id="ex-body">${html}</div><span class="foot" aria-hidden="true">Esc, or the close button, puts it back</span></div>`;
   box.setAttribute("aria-label", label); box.hidden = false; modal(true);
   const sh = box.firstElementChild; SND.play("rustle");
   if (sh.textContent.length < 700) box.setAttribute("aria-describedby", "ex-body"); else box.removeAttribute("aria-describedby");   // short papers are read out on opening
@@ -1287,7 +1507,7 @@ function examine(html, { cls = "", from = null, label = "Looking closely" } = {}
 }
 function unexamine(){
   const box = $("#examine"); if (box.hidden) return false;
-  box.hidden = true; box.innerHTML = ""; modal(false); SND.play("rustle");
+  READ.stop(); box.hidden = true; box.innerHTML = ""; modal(false); SND.play("rustle");
   document.querySelectorAll(".lit").forEach(e => e.classList.remove("lit"));
   const back = exFrom && exFrom.isConnected ? exFrom : stage.querySelector("h2") || stage; exFrom = null;
   back.focus(); return true;
@@ -1300,7 +1520,7 @@ stage.addEventListener("click", e => {
 
 /* ===================== Notebook (pause menu) ===================== */
 function openPause(){
-  if (!$("#pause").hidden) return; unexamine();
+  if (!$("#pause").hidden) return; unexamine(); READ.stop();
   if (S.start && !S.end && !S.pausedAt) S.pausedAt = Date.now();
   $("#wrongCount").textContent = S.wrong; drawClock(); resetRestart();
   $("#pause").hidden = false; modal(true); SND.play("rustle");
@@ -1320,7 +1540,7 @@ $("#restart").onclick = () => { if (!restartArmed) { restartArmed = true; const 
 document.addEventListener("keydown", e => {
   if (e.key === "Tab") {           // keep the keyboard inside whichever sheet is open
     const box = !$("#examine").hidden ? $("#examine") : !$("#pause").hidden ? $("#pause") : null; if (!box) return;
-    const f = [...box.querySelectorAll("button:not(:disabled), [tabindex='0']")]; if (!f.length) return;
+    const f = [...box.querySelectorAll("button:not(:disabled), [tabindex='0']")].filter(el => el.getClientRects().length); if (!f.length) return;   // only what is shown
     const i = f.indexOf(document.activeElement), j = e.shiftKey ? (i <= 0 ? f.length-1 : i-1) : (i === f.length-1 ? 0 : i+1);
     e.preventDefault(); f[j].focus(); f[j].classList.add("kf"); return;
   }
@@ -1343,7 +1563,8 @@ function updateHints(){
   const r = ROOMS[S.room-1]; const btn = $("#hint-btn"); if (!r || !btn) return;
   const list = roomHints(r), rules = ER.hintRules(CFG), lab = btn.querySelector("span");
   const shown = S.hintsShown[S.room] || 0, wrong = S.wrongIn[S.room] || 0;
-  $("#hints").innerHTML = list.slice(0,shown).map((h,i)=>`<div class="hint"><button type="button" class="hb" ${ex(`<h2>Hint ${i+1}</h2><p>${fmt(h)}</p>`, { label: "Hint " + (i+1) })}>Hint ${i+1}</button> <span>${fmt(h)}</span></div>`).join("");
+  $("#hints").innerHTML = list.slice(0,shown).map((h,i)=>`<div class="hint"><button type="button" class="hb" ${ex(`<h2>Hint ${i+1}</h2><p>${fmt(h)}</p>`, { label: "Hint " + (i+1) })}>Hint ${i+1}</button> <span>${fmt(h)}</span>${listen("hint-" + (i+1), "Hint " + (i+1), b => [b.parentElement.querySelector(".hb"), b.parentElement.querySelector(".hb + span")])}</div>`).join("");
+  READ.sync();             // a hint being read keeps its Stop state when the drawer is redrawn
   const note = $("#hint-note");
   /* A locked drawer is aria-disabled, not disabled, so it can still be reached and its reason read. */
   const lock = on => { if (on) btn.setAttribute("aria-disabled", "true"); else btn.removeAttribute("aria-disabled"); };
@@ -1398,7 +1619,7 @@ function pass(text, right){
   if (solvedRoom === S.room) return; solvedRoom = S.room;
   setMsg("good", deco(text)); if (right != null) count(right);
   /* The controls are switched off. The one that has focus is only marked aria-disabled, so focus is not thrown away. */
-  stage.querySelectorAll(".lock button, .mech button:not(.hb), #try, #answer, #mf input, #mf button").forEach(el => { if (el.id === "hint-btn") return;
+  stage.querySelectorAll(".lock button, .mech button:not(.hb):not(.listen), #try, #answer, #mf input, #mf button:not(.listen)").forEach(el => { if (el.id === "hint-btn") return;
     if (el === document.activeElement) el.setAttribute("aria-disabled", "true"); else el.disabled = true; });
   stage.querySelectorAll(".dial").forEach(d => { if (d !== document.activeElement) d.tabIndex = -1; d.setAttribute("aria-disabled", "true"); });
   const l = lockMove("");
@@ -1436,7 +1657,8 @@ const keyLock = (label, action, { form = "", total = 0, what = "right" } = {}) =
   ${total ? `<span class="counter" id="counter" aria-hidden="true"><span>0</span><em>of</em><span>${total}</span><em>${what}</em></span>` : ""}</div>`;
 /* Under every lock: one plain sentence on how to work it, then the result of the last try (#msg; it is also
    sent to the live region by setMsg). */
-const mech = (inner, room) => `<div class="mech">${room.type === "matching" ? "" : `<h3 class="sr">The lock</h3>`}${inner}<p class="how" id="how">${esc(ER.a11yHow(room))}</p><p class="msg" id="msg"></p>${hintBlock(room)}</div>`;
+const howListen = () => listen("how", "how to work the lock", () => [$("#how")], "dark");
+const mech = (inner, room) => `<div class="mech">${room.type === "matching" ? "" : `<h3 class="sr">The lock</h3>`}${inner}<p class="how" id="how">${esc(ER.a11yHow(room))}</p>${howListen()}<p class="msg" id="msg"></p>${hintBlock(room)}</div>`;
 
 /* The combination padlock: one dial per character. Each dial is a flat window with a strip of characters
    that slides up or down a notch. #answer is a real text field kept in step with the dials, so typing
@@ -1519,7 +1741,7 @@ let shown = false, fx = [], ajarFx = [];
 function go(n, { focus = true } = {}){
   const first = !shown; shown = true;
   const show = () => {
-    S.room=n; EX = []; unexamine(); solvedRoom = -1; roomState = null;
+    S.room=n; EX = []; unexamine(); READ.stop(); READS = {}; solvedRoom = -1; roomState = null;
     ajarFx.forEach(a => { try { a.cancel(); } catch(e){} }); ajarFx = [];
     renderDoors(); (n===0 ? intro : n>ROOMS.length ? finish : () => room(n))();
     fit();
@@ -1555,7 +1777,7 @@ const roomHead = (r, n) => `<div class="head"><h2 class="bplate" tabindex="-1"><
 function storyBtn(story, reference){
   if (!String(story||"").trim() && !String(reference||"").trim()) return "";
   const full = paras(story) + (reference ? `<p class="ref">${fmt(deco(reference))}</p>` : "");
-  return `<div class="story"><div class="clip">${inline(story || reference)}</div><button type="button" class="go" ${ex(full, { label: "The note" })}>Pick up the note to read it</button></div>`;
+  return `<div class="story"><div class="clip">${inline(story || reference)}</div><button type="button" class="go" ${ex(full, { label: "The note" })}>Pick up the note to read it</button>${listen("note", "the note", b => [b.parentElement.querySelector(".clip")])}</div>`;
 }
 /* "Describe this room": everything in the room as plain text in reading order (the note, each object with its
    code, the clues, the lock and how to work it). It is built from the content by ER.a11yDescribe, plus where
@@ -1585,17 +1807,19 @@ function intro(){
     <p class="placard"><span aria-hidden="true">${esc(title)}</span>${CFG.meta?.course ? `<small>${esc(CFG.meta.course)}</small>` : ""}</p>
     <h2 class="said" tabindex="-1">${esc(CFG.intro?.heading || title)}</h2>
     ${storyBtn(CFG.intro?.story)}
+    <button type="button" class="desc" id="a11y-options" aria-haspopup="dialog">${svg("0 0 16 16", `<circle cx="8" cy="2.600" r="1.500" fill="currentColor"/><path d="M2.500 5.500 8 6.600l5.500-1.100M8 6.600v3.400l-2.600 4.600M8 10l2.600 4.600" ${line}/>`)}<span>Accessibility options</span></button>
   </div>
   <div class="obj"><div class="titlerow deskrow">
     <div class="ledger"><label for="pname">Sign the guest ledger <span class="opt">(your name, for the certificate)</span></label>
       <div class="row"><span aria-hidden="true">Name</span><input id="pname" name="name" type="text" value="${esc(SCORM.name())}" autocomplete="name" maxlength="80"></div>
       <p class="old" aria-hidden="true">~~ ~~~~ ~~~~~~ &nbsp; ~~~ ~~~~~~~ ~~ &nbsp; ~~~~~ ~~~</p></div>
-    <div class="rules paper"><span class="pin" aria-hidden="true"></span><button type="button" class="rb" ${ex(rulesHtml, { label: "House rules" })}>House rules</button><span>${rules[0]} ${rules[1]}</span></div>
+    <div class="rules paper"><span class="pin" aria-hidden="true"></span><button type="button" class="rb" ${ex(rulesHtml, { label: "House rules" })}>House rules</button><span>${rules[0]} ${rules[1]}</span>${listen("rules", "the house rules", () => { const t = document.createElement("template"); t.innerHTML = rulesHtml; return [t.content]; })}</div>
     ${svg("0 0 40 60", `<path d="M30 2C22 14 17 26 15.500 41l2 .500C21 28 26 16 33 4z" fill="#d9cdb2" stroke="#6b5a40" stroke-width=".7"/><path d="M16.500 41 31 4" stroke="#6b5a40" stroke-width=".6"/><path d="M8 44h16v3l2 3v8H6v-8l2-3z" fill="#1b2430" stroke="#0b0f14"/><path d="M8 44h16v2.500H8z" fill="#3d4a58"/><path d="M9 51v5" stroke="#8fa3b5" stroke-width="1.200" stroke-linecap="round" opacity=".7"/>`, 'class="ink"')}
   </div></div>
   <button type="button" id="begin" class="pushplate">Begin<small>push to enter</small></button>`;
   const begin = () => { S.player = ($("#pname").value||"").trim() || "Student"; startTimer(); SND.play("press"); go(1); };
   $("#begin").onclick = begin;
+  $("#a11y-options").onclick = e => askA11y(e.currentTarget);
   $("#pname").onkeydown = e => { if (e.key === "Enter") begin(); };
   $("#pname").oninput = () => SND.play("key");
 }
@@ -1640,7 +1864,7 @@ function matching(r, n){
   const things = look === "books" ? "Books on the shelf" : look === "portraits" ? "Portraits on the wall" : "Cards in the drawer";
   stage.innerHTML = roomHead(r,n) + `<div class="obj"><h3 class="sr">${things}</h3>${LOOK[look](m)}
     <h3 class="cap">${esc(r.cluesHeading || "Clues")}</h3>
-    <ol class="clues" role="list" style="--per:${cn > 6 ? Math.ceil(cn/2) : Math.max(cn, 3)}">${m.answerCards.map((c,i)=>`<li style="--r:${(rot(i)*2.2).toFixed(2)}deg;--y:${((i*53)%5-2)*.14}rem"><div class="icard paper ruled"><span class="pin" aria-hidden="true"></span><button type="button" class="no" ${ex(`<h2>Clue ${clueName(i)}</h2><p>${fmt(c.clue)}</p>`, { cls: "ruled", label: "Clue " + clueName(i) })}>Clue ${clueName(i)}</button><span class="p">${fmt(c.clue)}</span></div></li>`).join("")}</ol></div>`
+    <ol class="clues" role="list" style="--per:${cn > 6 ? Math.ceil(cn/2) : Math.max(cn, 3)}">${m.answerCards.map((c,i)=>`<li style="--r:${(rot(i)*2.2).toFixed(2)}deg;--y:${((i*53)%5-2)*.14}rem"><div class="icard paper ruled"><span class="pin" aria-hidden="true"></span><button type="button" class="no" ${ex(`<h2>Clue ${clueName(i)}</h2><p>${fmt(c.clue)}</p>`, { cls: "ruled", label: "Clue " + clueName(i) })}>Clue ${clueName(i)}</button><span class="p">${fmt(c.clue)}</span>${listen("clue-" + i, "Clue " + clueName(i), b => [b.parentElement.querySelector(".no"), b.parentElement.querySelector(".p")])}</div></li>`).join("")}</ol></div>`
     + mech(dialLock(r, m), r);
   const check = () => {
     const typed = $("#answer").value.replace(/\s+/g,"").toUpperCase();
@@ -1659,7 +1883,8 @@ function quiz(r, n){
       q.kind==="choice"
         ? (q.choices||[]).map((c,j)=>String(c).trim()?`<label class="lever"><input type="radio" name="q${i}" value="${j}"><span class="lev" aria-hidden="true"></span><span class="lt">${fmt(c)}</span></label>`:"").join("")
         : `<span class="typer"><input type="text" name="q${i}" aria-label="Answer to question ${i+1}" autocomplete="off" spellcheck="false"></span>`
-    }</fieldset>`).join("")}</form></div>`
+    }${listen("q-" + (i+1), "question " + (i+1), b => { const f = b.closest("fieldset"), ch = [...f.querySelectorAll(".lt")];
+      return [`Question ${i+1}.`, f.querySelector("legend"), ...(ch.length ? ["Choices:", ...ch] : ["Type your answer."])]; })}</fieldset>`).join("")}</form></div>`
     + mech(`<div class="sbox"><span class="rivets" aria-hidden="true"><i></i><i></i><i></i><i></i></span>${keyLock(lockText(r.lockLabel) || "Strongbox", "Check answers", { form: "qf", total: qs.length })}</div>`, r);
   wireInputs($("#qf"));
   $("#qf").onsubmit = e => {
@@ -1789,10 +2014,11 @@ function reflection(r, n){
      to the next question, and on the last one it finishes. */
   stage.innerHTML = roomHead(r,n) + `<div class="obj"><div class="mirrorwrap" aria-hidden="true"><div class="mirror lock"><div class="glass"><span class="fog"></span></div></div></div></div>
     <form id="mf" novalidate>${qs.map((q,qi)=>`<fieldset class="qcard" data-q="${qi}"${qi ? " hidden" : ""}><legend><span class="qno">Question ${qi+1} of ${qs.length}<span class="sr">: </span></span> ${fmt(q.prompt)}</legend>${(q.options||[]).map(o=>
-     `<label class="lever paper"><input type="radio" name="q${qi}" value="${esc(o.profile)}"><span class="lev" aria-hidden="true"></span><span class="lt">${fmt(o.text)}</span></label>`).join("")}</fieldset>`).join("")}
+     `<label class="lever paper"><input type="radio" name="q${qi}" value="${esc(o.profile)}"><span class="lev" aria-hidden="true"></span><span class="lt">${fmt(o.text)}</span></label>`).join("")}${listen("q-" + (qi+1), "question " + (qi+1),
+       b => { const f = b.closest("fieldset"), ch = [...f.querySelectorAll(".lt")]; return [f.querySelector("legend"), ...(ch.length ? ["Choices:", ...ch] : [])]; }, "dark")}</fieldset>`).join("")}
     ${qs.length > 1 ? `<div class="qnav" role="group" aria-label="Go to a question">${qs.map((_,i)=>`<button type="button" class="n" data-go="${i}">${i+1}</button>`).join("")}</div>` : ""}
     <div class="titlerow" style="align-items:center"><button id="try" type="submit" class="pushplate"></button></div>
-    <p class="how" id="how">${esc(ER.a11yHow(r))}</p><p class="msg" id="msg"></p>${hintBlock(r)}</form>`;
+    <p class="how" id="how">${esc(ER.a11yHow(r))}</p>${howListen()}<p class="msg" id="msg"></p>${hintBlock(r)}</form>`;
   const form = $("#mf"), cards = [...form.querySelectorAll(".qcard")], fog = stage.querySelector(".fog");
   const answered = i => !!form.querySelector(`input[name=q${i}]:checked`);
   const paint = () => {
@@ -1803,7 +2029,7 @@ function reflection(r, n){
   };
   // The glass fogs over, the next question number is written while it is hidden, and it clears again.
   const show = (i, focus) => {
-    i = Math.max(0, Math.min(qs.length-1, i)); if (i === cur) return paint(); cur = i;
+    i = Math.max(0, Math.min(qs.length-1, i)); if (i === cur) return paint(); cur = i; READ.stop();
     if (!calm() && fog.animate) { fog.animate([{ opacity: 0 }, { opacity: 1, offset: .4 }, { opacity: 1, offset: .55 }, { opacity: 0 }], { duration: 620, easing: "ease-in-out" }); SND.play("rustle"); }
     paint(); setMsg("", "");
     if (focus) (cards[cur].querySelector("input:checked") || cards[cur].querySelector("input"))?.focus();   // the screen reader reads the new question (the group's legend) with the option
@@ -1862,7 +2088,7 @@ function finish(){
       <div class="seal" aria-hidden="true"><span>${prefix.length > 8 ? "&#10022;" : prefix.replace(/^([A-Z]+)(\d+)$/, "$1<br>$2")}</span></div>
     </div>
     <div class="side">
-      ${resultHead ? `<div class="result paper"><span class="pin" aria-hidden="true"></span><button type="button" class="h" ${ex(`<h2>${resultHead}</h2>${resultBody}`, { label: "Your result" })}>${resultHead}</button><span class="clip">${resultBody.replace(/<(\/?)p\b/g, (_, s) => `<${s}span${s ? "" : ' class="p"'}`)}</span></div>` : ""}
+      ${resultHead ? `<div class="result paper"><span class="pin" aria-hidden="true"></span><button type="button" class="h" ${ex(`<h2>${resultHead}</h2>${resultBody}`, { label: "Your result" })}>${resultHead}</button><span class="clip">${resultBody.replace(/<(\/?)p\b/g, (_, s) => `<${s}span${s ? "" : ' class="p"'}`)}</span>${listen("result", "your result", b => [b.parentElement.querySelector(".h"), b.parentElement.querySelector(".clip")])}</div>` : ""}
       <div class="titlerow noprint" style="gap:.7rem"><button type="button" class="pushplate small" id="print">Print / save as PDF</button>
         <button type="button" class="pushplate small" id="again">Play again</button></div>
       ${f.instructions ? `<p class="note">${fmt(f.instructions)}</p>` : ""}
@@ -1989,6 +2215,7 @@ bg.querySelector(".dust").innerHTML = Array.from({ length: 14 }, (_, i) => { con
 /* ===================== Start ===================== */
 function start(){
   if (/^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/.test(String(CFG.meta?.lang || ""))) root.lang = CFG.meta.lang;
+  READ.pick();                       // a voice for the content's language
   document.title = CFG.meta?.title || document.title;
   $("#game-title").textContent = CFG.meta?.title || "Escape Room";
   const review = ER.reviewStatus(CFG);
@@ -2000,6 +2227,7 @@ function start(){
     d.onclick = () => { const open = d.getAttribute("aria-expanded") !== "true"; d.setAttribute("aria-expanded", open); more.hidden = !open; SND.play("rustle"); };
   }
   fit(); renderDoors(); go(0);
+  if (!PREVIEW && !ER.a11yAsked()) askA11y(stage.querySelector("h2"));     // first visit: the accessibility prompt, first thing
 }
 /* A class link carries its own escape room in the address (#play=…), which is played instead of the one in this
    file. Anyone can make a link, so its content is untrusted: ER.fromLink limits its size, keeps only the shapes the
