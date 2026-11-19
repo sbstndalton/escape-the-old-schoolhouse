@@ -173,7 +173,7 @@ async function startWith(page, how) {
     // how students get it: Moodle, grade file
     await go(page, "How will your students get to the escape room?");
     await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor();
-    assert.match(await page.textContent("#wiz-errors"), /Choose where your students will play/);
+    assert.match(await page.textContent("#wiz-errors"), /Choose how your students will get to the escape room/);
     await page.click("label[for=where-moodle]");
     await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor();
     assert.match(await page.textContent("#wiz-errors"), /Choose how the grade gets to Moodle/);
@@ -365,6 +365,109 @@ async function startWith(page, how) {
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `no sideways scrolling on ${step}`);
     }
     await page.screenshot({ path: path.join(SHOTS, "wizard-phone-hub.png"), fullPage: true });
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("a class link: the recommended first choice, the password slip, Copy link, a QR code, and it plays to the certificate", async () => {
+    const page = await fresh();
+    await startWith(page, "empty"); await heading(page, "What is this escape room called?");
+    await page.fill("#wiz-title", "Week 3 check"); await go(page, "Your rooms");
+    await go(page, "Room 1: Write your questions");
+    await page.fill("#q1-prompt", "Who wrote Democracy and Education?"); await page.fill("#q1-a0", "Dewey");
+    await page.goto(base + "/editor.html#step=deliver"); await heading(page, "How will your students");
+    // the link is the first choice, and recommended
+    assert.equal(await page.getAttribute(".wradios input[type=radio] >> nth=0", "id"), "where-link");
+    assert.match(await page.textContent("label[for=where-link]"), /Share a class link \(recommended\).*Works anywhere: paste it into Moodle, Canvas, Google Classroom or an email/s);
+    await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor();
+    assert.equal(await page.evaluate(() => { document.querySelector("#wiz-errors a").click(); return document.activeElement.id; }), "where-link", "the error leads to the first choice");
+    await page.click("label[for=where-link]"); await go(page, "Share a class link");
+    assert.match(await page.textContent("#wiz-password-later"), /when you make the link in step 1/);
+    assert.match(await page.textContent("ol.walk"), /URL.*External URL.*Menus can differ by version.*External URL.*Load in a new tab.*Add Item.*Google Classroom/s);
+    assert.match(await page.textContent("#wiz-link-change"), /make a new link here and share that one: the old link keeps opening the old version/);
+    assert.match(await page.textContent("#wiz-link-backup"), /also a backup copy.*Open one I saved before.*paste the link/);
+    // making it asks for the exit password first, then about unchecked items
+    await page.click("#wiz-make-link"); await page.locator("#ask-password").waitFor();
+    await page.fill("#ask-password", "WEEK3GO"); await page.click("#ask-ok");
+    await page.locator(".modal #ask-ok").waitFor(); assert.match(await page.textContent(".modal"), /Share a draft\?.*Make the link anyway/s); await page.click("#ask-ok");
+    await page.locator("#wiz-link").waitFor();
+    assert.equal(await active(page), "wiz-link", "the keyboard goes to the link");
+    const link = await page.inputValue("#wiz-link");
+    assert.ok(link.startsWith(base + "/play.html#play=1."), link.slice(0, 60));
+    assert.equal(await page.getAttribute("#wiz-link", "readonly"), "");
+    assert.equal(await page.getAttribute("#wiz-link-open", "href"), link);
+    assert.equal(await page.getAttribute("#wiz-link-open", "target"), "_blank");
+    assert.equal(await page.textContent("#wiz-password"), "WEEK3GO");
+    const back = await ER.fromLink(link);
+    assert.equal(back.meta.title, "Week 3 check"); assert.equal(back.finish.exitPassword, "WEEK3GO"); assert.equal(back.rooms[0].questions[0].answers, "Dewey");
+    // a short link gets a QR code (the same one ER.qrSvg draws, which decodes back to the link in tests/shared.js)
+    assert.equal(await page.locator("#wiz-qr svg[role=img]").count(), 1);
+    assert.equal(await page.getAttribute("#wiz-qr svg path", "d"), ER.qrSvg(link).match(/ d="([^"]+)"/)[1]);
+    assert.equal(await page.getAttribute("#wiz-qr svg", "aria-label"), "QR code of your class link");
+    assert.equal(await page.locator("#wiz-long").count(), 0);
+    // Copy link
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.click("#wiz-link-copy"); await page.waitForFunction(() => /Copied|Couldn't/.test(document.querySelector(".copy .done").textContent));
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), link);
+    // Open it as a student: a new tab plays it to the certificate with the exit password
+    const [student] = await Promise.all([page.context().waitForEvent("page"), page.click("#wiz-link-open")]);
+    await student.locator("#begin").waitFor();
+    assert.equal(await student.title(), "Week 3 check");
+    await student.fill("#pname", "Link Student"); await student.click("#begin");
+    await student.locator("#stage h2", { hasText: "Room 1" }).waitFor();
+    await student.fill("input[name=q0]", "dewey"); await student.click("#try"); await student.click("#onward");
+    await student.locator("#exit-password").waitFor();
+    assert.equal(await student.textContent("#exit-password"), "WEEK3GO");
+    await student.close();
+    // changing the escape room makes the link out of date: the step says so and offers a new one
+    await page.goto(base + "/editor.html#step=room&room=1&part=questions"); await heading(page, "Room 1");
+    await page.fill("#q1-a0", "John Dewey");
+    await page.goto(base + "/editor.html#step=walk"); await heading(page, "Share a class link");
+    assert.match(await page.textContent("#wiz-link-stale"), /You changed the escape room after making your link. The old link still opens the old version/);
+    assert.equal((await page.textContent("#wiz-make-link")).trim(), "Make a new class link");
+    await page.click("#wiz-make-link"); await page.locator(".modal #ask-ok").waitFor(); await page.click("#ask-ok"); await page.locator("#wiz-link").waitFor();
+    assert.notEqual(await page.inputValue("#wiz-link"), link);
+    assert.equal((await ER.fromLink(await page.inputValue("#wiz-link"))).rooms[0].questions[0].answers, "John Dewey");
+    await page.goto(base + "/editor.html#step=done"); await heading(page, "Your escape room is ready");
+    assert.match(await page.textContent("#wiz-summary"), /A class link/);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("a long link (the sample) has no QR code and says so; a very long one warns about being cut off", async () => {
+    const page = await fresh();
+    await startWith(page, "sample"); await heading(page, "What is this escape room called?");
+    await page.evaluate(() => { meta.delivery = { where: "link" }; saveMeta(); });
+    await page.goto(base + "/editor.html#step=walk"); await heading(page, "Share a class link");
+    await page.click("#wiz-make-link"); await page.locator(".modal #ask-ok").waitFor(); await page.click("#ask-ok"); await page.locator("#wiz-link").waitFor();
+    const link = await page.inputValue("#wiz-link");
+    assert.ok(link.length > 6500 && link.length < 8500, "about 7.3 KB: " + link.length);
+    assert.match(await page.textContent("#wiz-qr-none"), /too long for a QR code/);
+    assert.equal(await page.locator("#wiz-long").count(), 0);
+    // a huge story makes a link over 30 KB: a plain warning, and the file route suggested
+    await page.evaluate(() => { let t = ""; for (let i = 0; t.length < 60000; i++) t += Math.random().toString(36).slice(2) + " "; cfg.rooms[0].story = t; changed(); });
+    await page.goto(base + "/editor.html#step=walk&x=1"); await heading(page, "Share a class link");
+    await page.click("#wiz-make-link");
+    while (!(await page.isVisible("#wiz-link"))) { await page.locator(".modal #ask-ok, #wiz-link").first().waitFor(); if (await page.isVisible(".modal #ask-ok")) await page.click(".modal #ask-ok"); }
+    assert.match(await page.textContent("#wiz-long"), /very long \(\d+ KB\).*cut long links off.*share the escape room as a file instead/s);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("a class link is also a backup: pasting it into “Open one I saved before” brings the escape room back", async () => {
+    const small = { schema: 1, meta: { title: "From a link" }, finish: { exitPassword: "LINKED1" }, rooms: [{ type: "quiz", title: "Q", questions: [{ kind: "short", prompt: "2 + 2?", answers: "4", verified: false }] }] };
+    const link = await ER.toLink(small, base + "/play.html");
+    const page = await fresh();
+    await page.goto(base + "/editor.html#step=start&open=1"); await heading(page, "How do you want to start?");
+    assert.equal(await page.isChecked("#start-file"), true, "the front page's “Open one I saved before” arrives with that choice made");
+    // a cut-off link gets a linked error on the box
+    await page.fill("#wiz-link-paste", link.slice(0, 120)); await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor();
+    assert.match(await page.textContent("#wiz-errors"), /This class link is incomplete: part of it is missing/);
+    assert.equal(await page.getAttribute("#wiz-link-paste", "aria-invalid"), "true");
+    await page.fill("#wiz-link-paste", "Here it is: " + link + " ");
+    await page.click("#wiz-continue"); await heading(page, "Your escape room");
+    assert.equal(await page.textContent("#wiz-hub-title"), "From a link");
+    assert.deepEqual(await page.evaluate(() => cfg), small);
     assert.deepEqual(page.errors, []);
     await page.context().close();
   });

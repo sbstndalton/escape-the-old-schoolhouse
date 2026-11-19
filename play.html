@@ -1597,7 +1597,8 @@ ER.qr = (() => {
 /* An SVG picture of a QR code: dark squares on white with the usual quiet border of 4 modules. */
 ER.qrSvg = (text, { label = "QR code" } = {}) => {
   const q = ER.qr(text); if (!q) return "";
-  let d = ""; for (let y = 0; y < q.size; y++) for (let x = 0; x < q.size; x++) if (q.dark(x, y)) d += `M${x + 4} ${y + 4}h1v1h-1z`;
+  let d = "";        // one path, a rectangle per run of dark squares in a row
+  for (let y = 0; y < q.size; y++) for (let x = 0; x < q.size; x++) { if (!q.dark(x, y)) continue; let n = 1; while (q.dark(x + n, y)) n++; d += `M${x + 4} ${y + 4}h${n}v1h-${n}z`; x += n - 1; }
   const n = q.size + 8;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" role="img" aria-label="${ER.esc(label)}" shape-rendering="crispEdges"><rect width="${n}" height="${n}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
 };
