@@ -129,7 +129,8 @@ html[data-contrast=more] .top :focus-visible{outline-color:#fff!important;box-sh
 @media print{
   html,body,html[data-contrast=more],html[data-contrast=more] body{background:#fff!important;color:#000!important}
   html{font-size:9.6pt!important}
-  body{min-height:0;line-height:1.33;letter-spacing:0;word-spacing:0}
+  body,html[data-readable=on] body{min-height:0;line-height:1.33;letter-spacing:0;word-spacing:0}
+  html[data-readable=on] .placard{font-family:var(--f-d);letter-spacing:.14em;font-weight:400}
   .skip,.top,.acts{display:none!important}
   main{max-width:none;margin:0;padding:0}
   .sheet{padding:0;background:none!important;border:0!important;box-shadow:none!important;color:#000!important}

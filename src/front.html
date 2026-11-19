@@ -83,7 +83,8 @@ input[type=text][aria-invalid=true]{border-color:var(--red);border-width:3px}
 .btn svg{width:1.4rem;height:1.4rem;flex:none}
 .btn.wide{width:100%}
 .or{margin:1.6rem 0 .5rem!important;padding-top:1.2rem;border-top:2px solid rgba(42,29,20,.35);font-weight:700}
-.alt{display:inline-flex;align-items:center;min-height:2.75rem;margin-top:.9rem;font-weight:700;text-underline-offset:.2em}
+.alts{display:flex;flex-wrap:wrap;gap:0 1.8rem;margin-top:.9rem}
+.alt{display:inline-flex;align-items:center;min-height:2.75rem;font-weight:700;text-underline-offset:.2em}
 /* how it works: three small pictures, each beside its words (the words go under the picture when it is narrow) */
 .how{list-style:none;margin:0;padding:0;display:grid;gap:1.1rem;counter-reset:s}
 .how li{counter-increment:s;display:flex;flex-wrap:wrap;gap:.3rem 1rem;align-items:flex-start}
@@ -192,7 +193,10 @@ html[data-contrast=more] footer :focus-visible,html[data-contrast=more] .door h2
       <div class="sheet">
         <p class="lead">Make an escape room about your own chapter, one step at a time. It takes about 30 to 45 minutes. You don't need an account or anything to install.</p>
         <a class="btn wide" id="make" href="editor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20l1.2-4.6L16 4.6l3.4 3.4L8.6 18.8zM14 7l3 3"/></svg>Make an escape room</a>
-        <a class="alt" id="open-saved" href="editor.html#step=start&amp;open=1">Open one I saved before</a>
+        <div class="alts">
+          <a class="alt" id="open-saved" href="editor.html#step=start&amp;open=1">Open one I saved before</a>
+          <a class="alt" id="guide-link" href="guide.html">Printable quick-start guide</a>
+        </div>
         <h3 id="how-h">How it works</h3>
         <ol class="how" aria-labelledby="how-h">
           <li><svg viewBox="0 0 88 70" aria-hidden="true" focusable="false"><path d="M14 8h40l10 10v46H14zM54 8v10h10M22 28h30M22 36h34M22 44h26"/><path d="M48 62l4-14 22-22 6 6-22 22zM70 30l6 6"/></svg><div><b>You make it</b><span>Type your questions, step by step. It is saved in your browser as you go.</span></div></li>
