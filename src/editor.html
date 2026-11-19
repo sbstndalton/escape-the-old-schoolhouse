@@ -1944,10 +1944,11 @@ function answerSheetHtml(){
     <p><em>Check every item against your textbook or sources.${sampleUnchecked(cfg) ? " The sample content was written with AI help and can contain mistakes." : ""} Mark items as checked in the editor.</em></p>
     ${rooms}${check}</main></body></html>`;
 }
-document.getElementById("btn-review").onclick = () => {
+document.getElementById("btn-review").onclick = () => openAnswerSheet();
+function openAnswerSheet(){
   const frame = h("iframe", { title: "Answer sheet" }); frame.srcdoc = answerSheetHtml();
   overlay("Answer sheet: for instructors only", frame, [h("button", { class: "inkline", id: "sheet-print", onclick: () => frame.contentWindow.print() }, icon("print"), "Print")], true);
-};
+}
 
 
 /* =====================================================================
@@ -2037,7 +2038,7 @@ function wRadios({ name, legend, asH1, hint, options, value, set, cls }){
 function errorSummary(){
   return h("section", { class: "errsum", id: "wiz-errors", tabindex: "-1", "aria-labelledby": "wiz-errors-title" },
     h("h2", { id: "wiz-errors-title" }, "There is a problem"),
-    h("ul", {}, WIZ.errors.map(e => h("li", {}, h("a", { href: "#" + e.target, onclick: ev => { ev.preventDefault(); const el = document.getElementById(e.target); if (el) { el.focus(); el.scrollIntoView({ block: "center" }); } } }, e.text)))));
+    h("ul", {}, WIZ.errors.map(e => h("li", {}, e.href ? h("a", { href: e.href }, e.text) : h("a", { href: "#" + e.target, onclick: ev => { ev.preventDefault(); const el = document.getElementById(e.target); if (el) { el.focus(); el.scrollIntoView({ block: "center" }); } } }, e.text)))));
 }
 /* An edit in the guided steps lifts the item's check, the same as in Advanced mode, and Check your facts says why. */
 const changedAfterCheck = new WeakSet();
@@ -2095,6 +2096,7 @@ function renderWizard(focus){
 async function wizContinue(def, r){
   WIZ.errors = def.check ? def.check(r) : [];
   if (WIZ.errors.length) { renderWizard("errors"); return; }
+  if (def.gate && def.gate(r)) return;
   if (def.save && (await def.save(r)) === false) return;
   wizGo(def.next(r));
 }
@@ -2256,8 +2258,7 @@ WSTEPS.hub = {
 };
 
 /* Steps not built yet open Advanced mode. */
-for (const [id, t, w] of [["facts", "Check your facts", "Check your facts in Advanced mode for now."], ["try", "Try it as a student", "Use “Preview as student” in Advanced mode for now."],
-  ["deliver", "How will your students get to the escape room?", "Use Export in Advanced mode for now."], ["walk", "Put it in your course", "Use Export in Advanced mode for now."]])
+for (const [id, t, w] of [["deliver", "How will your students get to the escape room?", "Use Export in Advanced mode for now."], ["walk", "Put it in your course", "Use Export in Advanced mode for now."]])
   WSTEPS[id] = { ...later(t, w), back: () => hashFor(STEP_ORDER[Math.max(0, stepNo(id) - 2)]), next: () => hashFor(STEP_ORDER[stepNo(id)] || "hub") };
 
 /* ---------- 4 Your rooms, and adding one ---------- */
@@ -2494,6 +2495,91 @@ function storyCheck(room){
   if (!String(room.story || "").trim()) out.push({ key: "room-story", target: "room-story", text: "Write what students read in this room" });
   return out;
 }
+
+/* ---------- 6 Check your facts: every gradable item in one list ---------- */
+const plainText = s => String(s ?? "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1").trim();
+function factWords(room, list, it){
+  if (list === "cards") return [`Card: ${plainText(it.term) || "(no name)"}${it.detail ? ` (${plainText(it.detail)})` : ""}`, String(it.clue || "").trim() ? `Clue: ${plainText(it.clue)}` : "An extra card, with no clue"];
+  if (room.type === "quiz") return [`Question: ${plainText(it.prompt) || "(not written yet)"}`, `Answer: ${it.kind === "choice" ? plainText((it.choices || [])[it.correct]) || "(none marked)" : ER.accepted(it.answers).length ? String(it.answers).split("|").map(x => x.trim()).filter(Boolean).join(" / ") : "(none yet)"}`];
+  if (room.type === "ordering") { const i = room.items.indexOf(it); return [`Number ${i + 1} in the order: ${plainText(it.text)}`, it.label ? `Shown after solving: ${plainText(it.label)}` : ""]; }
+  if (room.type === "sorting") return [`Item: ${plainText(it.text)}`, `Group: ${plainText((room.categories || [])[it.category]) || "(none chosen)"}`];
+  if (list === "profiles") return [`Result: ${plainText(it.name)}`, plainText(it.desc)];
+  return [`Question: ${plainText(it.prompt)}`, (it.options || []).map(o => `${plainText(o.text)} → ${plainText((room.profiles.find(p => p.key === o.profile) || {}).name || "?")}`).join("; ")];
+}
+const NOUN = { cards: "card", questions: "question", items: "item", profiles: "result" };
+function nextUnchecked(){
+  const boxes = [...document.querySelectorAll(".wfacts input[type=checkbox]")], open = boxes.filter(b => !b.checked);
+  if (!open.length) { say("Everything is checked."); document.getElementById("wiz-facts-count").focus(); return; }
+  const at = boxes.indexOf(document.activeElement.closest?.("li")?.querySelector("input[type=checkbox]"));
+  const next = open.find(b => boxes.indexOf(b) > at) || open[0];
+  next.closest("li").scrollIntoView({ block: "center" }); next.focus({ preventScroll: true });
+}
+WSTEPS.facts = {
+  title: () => "Check your facts",
+  back: () => { const s = roomSeq(); return s.length ? roomHash(...s[s.length - 1]) : hashFor("rooms"); },
+  body: () => {
+    const st = ER.reviewStatus(cfg), items = ER.reviewItems(cfg);
+    const count = h("p", { id: "wiz-facts-count", tabindex: "-1" }, h("b", {}, `${st.verified} of ${st.total} checked.`));
+    const recount = () => { const s = ER.reviewStatus(cfg); count.replaceChildren(h("b", {}, `${s.verified} of ${s.total} checked.`)); };
+    const n = st.unverified;
+    return [H1("Check your facts"), count,
+      h("p", { class: "whint" }, "Check each item against your textbook or other sources, and say where you checked it. Students see a “Draft” notice until every item is checked."),
+      sampleUnchecked(cfg) ? h("p", { id: "wiz-ai-note" }, "The sample was written with AI help and may contain mistakes, so check every item from it.") : null,
+      WIZ.warn && n ? h("section", { class: "errsum", id: "wiz-warn", tabindex: "-1", "aria-labelledby": "wiz-warn-title" },
+        h("h2", { id: "wiz-warn-title" }, `${n} ${n === 1 ? "item isn't" : "items aren't"} checked yet`),
+        h("p", {}, "Students will see the “Draft” notice, which says the answers may contain mistakes, until every item is checked."),
+        h("div", { class: "wacts", style: "margin-top:.6rem" }, wbtn({ class: "stamp", id: "wiz-check-now", onclick: () => { WIZ.warn = false; nextUnchecked(); } }, "Check them now"),
+          wbtn({ class: "stamp", id: "wiz-continue-anyway", onclick: () => wizGo(hashFor("try")) }, "Continue anyway"))) : null,
+      h("div", { class: "wacts", style: "margin-top:.8rem" },
+        wbtn({ class: "stamp", id: "wiz-next-unchecked", onclick: nextUnchecked }, icon("down"), "Next not checked"),
+        wbtn({ class: "inkline", id: "wiz-print", onclick: openAnswerSheet }, icon("print"), "Print the answer key")),
+      wHelp(h("p", {}, "Nothing is ever checked for you. Tick an item only after you have checked it yourself."),
+        h("p", {}, "If you change an item later, its tick is taken off, so you can check it again."),
+        h("p", {}, "To check on paper, print the answer key, then come back and tick the items here.")),
+      cfg.rooms.map((room, r) => {
+        const mine = items.filter(x => x.room === r);
+        if (!mine.length) return null;
+        return [h("h2", {}, `Room ${r + 1}: ${room.title || "Untitled"}`), h("ul", { class: "wfacts" }, mine.map(x => {
+          const it = x.item, k = `f${r + 1}-${x.list}-${x.i + 1}`, name = `room ${r + 1}, ${NOUN[x.list] || "item"} ${x.i + 1}`;
+          const [what, ans] = factWords(room, x.list, it);
+          const again = changedAfterCheck.has(it) && !it.verified ? h("p", { class: "again" }, "You changed this after checking it, so check it again.") : null;
+          return h("li", {}, h("p", { class: "what" }, what), ans ? h("p", { class: "ans" }, ans) : null, again,
+            h("div", { class: "wline" },
+              wField({ id: k + "-src", label: "Where you checked it", value: it.source, placeholder: "e.g. Textbook ch. 3, p. 45", set: v => { it.source = v; } }),
+              h("label", { class: "wchk" }, h("input", { type: "checkbox", id: k + "-ok", checked: it.verified === true, onchange: e => {
+                it.verified = e.target.checked; changedAfterCheck.delete(it); changed(); recount();
+                const s = ER.reviewStatus(cfg); say(`${e.target.checked ? "Checked" : "No longer checked"}: ${name}. ${s.verified} of ${s.total} checked.`); } }),
+                h("span", { class: "box", "aria-hidden": "true" }, icon("tick")), "I checked this is correct", h("span", { class: "sr" }, ` (${name})`))));
+        }))];
+      })];
+  },
+  gate: () => { if (ER.reviewStatus(cfg).unverified && !WIZ.warn) { WIZ.warn = true; renderWizard(); document.getElementById("wiz-warn").focus(); return true; } return false; },
+  next: () => hashFor("try")
+};
+
+/* ---------- 7 Try it as a student (the same preview as Advanced mode) ---------- */
+/* Problems that would make a room impossible to solve, each linked to the step where it is fixed. */
+function problemsLinked(){
+  return ER.validate(cfg).map(text => {
+    const m = text.match(/^Room (\d+)/), r = m ? +m[1] - 1 : -1;
+    const href = r >= 0 ? (PARTS[cfg.rooms[r]?.type] ? hashFor("room", { room: r + 1 }) : `#advanced&room=${r + 1}`) : /^Settings/.test(text) ? hashFor("name") : hashFor("rooms");
+    return { key: "problem", href, text };
+  });
+}
+WSTEPS.try = {
+  title: () => "Try it as a student",
+  back: () => hashFor("facts"),
+  body: () => [H1("Try it as a student"),
+    h("p", {}, "Play it the way your students will. In the bar at the top you can jump to any room and use “Show answers” to skip ahead. Nothing you do here is graded or saved."),
+    h("div", { class: "wacts", style: "margin-top:1rem" }, wbtn({ class: "plate", id: "wiz-try", onclick: () => {
+      const errs = problemsLinked();
+      if (errs.length) { WIZ.errors = errs; renderWizard("errors"); return; }
+      WIZ.errors = []; openPreview(0);
+    } }, icon("play"), "Start the student view")),
+    wHelp(h("p", {}, "The student view fills the screen. Press Esc, or “Exit preview” at the top, to come back to this page."),
+      h("p", {}, "If something needs fixing first, a list of problems appears here, each with a link to the page where you fix it."))],
+  next: () => hashFor("deliver")
+};
 
 applyDisplay();
 render();
