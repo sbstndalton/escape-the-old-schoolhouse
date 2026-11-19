@@ -229,9 +229,9 @@ const unsafe = page => page.evaluate(() => {
     assert.equal(await page.locator("h1").count(), 1);
     assert.deepEqual(await page.$$eval("h2", hs => hs.map(h => h.textContent)), ["I'm a student", "I'm a teacher"]);
     assert.deepEqual(await page.$$eval("a[href], button, input", els => els.map(e => e.id || e.className)),
-      ["skip", "class-link", "open-link", "play-sample", "make", "open-saved", "a11y-link", "contrast-toggle", "readable-toggle"], "Tab order is reading order");
-    const tabs = []; for (let i = 0; i < 9; i++) { await page.keyboard.press("Tab"); tabs.push(await focused(page)); }
-    assert.deepEqual(tabs, ["a", "class-link", "open-link", "play-sample", "make", "open-saved", "a11y-link", "contrast-toggle", "readable-toggle"]);
+      ["skip", "class-link", "open-link", "play-sample", "make", "open-saved", "guide-link", "a11y-link", "contrast-toggle", "readable-toggle"], "Tab order is reading order");
+    const tabs = []; for (let i = 0; i < 10; i++) { await page.keyboard.press("Tab"); tabs.push(await focused(page)); }
+    assert.deepEqual(tabs, ["a", "class-link", "open-link", "play-sample", "make", "open-saved", "guide-link", "a11y-link", "contrast-toggle", "readable-toggle"]);
     // an empty box and a cut-off link: a plain error on the box, focus stays there
     await page.focus("#class-link"); await page.keyboard.press("Enter");
     assert.equal(await page.textContent("#link-error"), "Paste your class link in the box first.");
@@ -273,7 +273,7 @@ const unsafe = page => page.evaluate(() => {
   await test("the front page says what to press, the privacy line and the accessibility statement", async () => {
     const page = await open(base + "/", { viewport: { width: 390, height: 844 } });
     const text = (await page.evaluate(() => document.body.innerText)).replace(/\s+/g, " ");
-    for (const re of [/I'm a student/, /I'm a teacher/, /Open my escape room/, /Play the sample escape room/, /Make an escape room/, /Open one I saved before/,
+    for (const re of [/I'm a student/, /I'm a teacher/, /Open my escape room/, /Play the sample escape room/, /Make an escape room/, /Open one I saved before/, /Printable quick-start guide/,
       /You make it/, /You share a class link/, /Students type the exit password into your quiz/, /Moodle, Canvas, Google Classroom or an email/,
       /nothing is sent anywhere. The escape room travels inside the link itself/, /never reaches a web server/]) assert.match(text, re);
     assert.doesNotMatch(text, /GitHub/i, "no GitHub on the front page");
