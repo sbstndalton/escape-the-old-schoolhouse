@@ -6,7 +6,7 @@
 - **Status:** the student game meets the target in everything we could test with tools and by hand. It has **not yet been tested by people who use assistive technology every day**, or with a real screen reader. That is the biggest gap, and it is listed first under [Known limitations](#known-limitations).
 - **Last reviewed:** November 2026, against the sample game in this repository. An independent audit in November 2026 found problems this page had missed or overstated (listed under [Second review](#second-review-november-2026)); they are fixed, each has a test, and the claims below were corrected.
 
-This page has two parts: the **student game** (below) and the **editor** (at the end).
+This page has three parts: the **student game** (below), the **front page and class links**, and the **editor** (at the end).
 
 ---
 
@@ -211,6 +211,49 @@ If something in the game is hard or impossible to use, please open an issue on t
 
 ---
 
+## Front page and class links
+
+The website opens on a **front page** with two doors, **I'm a student** and **I'm a teacher**. Students reach the game through a **class link**: the whole escape room packed into the web address. This part also covers the page a student sees when a link is broken, and this statement as a web page.
+
+**Target:** the same as the game: WCAG 2.2 AA, AAA where practical.
+
+### How it is built
+
+- **Plain and big.** Body text is 18px (1.125rem) in Atkinson Hyperlegible with a line height of 1.5; the lead sentences are larger. Each door has a heading ("I'm a student", "I'm a teacher") and is a labelled region; the page has one `h1`, a `main` and a `footer`, and a skip link to the doors. Reading order is Tab order.
+- **The link box** has a visible label ("Or paste your class link here") and a hint ("It is a long web address…") attached to it. A missing, cut-off or wrong link shows the reason in red ink above the box (with a bar, not colour alone), marks the box invalid, attaches the message to it, starts the tab title with "Error:", and keeps the keyboard in the box. The words are plain: "This class link is incomplete. Ask your teacher to send it again."
+- **Nothing moves** on the front page, so there is nothing to switch off. There are no pictures with meaning: the three "How it works" drawings sit beside words that say the same.
+- **High contrast and Readable text** switches at the foot (`role="switch"`, with a visible on/off word), shared with the game and the maker. High contrast also follows `prefers-contrast: more`; forced colours are supported.
+- **A link that didn't open** shows a plain note in the game's own scene, with a heading that takes focus (so it is read out) and **Go to the front page**. The key ring and the Draft note are hidden, because there are no rooms.
+- **The statement page** (`accessibility.html`) is this file as plain dark-on-light reading, one column, with the same display choices. Wide tables scroll sideways inside their own labelled box (a focusable region) when the window is narrow; the page itself never does.
+- **Teachers' QR code** is an extra: it always comes with the link as text and a Copy link button, and says plainly when the link is too long for one.
+
+### How it was tested
+
+`tests/a11y-game.js` walks the front page, the front page with a link error, a link that didn't open, and the statement (`frontTour()`), with the same checks as the game: axe-core in the eight looks (normal, High contrast and Readable text at 1440×900 and 390×844, forced colours, `prefers-contrast: more`): **0 violations**; every focusable control focused, ringed and not covered; targets at least 24 CSS px (links inside a sentence are exempt, as 2.5.8 allows); text at 200%, 320px wide, 720×450 and the text-spacing override: nothing cut off and no sideways scrolling; real edges in forced colours and High contrast; names, roles and states. `tests/links.js` uses the two doors with the keyboard alone (no pointer events), including the error messages.
+
+**Measured contrast** (median of the letter cores, as for the game):
+
+| Text | 1440×900 | 390×844 | High contrast |
+|---|---|---|---|
+| Front page heading | 15.5 | 11.9 | 21 |
+| Intro line | 13.3 | 10.7 | 21 |
+| Paper text on a door, field label, step names | 12.7 | 12.7 | 21 |
+| Field hint, small print, How it works | 8.5 | 8.5 | 21 |
+| Placard and door plates (brass) | 8.5 | 8.5 | 21 |
+| Brass buttons | 9.1 | 9.1 | 21 |
+| Privacy line | 15.3 | 15.1 | 21 |
+| Display switches | 14.3 | 14.3 | 21 |
+| Link error message | 8.2 | 8.2 | 10 |
+| Link that didn't open: heading / note / plate | 7.1 / 12.7 / 6.7 | 7.0 / 12.7 / 6.7 | 16 / 20.2 / 16 |
+| Statement text and tables | 15.5 | 15.5 | 21 |
+
+### Known limitations
+
+1. **Not yet tried by students or teachers who use assistive technology**, and no screen reader was run against these pages (the accessibility tree was checked instead), as for the game.
+2. **A very long class link** (over about 30 KB, usually from very long texts) may be cut off by some course systems or email programs. The maker warns about it and suggests the file instead; the game then says the link is incomplete.
+3. **Old browsers** without `DecompressionStream` (before about 2023) can't open compressed class links; the game says so plainly and suggests another browser or the file.
+4. **The QR code** is a picture of the link. It is labelled, but it is only useful to someone who can point a camera at it; the link itself is always there too.
+
 ## Editor
 
 This section covers the teacher editor (`editor.html`): the **guided steps** it opens on (one question per page, ten steps and a "Your escape room" page to come back to) and **Advanced mode** ("the Curator's workshop", every setting at once). The student game has its own section.
@@ -247,6 +290,7 @@ Everything below runs in `npm test` (`tests/a11y-editor.js`, plus the editor tes
 - **Choices** are real radio buttons in a fieldset, drawn as slips of paper with a ring; the chosen one has a filled ring and a heavier border, not only a colour. A second question that depends on the first (Moodle or Canvas: should it record the grade?) appears under the chosen answer, and the keyboard stays where it was.
 - **Nothing happens by itself.** Removing a room, question or card asks first on a slip, with **Go back**/**Cancel** first. Facts are never ticked for you. Continuing with unchecked items shows a note on the page (Check them now / Continue anyway), not a dialog. The exit-password slip is a labelled dialog whose keyboard starts in its box, with a suggestion that can be changed.
 - **Announcements:** ticks, added and removed entries, copied text and the exit password are read out through the editor's one polite live region.
+- **Sharing a class link** (step 8's first, recommended choice): the link is in a read-only, labelled box with its length described, and **Copy link** and **Open it as a student** (which says it opens a new tab). Making it goes through the same exit-password slip and "Share a draft?" question as a download. When the escape room changed after the link was made, the step says so in words and offers a new link. A link that is too long is described in words, not only by a missing QR code. These states are in the axe, contrast, focus, target and reflow scans.
 - **Where the work is saved** is always on screen: "Saved in this browser at 3:42 pm. Not backed up yet." with **Download a backup**. The browser asks before the page is closed while there are changes that are not in a backup.
 - **The same options:** High contrast, Readable text, forced colours, 200% text, 320px reflow and the text-spacing override are tested on every step (see the table above).
 
