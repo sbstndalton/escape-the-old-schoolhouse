@@ -4,7 +4,7 @@
 
 - **Target:** [WCAG 2.2](https://www.w3.org/TR/WCAG22/) Level AA for the student game and the teacher editor, with Level AAA wherever it was practical (see [What goes beyond AA](#what-goes-beyond-aa)).
 - **Status:** the student game meets the target in everything we could test with tools and by hand. It has **not yet been tested by people who use assistive technology every day**, or with a real screen reader. That is the biggest gap, and it is listed first under [Known limitations](#known-limitations).
-- **Last reviewed:** November 2026, against the sample game in this repository.
+- **Last reviewed:** November 2026, against the sample game in this repository. An independent audit in November 2026 found problems this page had missed or overstated (listed under [Second review](#second-review-november-2026)); they are fixed, each has a test, and the claims below were corrected.
 
 This page has two parts: the **student game** (below) and the **editor** (at the end).
 
@@ -27,6 +27,7 @@ Open the **notebook** (the pocket watch at the top right, or the **Esc** key). E
 Also built in:
 
 - **Describe this room.** A button under each room's title lists everything in the room as plain text in reading order: the story, each object with its code, the clues, the lock and how to work it, and what you have done so far.
+- **You move on when you are ready.** After a lock opens, the result stays on screen and a **Go through the door** plate appears under it, with the keyboard on it. Nothing changes room by itself.
 - **Your own text size.** The game never sets the text size from the window. It follows the browser's font-size setting and zoom, up to 400%, and the room becomes one scrolling column when it no longer fits.
 - **Keyboard only.** Everything works with Tab, Enter, Space, the arrow keys and Esc. Nothing needs a drag.
 - **Windows High Contrast** and other forced-colour modes are supported.
@@ -39,15 +40,16 @@ Automated tests run on every change (`npm test`, file `tests/a11y-game.js`). The
 |---|---|---|
 | **axe-core 4.14.1** (rules tagged wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa, best-practice) | Every state at 1440×900 and 390×844; again with High contrast, with Readable text, with forced colours emulated, and with `prefers-contrast: more` emulated. 160 scans in Chromium and 20 in WebKit. | **0 violations** |
 | **Keyboard only** | A full play-through from the title to the certificate using key presses alone (no pointer events), including reading papers, the room description, the dials by typing and by arrows, moving timeline cards, stamping, the mirror, and the notebook. | Completes |
-| **Focus visible and not obscured** (2.4.7, 2.4.11, 2.4.13) | Every focusable control in every state is focused; it must show a focus ring, be inside the window, and be the top element at its centre. In WebKit the same is done by walking the Tab order with real key presses. | 0 problems |
+| **Focus visible and not obscured** (2.4.7, 2.4.11, 2.4.13) | Every focusable control in every state is focused; it must show a focus ring, be inside the window, and be the top element at its centre. In WebKit the same is done by walking the Tab order with real key presses. The teacher's preview, with its answers shown, is checked separately by the editor's tests (centre and four corners of every focused control). | 0 problems |
 | **Target size** (2.5.8, 2.5.5) | Every pointer target is measured. | All 24 CSS px or more; game controls (dial arrows, studs, stamps, levers, stamp boxes, handles, papers, close buttons, the watch, the bell, notebook rows) 44 px or more |
-| **Text at 200%** (1.4.4) | The browser's default font size is doubled (32px), at 1440×900 and 390×844, and also together with Readable text and text spacing. | Nothing cut off, no sideways scrolling |
+| **Text at 200%** (1.4.4) | The root font size is doubled (what a 32px browser default does to a page sized in `rem`), at 1440×900 and 390×844, and also together with Readable text and text spacing. | Nothing cut off, no sideways scrolling, and no text shortened with `line-clamp` |
 | **Reflow** (1.4.10) | 320 CSS px wide (1280px at 400% zoom) and 720×450 (1440×900 at 200% zoom). | Nothing cut off, no sideways scrolling |
 | **Text spacing** (1.4.12) | Line height 1.5, paragraph spacing 2em, letter spacing 0.12em, word spacing 0.16em forced on everything. | Nothing cut off |
 | **Forced colours and High contrast** | Every control, paper, dial window and stamp state must still have a real edge; stamped and empty boxes must look different; dial characters must differ from their window. | 0 problems |
-| **Announcements** (4.1.3) | Wrong answers, right answers, "2 of 3" results, moved cards, stamps, hints and room changes must appear in the polite live region; the same message twice is announced twice. | Pass |
-| **Names, roles, states** (4.1.2, 1.3.1, 2.4.2, 2.4.6) | Page language and titles, one `h1`, heading order, landmarks, the key ring's summary, dial values, switches, dialogs, the locked hint drawer, stamps, and that the mirror never moves on by itself. | Pass |
-| **Contrast** (1.4.3, 1.4.6) | Measured from screenshots; see below. | All text 4.5:1 or more; all reading text 7:1 or more |
+| **Announcements** (4.1.3) | Wrong answers, right answers, "2 of 3" results, moved cards, stamps, typed dial values and hints must appear in the polite live region; the same message twice is announced twice. A right answer stays in the live region (and on screen) until the player presses **Go through the door**, checked after waiting 9 seconds. A new room is announced **once**: focus moves to its heading, and nothing about it is sent to the live region (the test records every text the region holds). After every try the result is inside the window and not under the "more below" tab (390×844, 720×450, 320×256). | Pass |
+| **Names, roles, states** (4.1.2, 1.3.1, 2.4.2, 2.4.6) | Page language and titles, one `h1`, heading order (in a matching room: the objects, the clues and the lock each have an `h3`), landmarks, the key ring's summary, dial values, switches, dialogs, the locked hint drawer, stamps, the Draft note's fixed name, the 14 timeline buttons' distinct names, "Play again" asking first, and that the mirror never moves on by itself. | Pass |
+| **Instructions** (3.3.2, 1.3.3) | The line under every lock must name the button the player actually presses ("Check answers", "Check order", "Submit", "Pull the shackle", "Next question"), never only a picture ("turn the handle"); matching rooms must say to take the clues in order, and mention decoys when there are any. | Pass |
+| **Contrast** (1.4.3, 1.4.6) | Measured from screenshots (median of the letter cores); see below, including the stricter darkest-pixel figures. | All text 4.5:1 or more and all reading text 7:1 or more by the median; not by the darkest pixel (see [Two ways to measure contrast](#two-ways-to-measure-contrast)) |
 | **Reduced motion** (2.3.3) | With reduced motion, or the Motion switch off, `document.getAnimations()` must be empty through a whole play-through (`tests/playthrough.js`). | Pass |
 | **Screen-reader structure** | The accessibility tree of every state was written out (`ariaSnapshot`) and read top to bottom by hand, checking that every object, its code, the lock and its state make sense in order. Several things were rebuilt because of it (see the last rows of the table below). | Reviewed by hand |
 | **Browsers** | Chromium (all tests) and WebKit (axe, the Tab walk, 200% text) through Playwright 1.65. | Pass |
@@ -60,7 +62,7 @@ The same checks were run on the game as it was before this work.
 |---|---|---|
 | axe-core violations | 0 (but axe could not judge the contrast of about 850 text nodes on textured backgrounds) | 0 |
 | Measured contrast below AA | 27 of 63 text styles at 1440×900 (lowest 2.1:1), 32 of 62 at 390×844 (lowest 1.9:1) | 0 of 74 (lowest 5.0:1) |
-| Reading text below 7:1 | 19 of 23 styles | 0 of 28 (lowest 7.2:1) |
+| Reading text below 7:1 | 19 of 23 styles | 0 of 28 (lowest 7.5:1) |
 | Text size | Set from the window (12.5px to 20px), so the browser's font size was ignored and zoom enlarged text only a little | The reader's own size; nothing is sized from the window |
 | Text at 200%, and 320px wide | Controls were pushed off screen and could not be reached (the automated play-through could not finish) | Playable; nothing cut off |
 | Text spacing override | 69 clipped pieces of text | 0 |
@@ -76,7 +78,7 @@ The same checks were run on the game as it was before this work.
 | State shown by colour alone | Key ring (steel or brass), current question | Also a tick, a lamp dot and size, a filled or empty number, and words |
 | Hints | A locked hint drawer could not be focused, so its reason could not be read | Focusable, with its reason attached |
 | Messages | Shown twice to screen readers, and a repeated message was not read again | One polite live region; repeats are read |
-| Room changes | Focus went to the whole room; no announcement; one page title for everything | Focus on the new heading, "Room 2 of 5: …" announced, a title per screen |
+| Room changes | Focus went to the whole room; no announcement; one page title for everything; the next room appeared by itself 1.2 s after a solve | Only when the player presses **Go through the door**; focus on the new heading, which reads the room out once; a title per screen |
 | Forced colours | Controls drawn with gradients and shadows disappeared | Every control has a real border; states use the system highlight |
 | Options | Motion, Sound | Also High contrast, Readable text, Hide the clock, Describe this room |
 
@@ -91,16 +93,17 @@ axe cannot work out contrast where text sits on a gradient or a texture, which i
 | Clue number | 3.0 | 7.7 | 7.7 | 20.2 |
 | Book titles on the spines | 8.0 | 13.2 | 13.2 | 21 |
 | Code letters on the books | 6.4 | 12.9 | 12.8 | 16 |
-| Portrait name plate | 5.7 | 8.2 | 8.2 | 16 |
-| Portrait dates | 4.6 | 7.2 | 7.2 | 16 |
-| Portrait code | 3.8 | 5.8 | 5.8 | 16 |
+| Portrait name plate | 5.7 | 12 | 12 | 16 |
+| Portrait dates | 4.6 | 11.3 | 11.4 | 16 |
+| Portrait code | 3.8 | 10.3 | 10.2 | 16 |
 | Room title plate (brass) | 4.4 | 7.1 | 7.0 | 16 |
 | Section label on the wall | 4.4 | 12.5 | 9.0 | 21 |
 | Lock name on brass | 4.2 | 11 | 11 | 14 |
 | "Pull the shackle to try" | 2.6 | 8.0 | 8.0 | 14 |
 | Dial characters | 7.8 | 15.8 | 15.8 | 20.2 |
 | Typed code | 4.1 | 9.6 | 9.6 | 20.2 |
-| How-to line under the lock | (new) | 13.8 | 13.7 | 21 |
+| How-to line under the lock | (new) | 13.7 | 13.5 | 21 |
+| Code box label ("Type the whole code instead") | (new) | 10.6 | 10.7 | 20 |
 | Result message | 7.7 | 16.2 | 15.8 | 21 |
 | Hint paper | (changed) | 10.1 | 10.1 | 20.2 |
 | Quiz question | 5.9 | 10.7 | 10.6 | 20.2 |
@@ -127,6 +130,21 @@ axe cannot work out contrast where text sits on a gradient or a texture, which i
 
 The full table of 74 styles is printed by `node tests/a11y-game.js --report report.json`.
 
+#### Two ways to measure contrast
+
+The figures above are **typical-stroke** figures. The game's test takes the **median** of the letter cores (the third of changed pixels that changed most); the editor's test takes the **mean of the strongest 12%**. Both describe what most of each letter looks like against what is really behind it. They are not worst-case figures.
+
+The November 2026 audit also measured the stricter way: the **declared text colour against every background pixel inside the text's line box** (text hidden), reporting the median, the 10th percentile and the **darkest pixel**. Re-run on the current build at 1440×900 and 390×844 (text that is hidden from assistive technology left out):
+
+| | Text styles | Lowest median | Below AA by median | Below AA by 10th percentile | Below AA by darkest pixel | Reading text under 7:1 by darkest pixel |
+|---|---|---|---|---|---|---|
+| Game, before this review | 190 | 5.6:1 | 0 | 1 | 27 | 72 |
+| Game, now | 188 | 6.0:1 | 0 | 1 | 17 | 61 |
+| Editor, before this review | 212 | 5.6:1 | 0 | 5 | 7 | 41 |
+| Editor, now | 232 | 5.6:1 | 0 | 4 | 8 | 44 |
+
+The darkest pixel is very strict here: a line box often touches a pin, a ruled line, a paper's edge or a shadow, so one dark pixel can set it. Most of the "below AA by darkest pixel" cases are of that kind (clue headings next to the red ruled line, the Draft note's wavy underline), but they have **not all been checked by hand**, and a few 10th-percentile results (the clock in one state, the editor's page kicker with the note unfolded, the envelope's "Answer key" label) deserve a look. So the honest summary is: no text is under AA by the typical-stroke measure or by the median; by the darkest pixel, some is.
+
 **Parts that are not text** (1.4.11), from their colours:
 
 | Part | Colours | Ratio |
@@ -146,30 +164,46 @@ The full table of 74 styles is printed by `node tests/a11y-game.js --report repo
 - **Structure.** One `h1` (the game's title), an `h2` for each screen, `h3` for parts of a room; `header` and `main` landmarks; a skip link. Lists are real lists. Decoration (door, lantern, frames, pins, the mirror) is hidden from assistive technology.
 - **Order.** Reading order, Tab order and the order of use match: story, objects, clues, lock, result, hints.
 - **Papers.** Stories, clues, hints and results are ordinary text on the page. A short heading button opens each one large in a dialog (labelled, modal, the room behind it inert, Esc closes, focus returns).
-- **Locks.** Each dial is a `spinbutton` named "Dial 2 of 5" with a value such as "E, 5 of 26". A labelled text box beside the lock takes the whole code. One plain sentence under every lock says how to work it.
+- **Locks.** Each dial is a `spinbutton` named "Dial 2 of 5" with a value such as "E, 5 of 26". A labelled text box beside the lock takes the whole code. A few plain sentences under every lock say how to work it, naming the real button ("Check order", not "turn the handle"); a matching room's also say to take the clues in order.
 - **States.** The key ring says "you are in room 2 of 5, 1 solved"; each key says solved, you are here, or locked. Switches are `role="switch"`. Stamp boxes and slips are pressed buttons. The counter's result is also in the message.
 - **No surprises.** Nothing changes by itself when you choose an option. There is no time limit. Wrong tries cost nothing unless the teacher turns on deductions, and the house rules say so before you start.
 
 ### What goes beyond AA
 
-- 1.4.6 Contrast (Enhanced): all reading text measures 7:1 or more. Short labels measure between 5:1 and 14:1, so labels do not all reach 7:1 outside High contrast (where everything is 10:1 or more).
+- 1.4.6 Contrast (Enhanced): all reading text measures 7:1 or more by the median of its letter cores (lowest 7.5:1); by the darkest background pixel some does not. Short labels measure between 5:1 and 14:1, so labels do not all reach 7:1 outside High contrast (where everything is 10:1 or more).
 - 1.4.8 Visual presentation: lines are about 80 characters or fewer, text is never justified, and line height is 1.5 for reading text (1.6 in the examine view and with Readable text).
-- 2.2.3 No timing; 2.3.3 Animation from interactions can be switched off.
+- 2.2.3 No timing: there is no time limit, nothing moves on by itself (a solved room waits for **Go through the door**; the mirror waits for **Next question**), and no message is cleared on a timer (the live region keeps the last message until the next one or a new screen). 3.2.5 Change on request: the room changes only when the player asks. (Until the November 2026 review the room changed by itself 1.2 s after a solve, so these two were not met then.)
+- 2.3.3 Animation from interactions can be switched off.
+- 2.4.10 Section headings: each room has a heading, and its parts (the objects, the clues, the lock) have their own.
 - 2.4.13 Focus appearance; 2.5.5 Target size of 44px for game controls.
 - 3.3.5 Help: instructions under every lock, the room description, and the notebook's "How to play".
 
 ### Known limitations
 
 1. **No testing with real assistive technology or disabled players yet.** Screen-reader behaviour was checked through the browser's accessibility tree, not by listening to NVDA, JAWS, VoiceOver or TalkBack. Voice control, switch access and screen magnifiers were not tried. Automated tools find only part of what real use finds.
-2. **Dials with a touch screen reader.** A custom `spinbutton` may not respond to the adjust gestures in VoiceOver on iOS or TalkBack. The text box next to the lock ("or type the code") does the same job and is the dependable route there.
+2. **Dials with a touch screen reader.** A custom `spinbutton` may not respond to the adjust gestures in VoiceOver on iOS or TalkBack. The text box next to the lock ("Type the whole code instead") does the same job and is the dependable route there. Typing a character on a dial moves to the next dial; the value set is announced first ("Dial 2: E"), but whether a screen reader speaks it before the next dial's name has not been checked by ear.
 3. **Teacher-written content is not checked by the game.** A teacher can write clues that depend on colour or position, very long codes, or hard reading. The editor's accessibility check is meant to catch these. Emoji that a teacher adds to portraits are treated as decoration and are not read out.
-4. **Short previews on papers.** Sighted players see the first lines of a story or clue and open it to read the rest. The whole text is always on the page for assistive technology and in "Describe this room".
+4. **Focus and the success message.** After a solve, focus moves to **Go through the door** while the success message is sent to the polite live region. Screen readers normally read the button and then the message, but some may drop the message; it is also on screen right above the button. This needs checking with real screen readers.
 5. **Narrow or zoomed windows put the lock below the objects.** In one-column layout the player scrolls between the clues and the lock. A "more below" mark shows when the room continues.
 6. **The certificate still shows the time taken** when the clock is hidden, because teachers may ask for it.
 7. **Zoom was tested by window size and font size, not by driving the browser's zoom control.** 200% and 400% zoom were reproduced as 720×450 and 320×256 windows and as a doubled default font size. Safari was covered by Playwright's WebKit, not by Safari on a Mac or iPhone. Forced colours were emulated in Chromium, not checked on Windows with each contrast theme.
 8. **Language.** The page is marked as English. A game written in another language should set `meta.lang` in its content; the editor does not have a field for it yet.
 9. **Reading level.** The sample content has not been checked for reading level (3.1.5, AAA).
-10. **The editor's preview** can show the teacher an answer panel that covers a corner of the room. Students never see it.
+10. **The editor's preview with answers shown** puts the answers in a strip above the room, which pushes the room down; the teacher can hide it from the strip or the rail. Students never see it.
+
+### Second review (November 2026)
+
+An independent audit of the game and the editor found these problems. The first version of this page did not catch them, mostly because the tests did not look in the right place (the preview's frame was not scanned, the preview rail was only checked at sizes where it fitted, and the announcement test accepted a room change that cut the success message short). Each is fixed and now has a test.
+
+| Finding | WCAG | Fix |
+|---|---|---|
+| In the editor's preview, "Show answers" laid a panel over the room that hid focused controls (books, clues and the code box at 390×844) | 2.4.11 | The answers are a labelled `aside` strip in the page flow, above the room, with its own heading and a **Hide answers** button. Tested: no focused control in any room is covered (centre and four corners), at 1440×900 and 390×844 |
+| The preview rail collapsed at 320×256 and with 32px text, drawing its buttons over the game | 1.4.10, 1.4.4 | The rail never shrinks below its controls; on short screens the preview scrolls. Tested at 320×256 and with 32px text |
+| The editor scrolled sideways at 390px with 32px text | 1.4.10 | The Preview plate and the seals wrap; the envelope's labels sit in the flow. The 200% text test now includes 390×844 |
+| A solved room moved on by itself after 1.2 s, cutting off the success message, and the new room was announced twice | 4.1.3; AAA 2.2.3, 3.2.5 | **Go through the door** (see above); the room is announced once, by its heading |
+| The result of a try could be out of view, or under the "more below" tab | 1.3.2, 2.4.11 (related) | The result is scrolled into view, clear of the tab, which also steps aside from the focused control |
+| The matching rooms' instructions did not say to take the clues in order or that some objects are decoys; other rooms said "turn the handle" though the button is named "Check answers", "Check order" or "Submit" | 3.3.2, 1.3.3 | The instructions say both, and name the real button |
+| Smaller issues: "Play again" lost the certificate without asking; the preview took focus into the game; story, clue and result text was cut short (with the text-spacing override, Room 4's note lost its instruction); 14 timeline buttons shared two names; no headings for a matching room's objects and lock; typing on a dial moved on without confirming the value; "or type the code" did not make sense on its own; the Draft note changed its own name; portrait name plates dipped to 3.9:1 at their darkest; editor placeholders looked like typed answers; the mirror's legend ran the number into the question; the quiz text box's error list was not tied to it | various | All fixed as described in this page |
 
 ### Reporting a problem
 
@@ -189,19 +223,19 @@ Everything below runs in `npm test` (`tests/a11y-editor.js`, plus the editor tes
 
 | Check | How | Result |
 |---|---|---|
-| Automated rules | **axe-core 4.14.1**, tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`, `best-practice`, on **every page, tab and overlay** (44 states on a desktop, 46 on a phone: each room type and tab, questions as text, the answer-key envelope and note open, a help slip open, hints on, accuracy grading, the Accessibility check, the list of room kinds, the phone cabinet and file list, the New / Export / Answer sheet / problems folders, the confirm slips, and the preview rail). The answer sheet, which is a document of its own, is scanned as one. | **0 violations and 0 "needs review"** at 1440×900 and 390×844, in each of: the default look, **High contrast**, **Readable text**, emulated **forced colours**, and emulated **prefers-contrast: more** (450 scans) |
-| Contrast | axe can't judge text over gradients and textures, so contrast is **measured from the pixels**: two screenshots of every state, one with the text made transparent, and the painted ink compared with what is behind it (textures, gradients, lamplight and vignette included). | About 2,700 runs of text per look, none below AA. Default look in Chromium: every one at 7:1 or better (lowest 7.04:1). WebKit draws thinner strokes: 12 small labels there measure between 6.3:1 and 7:1. Readable text: three labels between 6.3:1 and 7:1. High contrast: lowest 9.7:1 |
+| Automated rules | **axe-core 4.14.1**, tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`, `best-practice`, on **every page, tab and overlay** (45 states on a desktop, 47 on a phone: each room type and tab, questions as text, the answer-key envelope and note open, a help slip open, hints on, accuracy grading, the Accessibility check, the list of room kinds, the phone cabinet and file list, the New / Export / Answer sheet / problems folders, the confirm slips, the preview rail, and the preview showing a room with **Show answers** on). Every frame is scanned as a document of its own: the answer sheet, and the student view inside the preview. | **0 violations** at 1440×900 and 390×844, in each of: the default look, **High contrast**, **Readable text**, emulated **forced colours**, and emulated **prefers-contrast: more** (10 runs). **"Needs review": 0, with three kinds left out on purpose:** `color-contrast` (axe can't work out text over a gradient or texture: about 2,000 nodes per desktop run and 800 per phone run in the default look, 20 to 180 in High contrast and forced colours; their contrast is measured from pixels instead, next row), `frame-tested` (it only says axe didn't enter a frame from the page around it; every frame is scanned on its own) and `heading-order` inside a frame (axe can't see the page around the frame). Before November 2026 the preview's student view was not scanned at all, and this row said "0 needs review" without saying what was left out |
+| Contrast | axe can't judge text over gradients and textures, so contrast is **measured from the pixels**: two screenshots of every state, one with the text made transparent, and the painted ink compared with what is behind it (textures, gradients, lamplight and vignette included). **Method:** for each run of text, the average over its strongest 12% of changed pixels (the solid cores of the strokes, not their anti-aliased edges). That is a typical-stroke figure, not a worst-pixel figure; see [Two ways to measure contrast](#two-ways-to-measure-contrast) for the darkest-pixel figures. | About 1,900 runs of text per desktop look and 800 per phone look, none below AA. Default look in Chromium: lowest 6.1:1; everything under 7:1 is placeholder text (6.1 to 6.7:1, lighter on purpose so an example can't pass for an answer) apart from one cabinet label at 6.3:1. Readable text: lowest 4.6:1 (the page kicker over the felt at 390×844), 3 runs under 7:1 on a phone and 22 on a desktop. High contrast: lowest 7.4:1. WebKit draws thinner strokes and was not re-measured after these changes |
 | Keyboard | A **keyboard-only authoring test** with no pointer events at all: skip link, add a question room, write a question and its answers, press its seal, switch index tab with the arrow keys, name the room, export, and answer the "export a draft?" slip. A second test presses Tab through every control on the main pages and every overlay (about 650 tab stops). | Passes. Every stop shows a 3px focus ring and is never covered by the top rail, the cabinet, a note or a slip (2.4.7, 2.4.11) |
 | Dialogs | Delete, replace and "export a draft" slips, the folders, the phone cabinet and the preview: role, name, description, initial focus, Tab loop, Esc, focus return, inert background. No native `confirm()` or `alert()` is ever shown (the tests fail if one appears). | Passes |
 | Help slips (1.4.13) | Open on hover and on focus, stay while the pointer is on the mark or the slip, dismissed with Esc without moving pointer or focus. | Passes |
 | Target size | Every control measured in every state. | At least 24×24 CSS px everywhere; at least 44×44 on touch screens |
-| Text size and reflow | (1) Browser default text size doubled to 32px at 1280×900, (2) 200% zoom, (3) **320 CSS px wide** (400% zoom), also only 256px tall, (4) the WCAG **text-spacing** override (line height 1.5, letter spacing 0.12em, word spacing 0.16em, paragraph spacing 2em). | No clipped text, no sideways scrolling, nothing lost (1.4.4, 1.4.10, 1.4.12) |
+| Text size and reflow | (1) Browser default text size doubled to 32px at 1280×900 and at 390×844, (2) 200% zoom, (3) **320 CSS px wide** (400% zoom), also only 256px tall, (4) the WCAG **text-spacing** override (line height 1.5, letter spacing 0.12em, word spacing 0.16em, paragraph spacing 2em). The preview rail separately: at 320×256 and with 32px text, every rail control must lie inside the rail and off the student view. | No clipped text, no sideways scrolling, nothing lost (1.4.4, 1.4.10, 1.4.12). Until the November 2026 review this was **not** true at 390px with 32px text (the page scrolled sideways) or for the preview rail (it collapsed and its buttons covered the game); neither case was tested then |
 | Forced colours and increased contrast | Chromium's emulation of `forced-colors: active` and `prefers-contrast: more`. Every control must keep a real border, outline or underline, and "on" states must differ from "off" states. | Passes |
 | Motion | With `prefers-reduced-motion: reduce`, `document.getAnimations()` is empty. No CSS 3D anywhere. | Passes |
 | Screen-reader structure | The accessibility tree (`ariaSnapshot()`) of a room page is asserted line by line: landmarks, one `h1`, heading order, names, roles, states and reading order. It was also read through by hand, which found and fixed an unnamed image in the envelope and a drawer whose count was not spoken. | Passes |
 | Browsers | Chromium 158 (everything). WebKit 27 (the editor tests, and the accessibility suite except the two checks only Chromium can do: forced colours and the default-text-size setting). | Passes in both |
 
-**Before and after** (default look, both screen sizes together): axe violations 50 → 0; text below AA contrast 288 → 0 (lowest measured 1.9:1 → 7.0:1); axe "needs review" 222 → 0; tab stops without an outline ring 195 → 0 (text fields used to show only a tint and a thicker underline); controls under 24px (44px on touch) 682 → 0; native browser dialogs 5 → 0.
+**Before and after** (default look, both screen sizes together): axe violations 50 → 0; text below AA contrast 288 → 0 (lowest measured 1.9:1 → 7.0:1 at the time; 6.1:1 now that placeholders are deliberately lighter); axe "needs review" 222 → 0 (colour contrast, frame-tested and in-frame heading order left out, as above); tab stops without an outline ring 195 → 0 (text fields used to show only a tint and a thicker underline); controls under 24px (44px on touch) 682 → 0; native browser dialogs 5 → 0.
 
 ### What the editor does
 
@@ -215,7 +249,8 @@ Everything below runs in `npm test` (`tests/a11y-editor.js`, plus the editor tes
 - **Reading by default:** the distressed typewriter face and the small-caps face are used only for short labels and numbers. Everything a teacher reads or writes (field values, help, notes, the answer key, the answer sheet) is in a plain serif at 14px or more, with a line height of 1.5.
 - **Colour is never the only signal:** the open drawer is slid out, underlined and marked `aria-current`; the selected tab is underlined; unchecked counts are written out ("0/5"); warnings carry a "!" mark.
 - **Text size, zoom and small screens:** sizes are in `rem`, breakpoints are in `em`, tabs and buttons wrap, and on very small or heavily zoomed windows nothing is pinned.
-- **The preview rail and the answer-key envelope** are fully operable and labelled: every rail button has a name, the current room is marked, room changes are announced, and Esc returns focus to the button that opened the preview.
+- **The preview rail and the answer-key envelope** are fully operable and labelled: every rail button has a name, the current room is marked, room changes are announced, and Esc returns focus to the button that opened the preview. Opening the preview leaves focus on **Exit preview**; jumping to a room keeps it on the rail. With **Show answers** on, the answers are a labelled strip in the student view's page flow, above the room (never on top of it), with its own **Hide answers** button.
+- **Placeholders** are examples that start with "e.g.", in lighter italic type than what you type (6.4:1 on paper, against 12:1 for typed text), and an empty one-line field has a dashed rule, so an example can't be mistaken for an answer. Every field also has a real label.
 
 ### Accessibility check (helping teachers write accessible content)
 
@@ -246,13 +281,13 @@ The **Accessibility check** drawer reads what the teacher wrote and lists common
 - **No screen reader has been run against it yet.** Structure, names, roles, states and announcements were checked through the accessibility tree and axe, which is not the same as listening to NVDA, JAWS or VoiceOver. This is the most important thing still to do.
 - **Forced colours and increased contrast were tested with Chromium's emulation,** not on Windows with a real contrast theme. In forced colours the High contrast switch stays on and can't be turned off.
 - **Readable text relies on fonts already on the computer.** No extra typeface is embedded in the editor, so the face you get depends on the system.
-- **AAA contrast (7:1) is met for almost all text, not all of it.** Measured from pixels, a few small labels fall between 6.3:1 and 7:1: twelve in WebKit's default look and three with Readable text on. Disabled buttons are dimmer still (they are exempt). High contrast is above 9:1 throughout.
+- **AAA contrast (7:1) is not met for all text.** Measured from pixels (typical stroke), placeholders are 6.1 to 6.7:1 on purpose, one cabinet label is 6.3:1, and with Readable text on a phone the page kicker measures 4.6:1. Measured against the darkest background pixel, more text falls under 7:1 (see [Two ways to measure contrast](#two-ways-to-measure-contrast)). Disabled buttons are dimmer still (they are exempt). High contrast is 7.4:1 or more throughout.
 - **Other AAA criteria not met:** the old-book and small-caps faces are still used for short labels unless Readable text is on, and target sizes on a desktop are 24px or more rather than 44px (they are 44px on touch screens).
 - **The Accessibility check matches patterns in English.** It will miss problems phrased in ways it doesn't know, and it will sometimes flag wording that is fine ("at the top of his class"). It can't judge reading level, the quality of a hint, or whether a story makes sense without the picture; the "By hand" tab lists what to check yourself.
 - **Typing a quiz as text** is one plain text box. It is fully labelled, and mistakes are announced and listed, but a screen-reader user may find the form view easier.
 - **Rooms can only be moved up** in the cabinet (move the next room up to move one down).
-- **The typed strip that confirms an action** ("Project saved") disappears after six seconds. It is also announced, and nothing depends on it.
-- **In the preview,** keyboard focus moves into the game when it loads. The brass rail is before it in Tab order (Shift+Tab), and Esc closes the preview from either place.
+- **The typed strip that confirms an action** ("Project saved") disappears after six seconds (it stays while the pointer is on it). It is also announced, and nothing depends on it, but because it is timed **the editor does not claim AAA 2.2.3 (No timing)**. The student game does.
+- **On short screens the preview scrolls.** At 320×256, or with very large text, the rail takes most of the window and the student view continues below it.
 - **Firefox** was not available where the tests ran. The editor uses nothing Firefox lacks (`inert` needs Firefox 112 or later), but it has not been run there.
 
 ### Reporting a problem

@@ -91,8 +91,9 @@ The game is one night-time scene per room. Everything is an object you handle:
 
 - **Papers** (clue cards, books, portraits, the story note): click one to read it up close. **Esc** or the close button puts it back.
 - **Describe this room:** a button under each room's title that lists everything in the room as plain text.
-- **Combination padlock:** turn each dial with its arrows, a drag, the scroll wheel or the arrow keys, or just type the code in the box. Then pull the shackle (or press **Enter**).
-- **Other locks:** turn the handle on the door. A small counter shows how many you got right.
+- **Combination padlock:** take the clues in order; the codes they point to, in that order, open the lock. Turn each dial with its arrows, a drag, the scroll wheel or the arrow keys, or type the whole code in the box. Then press **Pull the shackle** (or **Enter**).
+- **Other locks:** press the handle on the door (its button is named **Check answers**, **Check order** or **Submit**). A small counter shows how many you got right.
+- **After a lock opens** the result stays on screen until the student presses **Go through the door**. Nothing moves on by itself.
 - **Sorting slips:** click a slip, then press a rubber stamp. Each slip also has its own boxes to stamp.
 - **Timeline cards:** move them with the round up and down buttons, or drag a card by its number.
 - **The mirror:** choose an answer, then press **Next question**.
