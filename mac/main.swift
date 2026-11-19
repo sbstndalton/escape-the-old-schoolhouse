@@ -1,5 +1,5 @@
 // Escape the Old Schoolhouse — macOS app
-// A small native window (AppKit + WebKit) that plays the bundled index.html offline.
+// A small native window (AppKit + WebKit) that plays the bundled play.html (the game with the sample) offline.
 import Cocoa
 import WebKit
 
@@ -33,10 +33,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         window.setFrameAutosaveName("MainWindow")
         window.makeKeyAndOrderFront(nil)
 
-        if let url = Bundle.main.url(forResource: "index", withExtension: "html") {
+        if let url = Bundle.main.url(forResource: "play", withExtension: "html") {
             webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         } else {
-            webView.loadHTMLString("<h1 style='font-family:sans-serif'>Game file (index.html) is missing from the app.</h1>", baseURL: nil)
+            webView.loadHTMLString("<h1 style='font-family:sans-serif'>Game file (play.html) is missing from the app.</h1>", baseURL: nil)
         }
         NSApp.activate(ignoringOtherApps: true)
     }

@@ -2,7 +2,7 @@ name: Build Mac app
 
 on:
   push:
-    paths: ["index.html", "mac/**", ".github/workflows/build-mac.yml"]
+    paths: ["play.html", "mac/**", ".github/workflows/build-mac.yml"]
   workflow_dispatch:
 
 permissions:

@@ -16,7 +16,7 @@ lipo -create build/game-arm64 build/game-x86_64 -output "$APP/Contents/MacOS/Esc
 
 echo "→ Packaging…"
 cp Info.plist "$APP/Contents/Info.plist"
-cp ../index.html "$APP/Contents/Resources/index.html"
+cp ../play.html "$APP/Contents/Resources/play.html"   # the game with the sample (the website's play.html)
 
 # App icon: a schoolhouse emoji drawn onto a chalkboard-green tile.
 ICONSET=build/AppIcon.iconset; mkdir -p "$ICONSET"

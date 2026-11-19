@@ -46,7 +46,7 @@ async function newPage(browser, base, { scorm = false, viewport = { width: 1000,
       };
     });
   }
-  await page.goto(base + "/index.html");
+  await page.goto(base + "/play.html");
   return page;
 }
 

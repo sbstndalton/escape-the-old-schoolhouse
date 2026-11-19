@@ -56,14 +56,14 @@ function expectNone(key, list) {
 }
 
 let base = "", browser = null;
-async function open({ viewport = DESKTOP, hc = false, readable = false, forced = false, contrast = null, scale = 1, motion = "reduce", engine = null } = {}) {
+async function open({ path = "/play.html", viewport = DESKTOP, hc = false, readable = false, forced = false, contrast = null, scale = 1, motion = "reduce", engine = null } = {}) {
   const ctx = await (engine || browser).newContext({ viewport, reducedMotion: motion, forcedColors: forced ? "active" : "none", deviceScaleFactor: scale, ...(contrast ? { contrast } : {}) });
   const page = await ctx.newPage();
   page.errors = [];
   page.on("pageerror", e => page.errors.push(e.message));
   page.on("console", m => { if (m.type() === "error") page.errors.push(m.text()); });
   await page.addInitScript(([hc, readable]) => { try { if (hc) localStorage.setItem("escape-room-contrast", "on"); if (readable) localStorage.setItem("escape-room-readable", "on"); } catch (e) {} }, [hc, readable]);
-  await page.goto(URL_ || base + "/index.html");
+  await page.goto(URL_ || base + path);
   page.old = await page.evaluate(() => !document.querySelector("#view"));      // an older build, for the before/after report
   return page;
 }

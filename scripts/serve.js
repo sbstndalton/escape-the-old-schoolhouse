@@ -27,5 +27,5 @@ module.exports = { start };
 
 if (require.main === module) {
   const port = Number(process.env.PORT) || 8080;
-  start(port).then(() => console.log(`Escape room running at http://localhost:${port}  (Ctrl+C to stop)`));
+  start(port).then(() => console.log(`Front page at http://localhost:${port}/ · the game at /play.html · the maker at /editor.html  (Ctrl+C to stop)`));
 }
