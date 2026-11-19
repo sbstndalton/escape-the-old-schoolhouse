@@ -12,7 +12,8 @@ const ER = require("../src/shared.js");
 const SHOTS = path.join(__dirname, "screenshots");
 fs.mkdirSync(SHOTS, { recursive: true });
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "escape-editor-"));
-const WAIT = 1500;
+// After a solve the game waits for the player: "Go through the door" (#onward) moves on.
+const door = async (game, heading) => { await game.click("#onward"); await game.locator("#stage h2", { hasText: heading }).waitFor(); };
 
 let passed = 0, failed = 0;
 async function test(name, fn) {
@@ -140,7 +141,7 @@ async function makeQuizRoom(page) {
     await game.click("#try");
     assert.match(await game.textContent("#msg"), /1 of 2 answers are correct/);
     await game.check("input[name=q1][value='1']");
-    await game.click("#try"); await game.waitForTimeout(WAIT);
+    await game.click("#try"); await door(game, "You Escaped");
     assert.match(await game.textContent("#stage"), /You Escaped!/);
     assert.equal(await game.textContent("#exit-password"), "MANN1837");
     assert.deepEqual(errors, []);
@@ -178,7 +179,7 @@ async function makeQuizRoom(page) {
     await game.click("#begin");
     await game.fill("input[name=q0]", "nope"); await game.check("input[name=q1][value='1']");
     await game.click("#try");                                         // 1 wrong try = -2 points
-    await game.fill("input[name=q0]", "John Dewey"); await game.click("#try"); await game.waitForTimeout(WAIT);
+    await game.fill("input[name=q0]", "John Dewey"); await game.click("#try"); await door(game, "You Escaped");
     const s = await game.evaluate(() => window.__scorm);
     assert.equal(s["cmi.core.score.raw"], "98");
     assert.match(await game.textContent("#stage"), /Score: 98%/);

@@ -726,6 +726,10 @@ h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
 #begin small{font:400 .88rem/1.3 var(--f-r);letter-spacing:.02em;opacity:1}
 .pushplate{color:#1d1205;min-height:2.75rem}
 .pushplate.small{font-size:.92rem;padding:.55rem 1rem .45rem}
+/* "Go through the door": the brass push-plate that appears under the result once a lock is open */
+.onward{align-self:center;max-width:100%;min-height:3rem;padding:.7rem 1.3rem .6rem;font-size:1.05rem;letter-spacing:.12em;text-align:center}
+.onward svg{width:1.2rem;height:1.2rem;flex:none}
+#mf .onward{display:flex;margin:.2rem auto 0}
 
 /* ---------- Ending ---------- */
 .dawn{height:min(38rem,calc(100vh - 8.5rem))}
@@ -1056,10 +1060,12 @@ let tick = null;
 const $ = s => document.querySelector(s);
 const root = document.documentElement, stage = $("#stage"), scene = $("#scene"), bg = $("#bg"), light = $("#light");
 const view = $("#view");
-/* Announcements for screen readers. The region is emptied first so the same message twice is still read. */
+/* Announcements for screen readers. The region is emptied first so the same message twice is still read.
+   Nothing clears it on a timer: the last message stays until the next one, or until hush() on a new screen. */
 let sayT = 0;
 const say = t => { const l = $("#live"); clearTimeout(sayT); l.textContent = "";
-  sayT = setTimeout(() => { l.textContent = String(t ?? "").replace(/\s+/g, " ").trim(); sayT = setTimeout(() => { l.textContent = ""; }, 8000); }, 80); };
+  sayT = setTimeout(() => { l.textContent = String(t ?? "").replace(/\s+/g, " ").trim(); }, 80); };
+const hush = () => { clearTimeout(sayT); $("#live").textContent = ""; };
 /* Keyboard users always get a focus ring, also where the script moves focus for them: whatever takes focus
    while the keyboard is in use is marked .kf (see the focus rules in the CSS). A pointer press ends it. */
 let byKeys = false;
@@ -1175,6 +1181,7 @@ const ICON = {
   left: svg("0 0 16 16", `<path d="M10.500 3 5 8l5.500 5" ${line}/>`), right: svg("0 0 16 16", `<path d="M5.500 3 11 8l-5.500 5" ${line}/>`),
   x: svg("0 0 16 16", `<path d="M3.500 3.500l9 9M12.500 3.500l-9 9" ${line}/>`),
   tick: svg("0 0 16 16", `<path d="M3 8.500 6.500 12 13 4.500" ${line}/>`, 'class="tick"'),
+  door: svg("0 0 16 16", `<path d="M3.500 14.500V2h7v12.500M1.500 14.500h13M10.500 2l3 1.500v11M8.500 8.500v.5" ${line}/>`),
   list: svg("0 0 16 16", `<path d="M2.500 4h1M6 4h7.500M2.500 8h1M6 8h7.500M2.500 12h1M6 12h7.500" ${line}/>`),
   padlock: svg("0 0 20 23", `<path class="c" d="M6 10V7a4 4 0 0 1 8 0v3" ${line}/><path class="o" d="M6 10V6a4 4 0 0 1 8 0" ${line}/><rect x="3.500" y="10" width="13" height="10.500" rx="1.500" fill="currentColor"/><circle cx="10" cy="14.500" r="1.500" fill="#1e130a"/>`)
 };
@@ -1365,7 +1372,6 @@ function fail(text, right){
 }
 // Incomplete answer: tell the player, but don't count a wrong try (no penalty, no hint unlock).
 function notYet(text){ if (solvedRoom === S.room) return; setMsg("bad", text); SND.play("press"); lockMove("nudge"); }
-let leaving = 0;
 function pass(text, right){
   if (solvedRoom === S.room) return; solvedRoom = S.room;
   setMsg("good", deco(text)); if (right != null) count(right);
@@ -1384,14 +1390,23 @@ function pass(text, right){
       if (sh) { sh.animate([{ transform: "translateY(0)" }, { transform: "translateY(.16rem) scaleY(.96)", offset: .18 }, { transform: "translateY(-2rem) scaleY(1.05)", offset: .55 }, { transform: "translateY(-1.4rem)", offset: .8 }, { transform: "translateY(-1.55rem)" }], { duration: 420, easing: "ease-out" });
         l.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(-.5rem) rotate(-3deg)", opacity: 1, offset: .2 }, { transform: "translateY(55vh) rotate(16deg)", opacity: 0 }], { duration: 560, delay: 520, easing: "cubic-bezier(.5,0,.9,.5)", fill: "forwards" }); }
       if (root.dataset.shape === "wide") { const ajar = [{ transform: "none" }, { transform: "scaleX(1.012) skewY(.3deg)", offset: .18 }, { transform: "scaleX(.8) skewY(-2.4deg)" }], o = { duration: 520, delay: l.classList.contains("dlock") ? 640 : 520, easing: "cubic-bezier(.5,0,.3,1)", fill: "forwards" };
-        const slab = bg.querySelector(".slab"), mc = stage.querySelector(".mech");
-        if (slab && getComputedStyle(slab.parentElement).display !== "none") { ajarFx.push(slab.animate(ajar, o)); if (mc) { mc.style.transformOrigin = "100% 50%"; mc.animate(ajar, o); } setTimeout(() => SND.play("creak"), o.delay); } }
+        const slab = bg.querySelector(".slab");      // only the painted door swings ajar: the result and the plate under the lock stay upright
+        if (slab && getComputedStyle(slab.parentElement).display !== "none") { ajarFx.push(slab.animate(ajar, o)); setTimeout(() => SND.play("creak"), o.delay); } }
       const fl = $(".flare"); fl.animate([{ opacity: 0 }, { opacity: 1, offset: .25 }, { opacity: .25 }], { duration: 1100, easing: "ease-out" });
     }
   }
-  // The next room appears about 1.3 s after the lock opens (go() itself takes up to 150 ms to swap the screen).
-  clearTimeout(leaving); const from = S.room;
-  leaving = setTimeout(() => { if (S.room === from) go(from+1); }, calm() ? 1300 : 1150);
+  onward();
+}
+/* After a solve nothing moves on by itself: the result stays on screen (and in the live region), and a brass
+   push-plate under it takes the player on when they are ready. Focus moves to it, so Enter or Space goes on.
+   The last room's plate leads to the certificate. */
+function onward(){
+  const from = S.room, msg = stage.querySelector("#msg"); if (!msg || $("#onward")) return;
+  const b = document.createElement("button");
+  b.type = "button"; b.id = "onward"; b.className = "pushplate onward";
+  b.innerHTML = `${ICON.door}<span>Go through the door</span>`;
+  b.onclick = () => { if (S.room === from) { SND.play("press"); go(from+1); } };
+  msg.after(b); b.focus();
 }
 const keyLock = (label, action, { form = "", total = 0, what = "right" } = {}) => `<div class="lock klock"><div class="esc"><span class="hole" aria-hidden="true"></span>
     <button id="try" class="key" ${form ? `type="submit" form="${form}"` : 'type="button"'} title="Turn the handle">${BIGKEY}<span class="sr">${esc(action)}</span></button></div>
@@ -1479,22 +1494,23 @@ function wireDials(m, onTry){
    screen simply appears. Whichever path runs, show() does all the work, so focus, hints, SCORM and the
    preview behave the same. The game never waits on an animation: show() runs within 150 ms regardless. */
 let shown = false, fx = [], ajarFx = [];
-function go(n){
+function go(n, { focus = true } = {}){
   const first = !shown; shown = true;
   const show = () => {
     S.room=n; EX = []; unexamine(); solvedRoom = -1; roomState = null;
     ajarFx.forEach(a => { try { a.cancel(); } catch(e){} }); ajarFx = [];
     renderDoors(); (n===0 ? intro : n>ROOMS.length ? finish : () => room(n))();
     fit();
-    /* Every screen has its own page title; focus goes to the new screen's heading and the move is announced. */
+    /* Every screen has its own page title, and focus goes to the new screen's heading. The heading is read out
+       when it takes focus, so the move is announced once, and not again through the live region. */
     const N = ROOMS.length, game = CFG.meta?.title || "Escape Room";
     const where = n===0 ? "" : n>N ? "You escaped" : `Room ${n} of ${N}: ${ROOMS[n-1].title || ""}`;
     document.title = where ? `${where} · ${game}` : game;
     if (PREVIEW) { teacherKey(); parent.postMessage({ er: "room", room: n }, "*"); }
-    view.scrollTop = 0;
-    if (first) return;
+    view.scrollTop = 0; hush();
+    if (first || !focus) return;
     const h = stage.querySelector("h2"); (h || stage).focus({ preventScroll: true });
-    say(n===0 ? game : n>N ? "You escaped! Your certificate is ready." : where);
+    if (!h) say(n===0 ? game : n>N ? "You escaped! Your certificate is ready." : where);
   };
   const doors = $("#doorfx");
   fx.forEach(a => { try { a.cancel(); } catch(e){} }); fx = []; doors.style.display = "";
@@ -1882,7 +1898,8 @@ function teacherKey(){
 }
 if (PREVIEW) window.addEventListener("message", e => {
   const d = e.data || {};
-  if (d.er === "goto") { if (!S.player) S.player = "Preview Student"; startTimer(); go(Math.max(0, Math.min(ROOMS.length+1, d.room|0))); }
+  // The teacher's rail keeps the keyboard: a jump from the rail changes the room without pulling focus into the game.
+  if (d.er === "goto") { if (!S.player) S.player = "Preview Student"; startTimer(); go(Math.max(0, Math.min(ROOMS.length+1, d.room|0)), { focus: false }); }
   if (d.er === "key") { S.showKey = !!d.on; teacherKey(); }
 });
 

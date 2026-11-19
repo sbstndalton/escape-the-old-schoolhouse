@@ -11,7 +11,12 @@ fs.mkdirSync(SHOTS, { recursive: true });
 
 const TIMELINE_ORDER = ["Plato", "Rousseau", "Horace", "Montessori", "Dewey", "Freire", "Adler"];
 const OBSERVATIONS = [0, 1, 0, 1, 0, 1, 0, 1]; // 0 = Traditional, 1 = Progressive
-const WAIT = 1500; // rooms advance ~1.3s after a correct answer
+// Nothing moves on by itself after a solve: the player presses "Go through the door" (#onward), and the next
+// screen appears within about 150 ms. door() presses it and waits for the new heading.
+async function door(page, heading) {
+  await page.click("#onward");
+  await page.locator("#stage h2", { hasText: heading }).waitFor();
+}
 
 let passed = 0, failed = 0;
 async function test(name, fn) {
@@ -63,21 +68,21 @@ async function playThrough(page, shotPrefix) {
   await page.fill("#pname", (await page.inputValue("#pname")) || "Test Student");
   await page.click("#begin");
   await shot("1-library");
-  await page.fill("#answer", "learn"); await page.click("#try"); await page.waitForTimeout(WAIT);
+  await page.fill("#answer", "learn"); await page.click("#try"); await door(page, "Room 2");
   await shot("2-gallery");
-  await page.fill("#answer", "9154"); await page.click("#try"); await page.waitForTimeout(WAIT);
+  await page.fill("#answer", "9154"); await page.click("#try"); await door(page, "Room 3");
   await shot("3-timeline");
   await solveTimeline(page); await page.click("#try");
   assert.match(await page.textContent("#msg"), /lock drops open/);
-  await page.waitForTimeout(WAIT);
+  await door(page, "Room 4");
   await shot("4-observation");
   for (let i = 0; i < 8; i++) await page.click(`.seg button[data-i="${i}"][data-v="${OBSERVATIONS[i]}"]`);
-  await page.click("#try"); await page.waitForTimeout(WAIT);
+  await page.click("#try"); await door(page, "Room 5");
   await shot("5-mirror");
   // The mirror asks one question at a time. Nothing moves on by itself: the plate goes to the next question,
   // and on the last one it finishes.
   for (let i = 0; i < 6; i++) { await page.locator(`input[name=q${i}]`).nth(2).check(); await page.click("#try"); }
-  await page.waitForTimeout(WAIT);
+  await door(page, "You Escaped");
   await shot("6-escaped");
 }
 
@@ -115,7 +120,7 @@ async function playThrough(page, shotPrefix) {
     await page.click("#begin");
     await page.fill("#answer", "wrong"); await page.click("#try");
     assert.match(await page.textContent("#msg"), /won't budge/);
-    await page.fill("#answer", "learn"); await page.click("#try"); await page.waitForTimeout(WAIT);
+    await page.fill("#answer", "learn"); await page.click("#try"); await door(page, "Room 2");
     await page.fill("#answer", "1234"); await page.click("#try");
     assert.match(await page.textContent("#msg"), /ERROR/);
     await page.close();
@@ -161,7 +166,7 @@ async function playThrough(page, shotPrefix) {
     assert.equal(await page.locator(".vol .band:not([aria-hidden=true])").count(), 0, "decoration is hidden from screen readers");
     await page.fill("#answer", "learn"); await page.click("#try");
     assert.equal(await page.locator(".lock.unlocked").count(), 1, "the padlock opens");
-    await page.locator("#stage h2:has-text('Room 2')").waitFor();
+    await door(page, "Room 2");
     // Room 2 is drawn as framed portraits with brass plates
     assert.equal(await page.locator(".gallery .portrait").count(), 8);
     assert.deepEqual((await page.locator(".plate b").allTextContents()).sort(), ["1", "2", "3", "4", "5", "7", "8", "9"]);
@@ -169,7 +174,7 @@ async function playThrough(page, shotPrefix) {
     assert.match(dewey, /John Dewey.*Code (No\. ?)?9$/);
     assert.equal(await page.locator(".portrait .gilt[aria-hidden=true]").count(), 8);
     await page.fill("#answer", "9154"); await page.click("#try");
-    await page.locator("#stage h2:has-text('Room 3')").waitFor();
+    await door(page, "Room 3");
     // Every portrait is signed with the sitter's initials; an unknown look, or a very long name on a book, falls back to plain cards
     await page.evaluate(() => go(2));
     await page.locator(".portrait", { hasText: "John Dewey" }).locator(".sitter i", { hasText: /^JD$/ }).waitFor();
@@ -254,7 +259,7 @@ async function playThrough(page, shotPrefix) {
     await blocked.click("#resume");
     await blocked.click("#begin");
     await blocked.fill("#answer", "learn"); await blocked.click("#try");
-    await blocked.locator("#stage h2:has-text('Room 2')").waitFor();
+    await door(blocked, "Room 2");
     assert.deepEqual(blocked.errors, []);
     await blocked.close();
   });
@@ -276,6 +281,8 @@ async function playThrough(page, shotPrefix) {
     assert.deepEqual(await dial.evaluateAll(els => els.map(e => e.querySelectorAll(".strip i")[1].textContent)), ["L", "E", "A", "R", "N"]);
     await page.keyboard.press("Enter");
     assert.equal(await page.locator(".lock.unlocked").count(), 1);
+    assert.equal(await page.evaluate(() => document.activeElement.id), "onward", "focus moves to the door plate");
+    await page.keyboard.press("Enter");
     await page.locator("#stage h2:has-text('Room 2')").waitFor();
     // and the other way round: typing in the field turns the dials; a click on a dial's stud turns it one notch
     await page.fill("#answer", "91");
@@ -358,7 +365,7 @@ async function playThrough(page, shotPrefix) {
     await page.click("#resume");
     await page.click("#begin");
     await page.fill("#answer", "learn"); await page.click("#try");
-    await page.locator("#stage h2:has-text('Room 2')").waitFor();
+    await door(page, "Room 2");
     assert.deepEqual(page.errors, []);
     await page.close();
     for (const init of [() => { window.AudioContext = undefined; window.webkitAudioContext = undefined; },
@@ -367,6 +374,7 @@ async function playThrough(page, shotPrefix) {
       await mute.click("#begin");
       await mute.fill("#answer", "wrong"); await mute.click("#try");
       await mute.locator(".dial").first().focus(); await mute.keyboard.type("learn"); await mute.keyboard.press("Enter");
+      await mute.keyboard.press("Enter");                                  // focus is on "Go through the door"
       await mute.locator("#stage h2:has-text('Room 2')").waitFor();
       assert.deepEqual(mute.errors, [], "no errors without audio");
       await mute.close();

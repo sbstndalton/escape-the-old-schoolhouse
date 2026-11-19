@@ -27,7 +27,6 @@ const REPORT = arg("report"), URL_ = arg("url"), SNAP = arg("snapshots"), ONLY =
 const AXE = require.resolve("axe-core/axe.min.js");
 const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"];
 const DESKTOP = { width: 1440, height: 900 }, PHONE = { width: 390, height: 844 };
-const WAIT = 1500;
 
 const QUIZ = { type: "quiz", title: "The Strongbox", story: "Two questions guard the strongbox.", lockLabel: "Strongbox", hintsEnabled: false, questions: [
   { kind: "short", prompt: "Who wrote *Democracy and Education*?", answers: "Dewey|John Dewey" },
@@ -83,14 +82,14 @@ async function tour(page, visit) {
   if (!page.old) { await page.click("#describe"); await visit("room 1, description open"); await esc(); }
   await page.click("#watch"); await visit("notebook open"); await esc();
   await page.fill("#answer", "xxxxx"); await page.click("#try"); await page.click("#hint-btn"); await visit("room 1, wrong try and a hint");
-  await page.fill("#answer", "learn"); await page.click("#try"); await page.evaluate(() => clearTimeout(leaving)); await visit("room 1, solved");
+  await page.fill("#answer", "learn"); await page.click("#try"); await visit("room 1, solved");
   await page.evaluate(() => { ROOMS[0].look = "cards"; }); await room(page, 1); await visit("room 1, plain cards");
   await page.evaluate(() => { ROOMS[0].look = "books"; });
   await room(page, 2); await visit("room 2, portraits");
   await page.evaluate(q => { window.__keep = ROOMS[2]; ROOMS[2] = q; }, QUIZ); await room(page, 3); await visit("quiz room");
   await page.fill("input[name=q0]", "nobody"); await page.check("input[name=q1][value='1']"); await page.click("#try"); await visit("quiz room, wrong try");
   await page.evaluate(() => { ROOMS[2] = window.__keep; }); await room(page, 3); await visit("room 3, timeline");
-  await solveTimeline(page); await page.click("#try"); await page.evaluate(() => clearTimeout(leaving)); await visit("room 3, solved");
+  await solveTimeline(page); await page.click("#try"); await visit("room 3, solved");
   await room(page, 4); await visit("room 4, slips and stamps");
   await page.locator(".ev .pick").nth(1).click(); await page.click(".stamp[data-v='0']"); await page.click(".seg button[data-i='0'][data-v='1']"); await visit("room 4, some slips stamped");
   await room(page, 5); await visit("room 5, mirror");
@@ -306,6 +305,8 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     const tabTo = async (sel, max = 150) => { for (let i = 0; i < max; i++) { await key("Tab"); if (await page.evaluate(s => !!document.activeElement && document.activeElement.matches(s), sel)) return; } throw new Error("Tab never reached " + sel); };
     const heading = async re => { await page.waitForFunction(s => new RegExp(s).test((document.querySelector("#stage h2") || {}).textContent || ""), re.source, { timeout: 5000 }); await page.waitForTimeout(900); };
     const focusOn = () => page.evaluate(() => { const a = document.activeElement; return a ? a.tagName + (a.id ? "#" + a.id : "") + "." + a.className : ""; });
+    // after a solve, focus is on "Go through the door"; Enter goes on
+    const through = async re => { await page.locator("#onward").waitFor(); assert.match(await focusOn(), /#onward/, "focus moves to the door plate"); await key("Enter"); await heading(re); };
     // title: the skip link is the first stop; sign the ledger, read the rules, push the door
     await key("Tab"); assert.match(await focusOn(), /skip/, "the first Tab stop is the skip link");
     // the Tab order is the reading order: HUD, the story, the ledger, the rules, and Begin last (though it is drawn on the door at the left)
@@ -322,9 +323,9 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll(".dlock [tabindex='0'], .dlock input, .dlock button")].map(e => e.id || e.className.split(" ")[0])), ["dial", "dial", "dial", "dial", "dial", "answer", "try"]);
     await tabTo(".dial"); await page.keyboard.type("lear"); await key("ArrowUp"); for (let i = 0; i < 13; i++) await key("ArrowUp");   // the last dial by arrows: blank … N
     assert.equal(await page.inputValue("#answer"), "LEARN");
-    await key("Enter"); await heading(/Room 2/);
+    await key("Enter"); await through(/Room 2/);
     // room 2: type the code in the box instead
-    await tabTo("#answer"); await page.keyboard.type("9154"); await key("Enter"); await heading(/Room 3/);
+    await tabTo("#answer"); await page.keyboard.type("9154"); await key("Enter"); await through(/Room 3/);
     // room 3: move cards with the studs (focus stays on the card being moved)
     const rank = s => TIMELINE.findIndex(k => s.includes(k));
     for (let pass = 0; pass < 8; pass++) for (let i = 0; i < 6; i++) {
@@ -333,13 +334,13 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
         for (let k = 0; k < 150; k++) { await key(k % 60 === 59 ? "Shift+Tab" : "Tab"); if (await page.evaluate(() => document.activeElement === window.__want)) break; }
         assert.equal(await page.evaluate(() => document.activeElement === window.__want), true, "reached the Move down stud"); await key("Enter"); }
     }
-    await tabTo("#try"); await key("Enter"); await heading(/Room 4/);
+    await tabTo("#try"); await key("Enter"); await through(/Room 4/);
     // room 4: stamp each slip with its own boxes (Space presses)
     for (let i = 0; i < 8; i++) { await tabTo(`.seg button[data-i="${i}"][data-v="${SORT[i]}"]`); await key("Space"); }
-    await tabTo("#try"); await key("Enter"); await heading(/Room 5/);
+    await tabTo("#try"); await key("Enter"); await through(/Room 5/);
     // room 5: arrow to an option, Enter goes to the next question, and on the last one finishes
     for (let q = 0; q < 6; q++) { await tabTo(`.qcard:not([hidden]) input`); await key("Space"); await key("ArrowDown"); await key("Enter"); await page.waitForTimeout(80); }
-    await heading(/You Escaped/);
+    await through(/You Escaped/);
     assert.match(await page.textContent("#stage"), /Keyboard Player/); assert.equal(await page.textContent("#exit-password"), "DEWEY1916");
     // the notebook: Esc opens it, Tab stays inside, Esc closes it and focus goes back to the watch
     await key("Escape"); assert.equal(await page.isVisible("#pause"), true);
@@ -407,26 +408,42 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
   });
 
   /* ---------- announcements, names, roles, states ---------- */
-  test("wrong and right answers and room changes are announced in the polite live region", async () => {
+  test("wrong and right answers are announced in the polite live region; a new room is announced once, by its heading", async () => {
     if (REPORT) return;
     const page = await open();
     const said = re => page.waitForFunction(s => new RegExp(s).test(document.querySelector("#live").textContent), re.source, { timeout: 4000 });
+    const focused = () => page.evaluate(() => { const a = document.activeElement; return a.tagName + ":" + a.textContent.replace(/\s+/g, " ").trim(); });
+    // every text the live region ever holds, in order
+    await page.evaluate(() => { window.__said = []; new MutationObserver(() => { const t = document.querySelector("#live").textContent.trim(); if (t) window.__said.push(t); }).observe(document.querySelector("#live"), { childList: true, characterData: true, subtree: true }); });
     assert.equal(await page.getAttribute("#live", "aria-live"), "polite");
-    await page.click("#begin"); await said(/^Room 1 of 5: The Library$/);
-    assert.equal(await page.evaluate(() => document.activeElement.tagName), "H2", "focus moves to the room's heading");
+    await page.click("#begin"); await page.locator("#stage h2:has-text('Room 1')").waitFor(); await page.waitForTimeout(400);
+    assert.match(await focused(), /^H2:Room 1 · The Library$/, "focus moves to the room's heading, which reads the room out");
+    assert.deepEqual(await page.evaluate(() => window.__said), [], "the room is not announced a second time through the live region");
     await page.click("#try"); await said(/Type the code first/);
     await page.fill("#answer", "wrong"); await page.click("#try"); await said(/won't budge/);
     await page.evaluate(() => { document.querySelector("#live").textContent = ""; });
     await page.click("#try"); await said(/won't budge/);                   // the same message again is announced again
     await page.fill("#answer", "learn"); await page.click("#try"); await said(/lock|open/i);
-    await said(/^Room 2 of 5: /);
+    const success = await page.textContent("#live");
+    assert.equal(await page.evaluate(() => document.activeElement.id), "onward", "focus moves to “Go through the door”");
+    assert.equal(await page.textContent("#onward"), "Go through the door");
+    await page.waitForTimeout(9000);                                       // nothing moves on, and nothing clears the message, however long the player takes
+    assert.match(await page.textContent("#stage h2"), /Room 1/, "the room doesn't change by itself");
+    assert.equal(await page.textContent("#live"), success, "the success message is still in the live region");
+    assert.equal(await page.textContent("#msg"), success, "and on screen");
+    await page.evaluate(() => { window.__said = []; });
+    await page.keyboard.press("Enter"); await page.locator("#stage h2:has-text('Room 2')").waitFor(); await page.waitForTimeout(400);
+    assert.match(await focused(), /^H2:Room 2 · /, "focus is on the new room's heading");
+    assert.deepEqual(await page.evaluate(() => window.__said), [], "the new room is announced once (by its heading), not again in the live region");
+    assert.equal(await page.textContent("#live"), "", "the old message is cleared silently");
     await room(page, 3); await page.locator("#order li").first().getByRole("button", { name: "Move down" }).click(); await said(/^Moved to position 2 of 7: /);
     await room(page, 4); await page.click("#try"); await said(/Choose a category for every item first/);
     await page.click(".stamp[data-v='0']"); await said(/Slip 1 stamped Traditional.*Slip 2 is picked up/);
     for (let i = 0; i < 8; i++) await page.click(`.seg button[data-i="${i}"][data-v="0"]`);
     await page.click("#try"); await said(/4 of 8 are in the correct category/);
     assert.equal(await page.textContent("#counter"), "4of8right", "the counter shows the same result");
-    await page.evaluate(() => { S.player = "Test"; go(6); }); await said(/You escaped/);
+    await page.evaluate(() => { S.player = "Test"; go(6); }); await page.locator("#stage h2:has-text('You Escaped')").waitFor();
+    assert.match(await focused(), /^H2:You Escaped!$/, "the certificate's heading takes focus");
     await done(page);
   }, { solo: true });
   test("names, roles and states: title, headings, key ring, dials, switches, dialogs, hints, stamps", async () => {
