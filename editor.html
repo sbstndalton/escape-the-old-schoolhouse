@@ -247,7 +247,10 @@
     background-image:linear-gradient(transparent calc(1.75rem - 2px),var(--line) calc(1.75rem - 2px));background-size:100% 1.75rem;background-attachment:local}
   input[type=text]:hover,input[type=number]:hover{border-bottom-color:var(--ink)}
   input[type=text]:focus-visible,input[type=number]:focus-visible,textarea:focus-visible{outline:3px solid var(--ink);outline-offset:2px;background-color:rgba(255,236,170,.45)}
-  input::placeholder,textarea::placeholder{color:#4b382a;opacity:1;font-style:italic}
+  /* Placeholders are examples ("e.g. …"), never instructions: lighter than typed text (6.4:1 on paper, against 12:1), in italics,
+     and an empty one-line field has a dashed rule instead of a solid one, so an example can't be mistaken for an answer. */
+  input::placeholder,textarea::placeholder{color:#5a4738;opacity:1;font-style:italic}
+  input[type=text]:placeholder-shown{border-bottom-style:dashed}
   .row{display:flex;gap:0 1.25rem;flex-wrap:wrap;align-items:flex-end}
   .row>.field{flex:1 1 8rem}
   .row>.field.narrow{flex:0 1 6.5rem}
@@ -541,7 +544,7 @@
   html[data-contrast=more] .glyph{border:2px solid currentColor}
   html[data-contrast=more] :is(input[type=text],input[type=number],textarea){background:#fff;background-image:none;border:2px solid #000;padding-left:.45rem;padding-right:.45rem}
   html[data-contrast=more] :is(input[type=text],input[type=number],textarea):focus-visible{background:#fff}
-  html[data-contrast=more] input::placeholder,html[data-contrast=more] textarea::placeholder{color:#333}
+  html[data-contrast=more] input::placeholder,html[data-contrast=more] textarea::placeholder{color:#555}
   html[data-contrast=more] .rotary{background:none;border:0;box-shadow:none;padding:0}
   html[data-contrast=more] .rotary label>span{color:#000;background:#fff;border:2px solid #000;margin:0 -2px 0 0}
   html[data-contrast=more] .rotary label>span::before{background:#fff;border:2px solid #000;box-shadow:none;width:.7rem;height:.7rem}
@@ -1284,7 +1287,7 @@ function matchingTabs(room){
       body: listEditor(room.cards, c => [
         h("div", { class: "row" }, field("Name on card", c, "term", { item: c, onChange: refreshAnswerKey }), field("Small detail", c, "detail", { placeholder: "e.g. dates", item: c }),
           field("Icon", c, "icon", { narrow: true, help: "Optional. One emoji or symbol shown on the card and in a portrait frame." }), field("Fixed code", c, "code", { narrow: true, help: "Optional. Overrides the automatic letter or number for this card.", item: c, onChange: refreshAnswerKey })),
-        field("Clue", c, "clue", { type: "textarea", rows: 2, item: c, onChange: refreshAnswerKey, placeholder: "leave blank for a decoy card" })
+        field("Clue", c, "clue", { type: "textarea", rows: 2, item: c, onChange: refreshAnswerKey, placeholder: "e.g. The thinker who… (blank: a decoy card)" })
       ], { noun: "Card", blank: blankCard }) },
     { id: "lock", label: "Lock", help: "The lock combination (in the answer key envelope) is worked out from the cards: the codes of the clue cards, in clue order.",
       body: [
@@ -1361,7 +1364,7 @@ function textToQuiz(text){
 }
 function quizTextEditor(room, r){
   const ta = h("textarea", { class: "mono", id: "quiz-text", rows: 12, value: quizToText(room.questions), spellcheck: "false", oninput: e => grow(e.target) });
-  const msg = h("div", {});
+  const msg = h("div", { id: "quiz-text-errors" });
   return h("div", {},
     h("details", { class: "crib" }, h("summary", {}, "How to type the questions"),
       h("pre", {}, "One question per paragraph, with a blank line between questions.\nQuestions you add or change here come back without their seal;\npress the seal in the form view after checking them.\n\n" +
@@ -1375,7 +1378,7 @@ function quizTextEditor(room, r){
           : a.answers === b.answers);
         questions.forEach(q => { if (q.verified) q.verified = room.questions.some(old => old.verified && same(q, old)); });
         msg.replaceChildren(problems.length ? h("div", { class: "errors", role: "alert" }, "Please fix:", h("ul", {}, problems.map(p => h("li", {}, p)))) : "");
-        if (problems.length) { ta.setAttribute("aria-invalid", "true"); ta.focus(); return; }
+        if (problems.length) { ta.setAttribute("aria-invalid", "true"); ta.setAttribute("aria-describedby", "quiz-text-errors"); ta.focus(); return; }
         room.questions = questions; changed(); toast(`Saved ${questions.length} questions.`); quizText.delete(room); render();
       } }, icon("tick"), "Use this text")));
 }
@@ -1385,7 +1388,7 @@ function orderingTabs(room){
     { id: "items", label: "Items in order", help: "List these in the right order (first at the top). Students see them shuffled. The label (like a year) is revealed after they solve it.",
       body: listEditor(room.items, it => h("div", { class: "row" },
         h("div", { class: "grow3" }, field("Item", it, "text", { type: "textarea", rows: 2, item: it })),
-        h("div", { class: "grow1" }, field("Label shown after solving", it, "label", { item: it, placeholder: "optional, e.g. a year" }))),
+        h("div", { class: "grow1" }, field("Label shown after solving", it, "label", { item: it, placeholder: "e.g. a year (optional)" }))),
       { noun: "Item", blank: blankOrder }) },
     roomTextTab(room), hintsTab(room) ];
 }
