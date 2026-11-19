@@ -10,7 +10,24 @@ Students solve 5 puzzle rooms about educational philosophies and philosophers, t
 - ✏️ Teachers can change every question and answer in a simple editor, and build new escape rooms for other chapters
 - ♿ Built to [WCAG 2.2 AA](ACCESSIBILITY.md): keyboard and screen-reader support, your own text size, High contrast, Readable text, no time limit
 
+> **Teachers: start at the website, <https://sbstndalton.github.io/escape-the-old-schoolhouse/>.** Press **I'm a teacher → Make an escape room** and follow the steps. When it's ready, you get a **class link** to paste into Moodle, Canvas, Google Classroom or an email. Students click it and play; the exit password on their certificate goes into a one-question quiz for the grade. Nothing on the rest of this page is needed for that.
+
 > ⚠️ **The sample content has not been fact-checked yet.** It was written with AI help and may contain mistakes. Until the instructor checks every item in the editor, students see a "Draft" notice at the top of the game. See [Checking the content](#-checking-the-content).
+
+---
+
+## 🚪 The front page and class links
+
+The website's front page has two doors:
+
+- **I'm a student:** paste a class link (or just click the one your teacher shared), or play the sample escape room.
+- **I'm a teacher:** make an escape room (the guided steps), open one you saved before, and a short "How it works".
+
+A **class link** is the whole escape room packed into one web address (`…/play.html#play=1.…`). Nothing is uploaded or stored anywhere: the part after `#` never reaches a web server. That also means:
+
+- **Changing the escape room means sharing a new link.** The old link keeps opening the old version.
+- **The link is a backup.** In the maker, choose **Open one I saved before** and paste it to get the escape room back.
+- **Long links:** the sample is about 7 KB of link, which Moodle, Canvas and email handle fine. Over about 30 KB (very long texts), the maker warns that some systems may cut it off and suggests the file instead. Short links also get a QR code.
 
 ---
 
@@ -18,9 +35,11 @@ Students solve 5 puzzle rooms about educational philosophies and philosophers, t
 
 | File | What it's for |
 |---|---|
-| [`index.html`](index.html) | The game itself. Double-click it to play. |
+| [`index.html`](index.html) | The front page (the website's start page). |
+| [`play.html`](play.html) | The game with the sample escape room. Double-click it to play. It also plays any class link. |
 | [`editor.html`](editor.html) | **For teachers:** change questions and answers, check content, and export new games. **Don't give this to students**, because it shows the answers. |
 | [`EscapeRoom_SCORM.zip`](EscapeRoom_SCORM.zip) | Upload this to Moodle or Canvas for automatic grading. **Don't unzip it.** |
+| [`accessibility.html`](accessibility.html) | The accessibility statement as a page (made from `ACCESSIBILITY.md`). |
 
 To download a file, click its name above, then click the **download button** (⬇) at the top right of the file view.
 To download everything at once, go to the main repository page and click the green **Code** button, then **Download ZIP**.
@@ -29,21 +48,21 @@ To download everything at once, go to the main repository page and click the gre
 
 ## ✏️ Editing questions and answers (for teachers)
 
-Download **`editor.html`** and double-click it. Everything happens in the browser, with no account and no internet needed.
+Open the website and press **I'm a teacher → Make an escape room**, or download **`editor.html`** and double-click it. Everything happens in the browser, with no account and nothing sent anywhere.
 
 ### Start here: the guided steps
 
 The first time you open the editor, it takes you through **10 short steps**, one question per page:
 
 1. **Welcome**: what an escape room is and what you'll do.
-2. **How to start**: change the sample, start with an empty escape room, or open one you saved before.
+2. **How to start**: change the sample, start with an empty escape room, or open one you saved before (a backup file, or a class link you shared).
 3. **Name it**: the title students see, and your course.
 4. **Your rooms**: add, remove and order rooms. Quiz questions and Match clues to cards are set up right in the steps; the other kinds open in Advanced mode.
 5. **Fill in each room**: your questions (with other accepted spellings) or your cards and clues ("Students will open the lock with LEARN"), then what students read.
 6. **Check your facts**: every item in one list. Say where you checked it and tick it. Nothing is ever ticked for you.
 7. **Try it as a student**: play it the way students will.
-8. **How students get it**: Moodle, Canvas, another course system, or a file.
-9. **Put it in your course**: download the right file, then numbered steps with the menu names for your system, your exit password with a **Copy** button, and the quiz question ready to paste.
+8. **How students get it**: **Share a class link** (recommended: works anywhere), Moodle, Canvas, another course system, or a file.
+9. **Put it in your course**: make the class link (with **Copy link**, **Open it as a student**, and a QR code when it is short enough) or download the right file, then numbered steps with the menu names for your system, your exit password with a **Copy** button, and the quiz question ready to paste.
 10. **Done**: a summary with **Change** links, and a reminder to keep your backup.
 
 Every step has **Back**, **Continue**, **Help with this step**, **Save and finish later**, and **Show all settings (Advanced mode)**. When you come back to the editor in the same browser, it opens on **Your escape room**: a list of what's done and what's left, plus **Your escape rooms** (every escape room in this browser), **Make another escape room** and **Make a copy of this one**.
@@ -85,7 +104,7 @@ The editor looks like a curator's workbench at night. The **cabinet** on the lef
 - **Accessibility check.** The **Accessibility check** drawer (at the end of the cabinet) reads what you wrote and lists things that often shut students out: directions that depend on colour, position, shape or sound ("the red book", "on the left"), words like "click" or "drag", time pressure, a lock with more than 8 dials, missing titles or instructions, symbols or emoji used as the only meaning, very long clues and reading-heavy rooms, typed answers with only one accepted spelling, long lists to order or sort, and rooms with no hints. Each note says where it is, why it matters, and what to do; clicking it takes you to the spot. The notes are advice only. They never stop you previewing or exporting, and they are printed at the end of the **Answer sheet**.
 - **Hints (optional).** Hints are **off** until you switch them on for a room. Each room can have **two hints** that you write. Students can't open a hint straight away: hint 1 unlocks after 1 wrong try and hint 2 after 3 wrong tries in that room (you can change these numbers in **Settings**). The editor warns you if a hint gives away the answer.
 - **Preview as student** opens the game exactly as students see it, full screen. The brass rail at the top is just for you: jump to any room, switch **Show answers** on or off, **Restart**, or **Exit preview** (or press **Esc**). Each room also has a **Preview this room** button. Nothing in the preview is saved or graded.
-- **Export for students** downloads the game as an `.html` file or a **SCORM `.zip`** for Moodle/Canvas, ready to upload.
+- **Export for students** has **Copy class link**, and downloads the game as an `.html` file or a **SCORM `.zip`** for Moodle/Canvas, ready to upload.
 - **Download a backup** (at the foot of the cabinet) downloads the game `.html`, which reopens with **Open…**. **Save project** downloads the same content as a `.json` file. The editor also remembers your work in this browser between visits, and the line at the foot of the cabinet says when it last saved and whether it is backed up.
 
 ---
@@ -104,8 +123,8 @@ The brass plate at the top shows how many items are checked (for example *31 / 4
 
 ## ▶️ Try it yourself first
 
-1. Download `index.html`.
-2. Double-click it, and it opens in your browser.
+1. On the website, press **Play the sample escape room**. Or download `play.html` and double-click it: it opens in your browser.
+2. Class links open in any up-to-date browser (Chrome, Edge, Firefox, Safari).
 3. If you see code instead, right-click the file → **Open with** → choose your browser.
 
 > Phones and iPads often show the code instead of running the game. Test on a laptop or desktop.
@@ -143,11 +162,23 @@ When students escape, the certificate shows this exit password:
 
 ---
 
+## 🔗 Share it as a class link (Moodle, Canvas, Google Classroom, email)
+
+The guided steps (step 8, **Share a class link**) make the link and show the steps. In short:
+
+- **Moodle:** **Add an activity or resource** → **URL** → paste the link into **External URL** → **Save and return to course**.
+- **Canvas:** **Modules** → **+** → **External URL** → paste it into **URL**, tick **Load in a new tab** → **Add Item**.
+- **Google Classroom or email:** paste the link into a post or a message.
+
+For the grade, add a one-question quiz with the exit password as the answer (below). Menus can differ by version.
+
+---
+
 ## 🎓 Put it in Canvas
 
 ### Option A: Quiz with the exit password (easiest, auto-graded)
-1. **Files** → **Upload** → choose `index.html`.
-2. **Pages** → **+ Page**. Type *"Start the escape room,"* highlight it, and click **Link** → **Course Links** → **Files** → `index.html`. Click **Save & Publish**.
+1. **Files** → **Upload** → choose `play.html`.
+2. **Pages** → **+ Page**. Type *"Start the escape room,"* highlight it, and click **Link** → **Course Links** → **Files** → `play.html`. Click **Save & Publish**.
 3. **Quizzes** → **+ Quiz**. Add one **Fill in the Blank** question:
    *"Enter the exit password from the escape room certificate."*
    Correct answer: `DEWEY1916`. Add `dewey1916` as a second correct answer in case students type lowercase.
@@ -172,7 +203,7 @@ When students escape, the certificate shows this exit password:
 *If "SCORM package" isn't in the list, ask your Moodle administrator to enable it, or use Option B.*
 
 ### Option B: File and quiz with the exit password
-1. **Add an activity or resource** → **File** → upload `index.html` → set **Display** to *Open* → **Save**.
+1. **Add an activity or resource** → **File** → upload `play.html` → set **Display** to *Open* → **Save**.
 2. **Add an activity or resource** → **Quiz** → add a **Short answer** question with the correct answer `DEWEY1916`. Moodle short-answer questions ignore capitalization by default.
 
 **Check it as a student:** In either platform, use **Student View** (Canvas) or **Switch role to → Student** (Moodle) to play it the way students will.
@@ -194,16 +225,16 @@ npx playwright install chromium
 **Useful commands:**
 | Command | What it does |
 |---|---|
-| `npm run serve` | Runs the game at http://localhost:8080 |
-| `npm run build` | Rebuilds `index.html`, `editor.html`, and `EscapeRoom_SCORM.zip` from `src/` and `content/` |
-| `npm test` | Builds, then plays the whole game, drives the editor and its guided steps automatically (`tests/editor.js`, `tests/wizard.js`), and runs the game's and the editor's accessibility tests (several minutes). Screenshots go to `tests/screenshots/` |
+| `npm run serve` | Serves the site at http://localhost:8080 (front page; the game is `/play.html`, the maker `/editor.html`) |
+| `npm run build` | Rebuilds `index.html`, `play.html`, `editor.html`, `accessibility.html` and `EscapeRoom_SCORM.zip` from `src/`, `content/` and `ACCESSIBILITY.md` |
+| `npm test` | Builds, then plays the whole game, tests class links and the front page (`tests/links.js`), drives the editor and its guided steps automatically (`tests/editor.js`, `tests/wizard.js`), and runs the game's and the editor's accessibility tests (several minutes). Screenshots go to `tests/screenshots/` |
 | `npm run test:a11y` | Builds, then runs only the accessibility tests (`tests/a11y-game.js` and `tests/a11y-editor.js`) |
 
 **Browser control (MCP):** the `.mcp.json` file gives Claude Code the **Playwright** browser tools. The first time you open Claude Code in this folder, it asks whether to allow the `playwright` server. Say yes. After that you can ask things like *"Play the escape room on a phone-sized screen and tell me what's confusing,"* or *"Add a sixth room about Horace Mann and test it."* The `CLAUDE.md` file tells Claude the rules for this project.
 
 The tests also run automatically on GitHub every time the game or editor changes.
 
-**How the files fit together:** the game's code is in `src/game.html`, the editor's is in `src/editor.html`, shared logic is in `src/shared.js`, and the sample escape room's content is in `content/foundations-of-education.json`. `npm run build` combines them into the files at the top of the repository. Don't edit `index.html` or `editor.html` directly.
+**How the files fit together:** the game's code is in `src/game.html`, the editor's is in `src/editor.html`, the front page is `src/front.html`, the statement page's frame is `src/statement.html`, shared logic (including class links and the QR code maker) is in `src/shared.js`, and the sample escape room's content is in `content/foundations-of-education.json`. `npm run build` combines them into the files at the top of the repository. Don't edit `index.html`, `play.html`, `editor.html` or `accessibility.html` directly.
 
 ---
 
@@ -223,7 +254,8 @@ Hints are **off** in the sample. Each room has two ready-made hints that point s
 
 ## ℹ️ Good to know
 
-- **Privacy:** The game runs entirely in the student's browser. It doesn't send data anywhere, except that SCORM reports completion, score, and time to *your own* Moodle or Canvas gradebook.
+- **Privacy:** The game runs entirely in the student's browser. It doesn't send data anywhere, except that SCORM reports completion, score, and time to *your own* Moodle or Canvas gradebook. A class link carries the escape room inside the link itself; the part after `#` is never sent to a web server.
+- **Class links can be made by anyone.** The game treats what a link carries as untrusted: it is size-limited, cleaned, checked, and every text is shown as plain text, never as code.
 - **Answers are only lightly hidden.** Everything runs in the student's browser, so a tech-savvy student could dig the answers out of the game file. That's fine for practice and low-stakes quizzes, but don't rely on it for high-stakes tests.
-- **Editing:** use `editor.html` (see [Editing questions and answers](#️-editing-questions-and-answers-for-teachers)). Don't edit `index.html` by hand; it's generated.
+- **Editing:** use `editor.html` (see [Editing questions and answers](#️-editing-questions-and-answers-for-teachers)). Don't edit `index.html` or `play.html` by hand; they're generated.
 - **Facts vary by source:** some details differ between references. For example, *The Republic* is usually dated between 380 and 370 BCE, and Freire wrote *Pedagogy of the Oppressed* in Chile around 1967–68. Check them against your own textbook.

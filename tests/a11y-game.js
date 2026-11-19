@@ -56,14 +56,14 @@ function expectNone(key, list) {
 }
 
 let base = "", browser = null;
-async function open({ viewport = DESKTOP, hc = false, readable = false, forced = false, contrast = null, scale = 1, motion = "reduce", engine = null } = {}) {
+async function open({ path = "/play.html", viewport = DESKTOP, hc = false, readable = false, forced = false, contrast = null, scale = 1, motion = "reduce", engine = null } = {}) {
   const ctx = await (engine || browser).newContext({ viewport, reducedMotion: motion, forcedColors: forced ? "active" : "none", deviceScaleFactor: scale, ...(contrast ? { contrast } : {}) });
   const page = await ctx.newPage();
   page.errors = [];
   page.on("pageerror", e => page.errors.push(e.message));
   page.on("console", m => { if (m.type() === "error") page.errors.push(m.text()); });
   await page.addInitScript(([hc, readable]) => { try { if (hc) localStorage.setItem("escape-room-contrast", "on"); if (readable) localStorage.setItem("escape-room-readable", "on"); } catch (e) {} }, [hc, readable]);
-  await page.goto(URL_ || base + "/index.html");
+  await page.goto(URL_ || base + path);
   page.old = await page.evaluate(() => !document.querySelector("#view"));      // an older build, for the before/after report
   return page;
 }
@@ -122,7 +122,8 @@ function checkFocus() {
   for (const el of els) {
     el.focus();
     if (document.activeElement !== el) { out.push("can't take focus: " + name(el)); continue; }
-    const r = el.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const r = el.getClientRects()[0] || el.getBoundingClientRect(), x = r.left + r.width / 2;   // a link that wraps: the middle of its first line
+    const y = r.height > innerHeight ? Math.max(r.top, 0) + 12 : r.top + r.height / 2;            // a box taller than the window: its visible top
     if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) { out.push("focused but off screen: " + name(el)); continue; }
     const top = document.elementFromPoint(x, y);
     if (!(top && (el === top || el.contains(top)))) out.push("covered when focused: " + name(el) + " by " + (top ? name(top) : "nothing"));
@@ -140,6 +141,7 @@ function checkTargets() {
   const out = [];
   for (const el of layer.querySelectorAll("a[href],button,input,select,textarea,[role=spinbutton],.nub,.grip,.klabel")) {
     if (!shown(el) || el.closest("[inert]") || el.classList.contains("skip")) continue;
+    if (el.matches("a") && getComputedStyle(el).display === "inline" && el.parentElement.closest("p,li,td")) continue;   // a link inside a sentence (exempt in 2.5.8)
     const box = el.matches(PAPER) ? el.parentElement : el, r = box.getBoundingClientRect(), min = box.matches(BIG) ? 43.5 : 24;
     if (el.matches(PAPER) && getComputedStyle(el, "::after").position !== "absolute") out.push("a paper's heading button isn't stretched over the paper: " + name(el));
     if (r.width < min - .01 || r.height < min - .01) out.push(`${Math.round(r.width)}x${Math.round(r.height)} (needs ${Math.ceil(min)}): ` + name(el));
@@ -159,7 +161,8 @@ function checkClip() {
     const el = n.parentElement; if (!shown(el) || el.closest(".sr,.strip,.skip,.old,script,style") || el.closest("[hidden]")) continue;
     const range = document.createRange(); range.selectNodeContents(n);
     const r = range.getBoundingClientRect(); if (!r.width || !r.height) continue;
-    if (r.left < -1 || r.right > innerWidth + 1) add(`text runs off the side of the window: ` + name(el));
+    const inTable = !!el.closest(".tbl");     // a wide table in the accessibility statement scrolls inside its own labelled box (tables are exempt from reflow)
+    if (!inTable && (r.left < -1 || r.right > innerWidth + 1)) add(`text runs off the side of the window: ` + name(el));
     let scrollsY = false;                                                    // inside something that scrolls up and down, text below the fold is reachable, not cut off
     for (let a = el; a && a !== document.body; a = a.parentElement) {
       const cs = getComputedStyle(a); if (cs.display === "inline") continue;
@@ -168,7 +171,7 @@ function checkClip() {
       const q = a.getBoundingClientRect();
       if (hid(cs.overflowX) && (r.right > q.right + 1.5 || r.left < q.left - 1.5)) add("text is cut off at the side: " + name(el) + " inside " + name(a));
       if (hid(cs.overflowY) && !scrollsY && (r.bottom > q.bottom + 1.5 || r.top < q.top - 1.5)) add("text is cut off: " + name(el) + " inside " + name(a));
-      if (scr(cs.overflowX) && a.scrollWidth > a.clientWidth + 1) add("scrolls sideways: " + name(a));
+      if (scr(cs.overflowX) && a.scrollWidth > a.clientWidth + 1 && !a.matches(".tbl")) add("scrolls sideways: " + name(a));
       if (scr(cs.overflowY)) scrollsY = true;
     }
   }
@@ -275,6 +278,24 @@ const TEXTS = {
   "room 1, a clue held up": [["Sheet heading", ".sheet h2", "big"], ["Sheet text", ".sheet p", "read"], ["Sheet footer", ".sheet .foot", "label"]],
   "notebook open": [["Notebook heading", ".page h2", "big"], ["Notebook stats", ".page .stat", "read"], ["Notebook rows", ".page li button .lbl", "read"], ["Switch state (on/off)", ".page li .st", "label"], ["How to play", ".page ul li", "read"]]
 };
+/* The other pages a student meets: the front page (also with a link error), a class link that didn't open, and the
+   accessibility statement. frontTour() visits each, like tour() does for the game. */
+async function frontTour(page, visit) {
+  await page.goto(base + "/"); await page.locator("#student-h").waitFor(); await visit("front page");
+  await page.fill("#class-link", "https://example.org/play.html#play=1.abcdefghijkl"); await page.click("#open-link");
+  await page.locator("#link-error:not([hidden])").waitFor(); await visit("front page, link error");
+  await page.goto(base + "/play.html#play=1.abcdefghijkl"); await page.locator("#link-problem").waitFor(); await visit("class link didn't open");
+  await page.goto(base + "/accessibility.html"); await page.locator("#statement h1").waitFor(); await visit("accessibility statement");
+}
+Object.assign(TEXTS, {
+  "front page": [["Site name on the placard", ".placard", "label"], ["Front page heading", "h1", "big"], ["Intro line", ".intro", "read"], ["Door plate", ".door h2", "big"],
+    ["Paper text on a door", ".sheet .lead", "read"], ["Field label", "label.big", "read"], ["Field hint", ".fhint", "read"], ["Brass button", ".btn", "label"], ["Text link on paper", "#open-saved", "read"],
+    ["Small print on paper", ".sheet .small", "read"], ["How it works", ".how span", "read"], ["How it works, step names", ".how b", "read"], ["Privacy line", "#privacy", "read"],
+    ["Footer link", "#a11y-link", "read"], ["Display switch", ".switch .lbl", "label"]],
+  "front page, link error": [["Error message", "#link-error", "read"], ["Typed link", "#class-link", "read"]],
+  "class link didn't open": [["Its heading", "h2.bplate", "big"], ["Its note", "#link-problem p:not(:last-child)", "read"], ["Front page plate", "#home", "label"]],
+  "accessibility statement": [["Statement text", "#statement p", "read"], ["Statement heading", "#statement h2", "big"], ["Table text", "#statement td", "read"], ["Top bar link", ".top a", "read"]]
+});
 const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to the AAA figure
 
 (async () => {
@@ -618,6 +639,67 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
       await done(big);
       assert.equal(bad.length, 0, bad.slice(0, 25).join("\n"));
     } finally { await wk.close(); }
+  });
+
+  /* ---------- the front page, a broken class link, and the statement ---------- */
+  for (const [label, opts] of (REPORT ? LOOKS.slice(0, 2) : LOOKS)) test(`front pages: axe finds nothing (${label})`, async () => {
+    const page = await open({ ...opts, path: "/" }), bad = [];
+    await frontTour(page, async name => { for (const v of await axe(page)) bad.push(`[${name}] ${v}`); });
+    expectNone("axe violations (front pages)", bad); await done(page);
+  });
+  for (const [label, opts] of [["1440x900", {}], ["390x844", { viewport: PHONE }], ["390x844, High contrast and Readable text", { viewport: PHONE, hc: true, readable: true }]]) {
+    if (REPORT && opts.hc) continue;
+    test(`front pages: focus rings, never covered, targets 24px or more (${label})`, async () => {
+      const page = await open({ ...opts, path: "/" }), focus = [], size = [];
+      await page.keyboard.press("Tab");
+      await frontTour(page, async name => { await page.keyboard.press("Tab"); for (const p of await inPage(page, checkFocus)) focus.push(`[${name}] ${p}`); for (const p of await inPage(page, checkTargets)) size.push(`[${name}] ${p}`); });
+      expectNone("focus hidden or covered", focus); expectNone("targets too small", size); await done(page);
+    });
+  }
+  for (const [label, opts, how] of SIZES) {
+    if (REPORT && /Readable/.test(label)) continue;
+    test(`front pages: nothing is cut off and nothing scrolls sideways: ${label}`, async () => {
+      const page = await open({ ...opts, path: "/" }), bad = [];
+      const style = async () => { if (how.includes("big")) await page.addStyleTag({ content: "html{font-size:200%!important}" }); if (how.includes("space")) await page.addStyleTag({ content: SPACING }); };
+      await frontTour(page, async name => { await style(); for (const p of await inPage(page, checkClip)) bad.push(`[${name}] ${p}`); });
+      expectNone("front pages: clipped", bad); await done(page);
+    });
+  }
+  for (const [label, opts] of [["forced colours", { forced: true }], ["the High contrast switch, 390x844", { hc: true, viewport: PHONE }]]) test(`front pages: controls are still drawn in ${label}`, async () => {
+    if (REPORT) return;
+    const page = await open({ ...opts, path: "/" }), bad = [];
+    await frontTour(page, async name => { for (const p of await inPage(page, checkDrawn)) bad.push(`[${name}] ${p}`);
+      if (name === "front page") for (const p of await page.evaluate(() => [...document.querySelectorAll(".btn, .switch, #class-link, .door, .sheet")].filter(el => { const cs = getComputedStyle(el); return !(parseFloat(cs.borderTopWidth) >= 1 && cs.borderTopStyle !== "none"); }).map(el => "no edge: " + (el.id || el.className)))) bad.push(`[${name}] ${p}`); });
+    expectNone("forced colours: undrawn", bad); await done(page);
+  });
+  for (const [label, opts] of [["normal, 1440x900", {}], ["normal, 390x844", { viewport: PHONE }], ["High contrast, 1440x900", { hc: true }]]) test(`front pages: measured contrast of every text style (${label})`, async () => {
+    const page = await open({ ...opts, scale: 2, path: "/" }), helper = await page.context().newPage(), bad = [], table = {};
+    await helper.goto("about:blank");
+    await frontTour(page, async name => { await page.addStyleTag({ content: HIDE }); for (const [what, sel, kind] of TEXTS[name] || []) {
+      const c = await contrastOf(page, helper, sel); if (c == null) { bad.push(`[${name}] couldn't measure ${what} (${sel})`); continue; }
+      table[what] = { ratio: c, kind };
+      if (c < NEED[kind]) bad.push(`[${name}] ${what} (${sel}): ${c}:1, needs ${NEED[kind]}:1`);
+    } });
+    report.contrast["front pages, " + label] = table; expectNone("contrast below AA (front pages)", bad); await done(page);
+  });
+  test("front pages: language, titles, one h1, landmarks, a labelled box with its hint, switches", async () => {
+    if (REPORT) return;
+    const page = await open({ path: "/" });
+    assert.equal(await page.getAttribute("html", "lang"), "en");
+    assert.equal(await page.locator("h1").count(), 1); assert.equal(await page.locator("main").count(), 1); assert.equal(await page.locator("footer").count(), 1);
+    assert.equal(await page.getAttribute("#student", "aria-labelledby"), "student-h"); assert.equal(await page.getAttribute("#teacher", "aria-labelledby"), "teacher-h");
+    assert.equal(await page.locator("label[for=class-link]").count(), 1); assert.equal(await page.getAttribute("#class-link", "aria-describedby"), "link-hint");
+    for (const id of ["contrast-toggle", "readable-toggle"]) { assert.equal(await page.getAttribute("#" + id, "role"), "switch"); assert.equal(await page.getAttribute("#" + id, "aria-checked"), "false"); }
+    await page.click("#readable-toggle"); assert.equal(await page.getAttribute("html", "data-readable"), "on");
+    await page.waitForFunction(() => document.querySelector("#live").textContent === "Readable text is on.");
+    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).fontSize), "18px");
+    await page.goto(base + "/play.html#play=1.abc"); await page.locator("#link-problem").waitFor();
+    assert.equal(await page.locator("#stage h2").count(), 1, "one h2 in the stage");
+    assert.equal(await page.evaluate(() => document.activeElement.tagName), "H2", "focus is on the message, which reads it out");
+    await page.goto(base + "/accessibility.html");
+    assert.equal(await page.locator("h1").count(), 1); assert.equal(await page.locator("main").count(), 1);
+    assert.equal(await page.locator(".tbl[role=region][aria-label][tabindex='0']").count(), await page.locator("table").count(), "every table scrolls in a labelled, focusable box");
+    await done(page);
   });
 
   await runAll();
