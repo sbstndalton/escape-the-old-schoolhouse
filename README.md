@@ -8,6 +8,7 @@ Students solve 5 puzzle rooms about educational philosophies and philosophers, t
 - 🔌 Needs no internet, accounts, or installs
 - 🎓 Works in **Moodle** and **Canvas**
 - ✏️ Teachers can change every question and answer in a simple editor, and build new escape rooms for other chapters
+- ♿ Built to [WCAG 2.2 AA](ACCESSIBILITY.md): keyboard and screen-reader support, your own text size, High contrast, Readable text, no time limit
 
 > ⚠️ **The sample content has not been fact-checked yet.** It was written with AI help and may contain mistakes. Until the instructor checks every item in the editor, students see a "Draft" notice at the top of the game. See [Checking the content](#-checking-the-content).
 
@@ -41,7 +42,7 @@ The editor looks like a curator's workbench at night. The **cabinet** on the lef
   - **Put in order**: timelines or steps in a process.
   - **Sort into groups**: for example traditional vs. progressive.
   - **Reflection survey**: no wrong answers; shows a result profile on the certificate.
-- **Animation and sound are optional for students.** Dials click, locks spring open, doors part between rooms, and the certificate gets a wax seal. Students can switch animation off with **Motion** in the notebook (click the pocket watch or press **Esc**), and sound off with the bell at the top right. Motion is off automatically on devices set to "reduce motion", and the game works the same either way.
+- **Animation and sound are optional for students.** Dials click, locks spring open, doors part between rooms, and the certificate gets a wax seal. Students can switch animation off with **Motion** in the notebook (click the pocket watch or press **Esc**), and sound off with the bell at the top right. Motion is off automatically on devices set to "reduce motion", and the game works the same either way. The notebook also has **High contrast**, **Readable text** and **Hide the clock**. See [Accessibility](#-accessibility).
 - **Type a whole quiz as text.** In a Question lock room, click **Edit all questions as text** and write:
   ```text
   Q: Who wrote Democracy and Education (1916)?
@@ -85,15 +86,21 @@ The brass plate at the top shows how many items are checked (for example *31 / 4
 ### How it plays
 The game is one night-time scene per room. Everything is an object you handle:
 
-- **Papers** (clue cards, books, portraits, the story note): click one to read it up close. **Esc** or a click outside puts it back.
-- **Combination padlock:** turn each dial with a click, a drag, the scroll wheel or the arrow keys, or just type the code. Then pull the shackle (or press **Enter**).
+- **Papers** (clue cards, books, portraits, the story note): click one to read it up close. **Esc** or the close button puts it back.
+- **Describe this room:** a button under each room's title that lists everything in the room as plain text.
+- **Combination padlock:** turn each dial with its arrows, a drag, the scroll wheel or the arrow keys, or just type the code in the box. Then pull the shackle (or press **Enter**).
 - **Other locks:** turn the handle on the door. A small counter shows how many you got right.
 - **Sorting slips:** click a slip, then press a rubber stamp. Each slip also has its own boxes to stamp.
-- **Timeline cards:** move them with the round studs, or drag a card by its number.
-- **Key ring** (top left): one key per room. A key turns brass when you escape its room.
-- **Pocket watch** (top right): shows your time. Click it, or press **Esc**, for the notebook: sound, motion, start over.
+- **Timeline cards:** move them with the round up and down buttons, or drag a card by its number.
+- **The mirror:** choose an answer, then press **Next question**.
+- **Key ring** (top left): one key per room. A key turns brass and gets a tick when you escape its room.
+- **Pocket watch** (top right): opens the notebook (so does **Esc**): sound, motion, high contrast, readable text, hide the clock, start over. There is no time limit; the clock only shows how long you have played.
+- **A tall room scrolls.** On a phone or a small window the room is one column. A "more below" mark shows when there is more to see.
 
-Everything also works from the keyboard (**Tab**, **Enter**, **Space**, arrow keys).
+Everything also works from the keyboard (**Tab**, **Enter**, **Space**, arrow keys, **Esc**).
+
+### ♿ Accessibility
+The game follows your browser's text size and zoom, works with the keyboard alone and with screen readers, and supports Windows High Contrast. In the notebook you can switch on **High contrast** and **Readable text** (plain letters, larger, more space), switch off **Motion** and **Sound**, and **hide the clock**. What was tested, the measured contrast figures, and the known limits are in **[ACCESSIBILITY.md](ACCESSIBILITY.md)**.
 
 ---
 
@@ -196,7 +203,8 @@ npx playwright install chromium
 |---|---|
 | `npm run serve` | Runs the game at http://localhost:8080 |
 | `npm run build` | Rebuilds `index.html`, `editor.html`, and `EscapeRoom_SCORM.zip` from `src/` and `content/` |
-| `npm test` | Builds, then plays the whole game and drives the editor automatically, and saves screenshots to `tests/screenshots/` |
+| `npm test` | Builds, then plays the whole game, runs the accessibility checks, and drives the editor automatically. Screenshots go to `tests/screenshots/` |
+| `npm run test:a11y` | Builds, then runs only the game's accessibility checks (`tests/a11y-game.js`) |
 
 **Browser control (MCP):** the `.mcp.json` file gives Claude Code the **Playwright** browser tools. The first time you open Claude Code in this folder, it asks whether to allow the `playwright` server. Say yes. After that you can ask things like *"Play the escape room on a phone-sized screen and tell me what's confusing,"* or *"Add a sixth room about Horace Mann and test it."* The `CLAUDE.md` file tells Claude the rules for this project.
 
