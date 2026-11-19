@@ -3,6 +3,7 @@
 //   play.html             the student game with the sample content; it also plays any class link (play.html#play=…)
 //   editor.html           the teacher's maker (includes the game template so it can export games and make links)
 //   accessibility.html    the accessibility statement (ACCESSIBILITY.md as a page)
+//   guide.html            the teachers' printable one-page quick-start guide
 //   EscapeRoom_SCORM.zip  the sample game packaged for Moodle/Canvas (its own launch file is index.html inside the zip)
 //   imsmanifest.xml       the SCORM manifest, for reference
 // Run: npm run build
@@ -39,6 +40,12 @@ const FONT_NOTE = "/* Embedded fonts (no internet needed). Atkinson Hyperlegible
 const front = read("src/front.html")
   .replace("/*__FONTS__*/", () => FONT_NOTE + fontFaces(["Atkinson Hyperlegible", "IM Fell English SC"]))
   .replace("/*__SHARED__*/", () => shared);
+
+// The quick-start guide carries the site's address as text and as a QR code, so a printed copy leads back.
+const guide = read("src/guide.html")
+  .replace("/*__FONTS__*/", () => FONT_NOTE + fontFaces(["Atkinson Hyperlegible", "IM Fell English SC"]))
+  .replace("<!--__SITE__-->", () => ER.esc(ER.SITE))
+  .replace("<!--__QR__-->", () => ER.qrSvg(ER.SITE, { label: "QR code of the site's address, " + ER.SITE }));
 
 /* ---------- ACCESSIBILITY.md as a page ----------
    A small Markdown reader for what that file uses: headings, paragraphs, lists, tables, rules, **bold**, *italic*,
@@ -101,7 +108,8 @@ fs.writeFileSync(path.join(root, "index.html"), front);
 fs.writeFileSync(path.join(root, "play.html"), play);
 fs.writeFileSync(path.join(root, "editor.html"), editor);
 fs.writeFileSync(path.join(root, "accessibility.html"), statement);
+fs.writeFileSync(path.join(root, "guide.html"), guide);
 fs.writeFileSync(path.join(root, "EscapeRoom_SCORM.zip"), zip);
 fs.writeFileSync(path.join(root, "imsmanifest.xml"), ER.manifest(content.meta.title));
 const st = ER.reviewStatus(content);
-console.log(`Built index.html (front page), play.html, editor.html, accessibility.html, EscapeRoom_SCORM.zip  (${content.rooms.length} rooms; ${st.verified}/${st.total} items verified)`);
+console.log(`Built index.html (front page), play.html, editor.html, accessibility.html, guide.html, EscapeRoom_SCORM.zip  (${content.rooms.length} rooms; ${st.verified}/${st.total} items verified)`);
