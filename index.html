@@ -804,6 +804,8 @@ h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
 [data-shape=tall] .shelf{padding:1rem .9rem .95rem}
 [data-shape=tall] .drawer,[data-shape=tall] .desk,[data-shape=tall] #qf{padding:.8rem .7rem 1rem}
 [data-shape=tall] .board{padding:.9rem .6rem .9rem 2.2rem}
+[data-shape=tall] #order .t{flex:1 1 calc(100% - 3.8rem)}
+[data-shape=tall] #order .t + .stud{margin-left:auto}
 [data-shape=tall] .gallery{grid-template-columns:repeat(auto-fill,minmax(7.4rem,1fr));gap:1.3rem .6rem}
 [data-shape=tall] .mirror{width:min(8.5rem,42%)}
 [data-shape=tall] .mirrorwrap{padding:1.6rem 0 0}
@@ -937,7 +939,7 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
 @media print{
   html,body{height:auto;overflow:visible;background:#fff}
   #scene,#view{position:static;display:block;width:auto;transform:none;background:#fff;overflow:visible}
-  #bg,#hud,#light,#grainfx,#doorfx,#examine,#pause,#teacher-key,#more,.dawn,.noprint,#confetti{display:none!important}
+  #bg,#hud,#light,#grainfx,#doorfx,#examine,#pause,#teacher-key,#more,.dawn,.noprint,.pin,#confetti{display:none!important}
   #stage{position:static;display:block;padding:0;overflow:visible}
   .head{display:none}
   .endrow{display:block}
