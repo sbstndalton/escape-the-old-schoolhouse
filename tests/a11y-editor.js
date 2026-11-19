@@ -43,7 +43,9 @@ function report(kind, problems) {
 }
 
 async function open(browser, base, viewport, opts = {}) {
-  const ctx = await browser.newContext({ viewport, acceptDownloads: true, ...opts });
+  const { ask, ...ctxOpts } = opts;
+  const ctx = await browser.newContext({ viewport, acceptDownloads: true, ...ctxOpts });
+  if (!ask) await ctx.addInitScript(require("./skip-ask.js"));      // the first-visit prompt has its own states (opts.ask: see it)
   const page = await ctx.newPage();
   page.errors = [];
   page.on("pageerror", e => page.errors.push(e.message));
@@ -63,7 +65,7 @@ async function drawer(page, text) {          // open a drawer of the cabinet (th
   await settle(page);
 }
 async function escapeAll(page) {
-  for (let i = 0; i < 4; i++) { if (!(await page.locator(".overlay, .preview, .modal, body.cab-open, #tools.open, #add-menu").count())) break; await page.keyboard.press("Escape"); await settle(page); }
+  for (let i = 0; i < 4; i++) { if (!(await page.locator(".overlay, .preview, .modal, #a11y-ask, body.cab-open, #tools.open, #add-menu").count())) break; await page.keyboard.press("Escape"); await settle(page); }
 }
 
 /* Every page, tab and overlay of the editor, one after another. `visit(name)` is called in each state. */
@@ -107,6 +109,7 @@ async function eachState(page, visit, only) {
   if (phone) await go("phone / cabinet open", cab);
   await go("cabinet / add a room list", async () => { await cab(); await page.click("#add-room"); }, async () => { await page.click("#add-room"); await escapeAll(page); });
   if (await page.locator("#display-toggles, #btn-view").count()) await go("cabinet / display switches", cab);
+  if (await page.locator("#a11y-options").count()) await go("dialog / accessibility options", async () => { await cab(); await page.click("#a11y-options"); await page.locator("#a11y-ask").waitFor(); });
   const tool = async id => { if (phone) await page.click("#btn-more"); await page.click(id); };
   if (phone) await go("phone / file list open", () => page.click("#btn-more"));
   await go("overlay / new", () => tool("#btn-new"));
@@ -144,6 +147,7 @@ async function wizardStates(page, go, phone){
   const stay = async () => {};
   const err = async () => { await page.click("#wiz-continue"); await page.locator("#wiz-errors, #wiz-warn").first().waitFor(); };
   await go("wizard / 1 welcome", () => to("#step=welcome"), stay);
+  await go("wizard / accessibility options (asked first on a first visit)", async () => { await to("#step=welcome&a=1"); await page.click("#wiz-a11y"); await page.locator("#a11y-ask").waitFor(); });
   await go("wizard / 1 welcome, help open", async () => { await to("#step=welcome&h=1"); await page.click("#wiz-help summary"); }, stay);
   if (phone) await go("wizard / steps list open", async () => { await to("#step=name&s=1"); await page.click("#wiz-steps summary"); }, async () => { await page.click("#wiz-steps summary"); });
   await go("wizard / 2 start", () => to("#step=start", "WIZ.start = null"), stay);

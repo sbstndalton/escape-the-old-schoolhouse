@@ -25,6 +25,7 @@ async function test(name, fn) {
 let base, browser;
 async function open(url, { viewport = { width: 1280, height: 900 }, motion = "reduce" } = {}) {
   const ctx = await browser.newContext({ viewport, reducedMotion: motion });
+  await ctx.addInitScript(require("./skip-ask.js"));            // a returning visitor: the first-visit prompt is tested in tests/a11y-prompt.js
   const page = await ctx.newPage();
   page.errors = []; page.outside = [];
   page.on("pageerror", e => page.errors.push(e.message));
@@ -229,9 +230,9 @@ const unsafe = page => page.evaluate(() => {
     assert.equal(await page.locator("h1").count(), 1);
     assert.deepEqual(await page.$$eval("h2", hs => hs.map(h => h.textContent)), ["I'm a student", "I'm a teacher"]);
     assert.deepEqual(await page.$$eval("a[href], button, input", els => els.map(e => e.id || e.className)),
-      ["skip", "class-link", "open-link", "play-sample", "make", "open-saved", "a11y-link", "contrast-toggle", "readable-toggle"], "Tab order is reading order");
-    const tabs = []; for (let i = 0; i < 9; i++) { await page.keyboard.press("Tab"); tabs.push(await focused(page)); }
-    assert.deepEqual(tabs, ["a", "class-link", "open-link", "play-sample", "make", "open-saved", "a11y-link", "contrast-toggle", "readable-toggle"]);
+      ["skip", "class-link", "open-link", "play-sample", "make", "open-saved", "a11y-link", "contrast-toggle", "readable-toggle", "a11y-options"], "Tab order is reading order");
+    const tabs = []; for (let i = 0; i < 10; i++) { await page.keyboard.press("Tab"); tabs.push(await focused(page)); }
+    assert.deepEqual(tabs, ["a", "class-link", "open-link", "play-sample", "make", "open-saved", "a11y-link", "contrast-toggle", "readable-toggle", "a11y-options"]);
     // an empty box and a cut-off link: a plain error on the box, focus stays there
     await page.focus("#class-link"); await page.keyboard.press("Enter");
     assert.equal(await page.textContent("#link-error"), "Paste your class link in the box first.");

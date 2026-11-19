@@ -24,6 +24,7 @@ async function open({ url = "/play.html", mock = {}, viewport = { width: 1280, h
   page.on("pageerror", e => page.errors.push(e.message));
   page.on("console", m => { if (m.type() === "error") page.errors.push(m.text()); });
   await ctx.route("**/*", route => { const u = route.request().url(); if (u.startsWith(base) || /^(data|blob|about):/.test(u)) return route.continue(); page.outside.push(u); return route.abort(); });
+  await page.addInitScript(require("./skip-ask.js"));
   if (mock) await page.addInitScript(speechMock, mock);
   if (init) await page.addInitScript(init);
   await page.goto(url.startsWith("http") ? url : base + url);

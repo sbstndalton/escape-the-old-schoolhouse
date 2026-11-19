@@ -72,6 +72,9 @@ async function makeQuizRoom(page) {
   const server = await start(0);
   const base = `http://127.0.0.1:${server.address().port}`;
   const browser = await engine.launch();
+  // every page starts as a returning visitor: the first-visit accessibility prompt is tested in tests/a11y-prompt.js
+  const plainPage = browser.newPage.bind(browser);
+  browser.newPage = async (...a) => { const p = await plainPage(...a); await p.addInitScript(require("./skip-ask.js")); return p; };
   console.log("\nEscape room editor tests\n");
 
   await test("opens with the sample content, all 40 items unchecked", async () => {

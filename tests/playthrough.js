@@ -26,6 +26,7 @@ async function test(name, fn) {
 
 async function newPage(browser, base, { scorm = false, viewport = { width: 1000, height: 900 }, reducedMotion = "no-preference", init = null } = {}) {
   const page = await browser.newPage({ viewport, reducedMotion });
+  await page.addInitScript(require("./skip-ask.js"));            // a returning visitor: the first-visit prompt is tested in tests/a11y-prompt.js
   if (init) await page.addInitScript(init);
   page.errors = [];
   page.externalRequests = [];

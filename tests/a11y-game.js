@@ -66,6 +66,7 @@ async function open({ path = "/play.html", viewport = DESKTOP, hc = false, reada
   // Speech is mocked with local voices, so every Listen button is drawn and checked; a sentence "takes" a minute,
   // so a state that is reading stays reading.
   await page.addInitScript(speechMock, { ms: 60000 });
+  await page.addInitScript(require("./skip-ask.js"));          // the first-visit prompt is opened from its control in tour() and frontTour()
   await page.addInitScript(([hc, readable]) => { try { if (hc) localStorage.setItem("escape-room-contrast", "on"); if (readable) localStorage.setItem("escape-room-readable", "on"); } catch (e) {} }, [hc, readable]);
   await page.goto(URL_ || base + path);
   page.old = await page.evaluate(() => !document.querySelector("#view"));      // an older build, for the before/after report
@@ -79,6 +80,7 @@ async function tour(page, visit) {
   const esc = async () => { await page.keyboard.press("Escape"); };
   await visit("title");
   await page.locator(".rules").click(); await visit("title, house rules open"); await esc();
+  if (!page.old) { await page.click("#a11y-options"); await page.locator("#a11y-ask").waitFor(); await visit("title, accessibility options open"); await esc(); }
   await page.evaluate(() => { S.player = "Test Student"; startTimer();
     ROOMS[0].hintsEnabled = true; ROOMS[0].hints = ["Start with the clue you are surest about.", "Each clue names one book."]; });
   await room(page, 1); await visit("room 1, books");
@@ -114,8 +116,8 @@ async function solveTimeline(page) {
 
 /* ---------------- checks that run inside the page; each returns a list of problems ---------------- */
 // The layer the player can reach: an open sheet or notebook, otherwise the scene.
-const LAYER = `(() => { const ex = document.querySelector("#examine"), pa = document.querySelector("#pause");
-  return ex && !ex.hidden ? ex : pa && !pa.hidden ? pa : document.querySelector("#scene") || document.body; })()`;
+const LAYER = `(() => { const ex = document.querySelector("#examine"), pa = document.querySelector("#pause"), aq = document.querySelector("#a11y-ask");
+  return aq ? aq : ex && !ex.hidden ? ex : pa && !pa.hidden ? pa : document.querySelector("#scene") || document.body; })()`;
 const HELPERS = `
   const layer = ${LAYER};
   const shown = el => { if (!el.getClientRects().length) return false; const cs = getComputedStyle(el); return cs.visibility !== "hidden" && +cs.opacity > 0.01 || el.matches("input[type=radio]"); };
@@ -143,7 +145,7 @@ function checkFocus() {
 }
 function checkTargets() {
   // HELPERS
-  const BIG = ".listen,.nub,.stamp,.lever input,.stud,#watch,#sound-toggle,.x,.qnav .n,.seg button,#try,#hint-btn,.desc,.pushplate,#begin,.page li button,.grip,.story,.icard,.hint,.rules,.result,.grab";
+  const BIG = ".a11yq button,.listen,.nub,.stamp,.lever input,.stud,#watch,#sound-toggle,.x,.qnav .n,.seg button,#try,#hint-btn,.desc,.pushplate,#begin,.page li button,.grip,.story,.icard,.hint,.rules,.result,.grab";
   const PAPER = ".story .go,.icard .no,.hint .hb,.rules .rb,.result .h,.ev .pick";      // heading buttons stretched over their whole paper: the paper is the target
   const out = [];
   for (const el of layer.querySelectorAll("a[href],button,input,select,textarea,[role=spinbutton],.nub,.grip,.klabel")) {
@@ -272,6 +274,8 @@ const TEXTS = {
     ["Section label on the wall (Clues)", ".cap", "label"], ["Clue number", ".icard .no", "label"], ["Clue text", ".icard .p", "read"], ["Lock name on brass", ".lname", "label"],
     ["“Pull the shackle to try”", ".pull", "label"], ["Tag: “Type the whole code instead”", ".tag span", "label"], ["How-to line under the lock", ".how", "read"], ["Hint drawer button (locked)", "#hint-btn span", "label"],
     ["Hint note", "#hint-note", "read"], ["Key ring: the current key's number", ".door.current b", "label"]],
+  "title, accessibility options open": [["Prompt heading", "#a11y-ask h2", "big"], ["Prompt text", ".a11yq-lead", "read"], ["Prompt switch name", ".a11yq-lbl", "read"], ["Prompt switch state", ".a11yq-st", "read"],
+    ["What a switch does", ".a11yq-d", "read"], ["Screen-reader line", ".a11yq-sr", "read"], ["Continue", "#a11y-ask-ok", "read"], ["Continue without changes", "#a11y-ask-skip", "read"]],
   "room 1, reading a clue aloud": [["Listen button on paper", ".icard .listen:not([data-reading]) .lw", "label"], ["Listen button, reading (Stop)", ".listen[data-reading] .lw", "label"], ["Listen button on the wall", "#how + .listen .lw", "label"]],
   "quiz room, reading a question aloud": [["Listen button on a question slip", ".slip .listen:not([data-reading]) .lw", "label"]],
   "room 1, wrong try and a hint": [["Result message", "#msg", "read"], ["Hint paper", ".hint > span", "read"], ["Hint heading", ".hint .hb", "label"], ["Dial characters", ".dial .strip i:nth-child(2)", "big"], ["Typed code", "#answer", "big"]],
@@ -291,6 +295,7 @@ const TEXTS = {
    accessibility statement. frontTour() visits each, like tour() does for the game. */
 async function frontTour(page, visit) {
   await page.goto(base + "/"); await page.locator("#student-h").waitFor(); await visit("front page");
+  await page.click("#a11y-options"); await page.locator("#a11y-ask").waitFor(); await visit("front page, accessibility options open"); await page.keyboard.press("Escape");
   await page.fill("#class-link", "https://example.org/play.html#play=1.abcdefghijkl"); await page.click("#open-link");
   await page.locator("#link-error:not([hidden])").waitFor(); await visit("front page, link error");
   await page.goto(base + "/play.html#play=1.abcdefghijkl"); await page.locator("#link-problem").waitFor(); await visit("class link didn't open");
@@ -301,6 +306,7 @@ Object.assign(TEXTS, {
     ["Paper text on a door", ".sheet .lead", "read"], ["Field label", "label.big", "read"], ["Field hint", ".fhint", "read"], ["Brass button", ".btn", "label"], ["Text link on paper", "#open-saved", "read"],
     ["Small print on paper", ".sheet .small", "read"], ["How it works", ".how span", "read"], ["How it works, step names", ".how b", "read"], ["Privacy line", "#privacy", "read"],
     ["Footer link", "#a11y-link", "read"], ["Display switch", ".switch .lbl", "label"]],
+  "front page, accessibility options open": [["Prompt heading", "#a11y-ask h2", "big"], ["Prompt switch name", ".a11yq-lbl", "read"], ["What a switch does", ".a11yq-d", "read"], ["Screen-reader line", ".a11yq-sr", "read"], ["Continue", "#a11y-ask-ok", "read"]],
   "front page, link error": [["Error message", "#link-error", "read"], ["Typed link", "#class-link", "read"]],
   "class link didn't open": [["Its heading", "h2.bplate", "big"], ["Its note", "#link-problem p:not(:last-child)", "read"], ["Front page plate", "#home", "label"]],
   "accessibility statement": [["Statement text", "#statement p", "read"], ["Statement heading", "#statement h2", "big"], ["Table text", "#statement td", "read"], ["Top bar link", ".top a", "read"]]
@@ -340,7 +346,7 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     // title: the skip link is the first stop; sign the ledger, read the rules, push the door
     await key("Tab"); assert.match(await focusOn(), /skip/, "the first Tab stop is the skip link");
     // the Tab order is the reading order: HUD, the story, the ledger, the rules, and Begin last (though it is drawn on the door at the left)
-    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#view a[href], #view button, #view input")].map(e => e.id || e.className)), ["skip", "draft", "sound-toggle", "watch", "go", "listen", "pname", "rb", "listen", "begin"]);
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#view a[href], #view button, #view input")].map(e => e.id || e.className)), ["skip", "draft", "sound-toggle", "watch", "go", "listen", "a11y-options", "pname", "rb", "listen", "begin"]);
     await tabTo("#pname"); await page.keyboard.type("Keyboard Player");
     await tabTo(".rules .rb"); await key("Enter"); assert.equal(await page.isVisible("#examine"), true); await key("Tab"); await key("Tab"); assert.equal(await page.evaluate(() => !!document.activeElement.closest("#examine")), true, "Tab stays in the sheet");
     await key("Escape"); assert.match(await focusOn(), /\.rb/, "focus returns to the paper");
