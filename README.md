@@ -32,6 +32,31 @@ To download everything at once, go to the main repository page and click the gre
 
 Download **`editor.html`** and double-click it. Everything happens in the browser, with no account and no internet needed.
 
+### Start here: the guided steps
+
+The first time you open the editor, it takes you through **10 short steps**, one question per page:
+
+1. **Welcome**: what an escape room is and what you'll do.
+2. **How to start**: change the sample, start with an empty escape room, or open one you saved before.
+3. **Name it**: the title students see, and your course.
+4. **Your rooms**: add, remove and order rooms. Quiz questions and Match clues to cards are set up right in the steps; the other kinds open in Advanced mode.
+5. **Fill in each room**: your questions (with other accepted spellings) or your cards and clues ("Students will open the lock with LEARN"), then what students read.
+6. **Check your facts**: every item in one list. Say where you checked it and tick it. Nothing is ever ticked for you.
+7. **Try it as a student**: play it the way students will.
+8. **How students get it**: Moodle, Canvas, another course system, or a file.
+9. **Put it in your course**: download the right file, then numbered steps with the menu names for your system, your exit password with a **Copy** button, and the quiz question ready to paste.
+10. **Done**: a summary with **Change** links, and a reminder to keep your backup.
+
+Every step has **Back**, **Continue**, **Help with this step**, **Save and finish later**, and **Show all settings (Advanced mode)**. When you come back to the editor in the same browser, it opens on **Your escape room**: a list of what's done and what's left, plus **Your escape rooms** (every escape room in this browser), **Make another escape room** and **Make a copy of this one**.
+
+**Where your work is saved.** As you type, the editor saves in *this browser on this computer only*. The line at the top says so ("Saved in this browser at 3:42 pm. Not backed up yet."). Press **Download a backup** to keep a copy of your own: the backup is the game file itself, so it plays in any browser and opens again in the editor (choose **Open one I saved before**). The browser warns you before you close the page with changes that aren't in a backup yet.
+
+**The exit password.** Before you download a file for students, the editor makes sure your escape room has its own exit password. If it has none, or it is a changed copy of the sample still using `DEWEY1916`, it asks "What should the exit password be?" and suggests one from your title.
+
+### Advanced mode (all settings)
+
+**Show all settings** opens the full editor described below; **Guided steps** in its file list takes you back. Both work on the same escape room.
+
 The editor looks like a curator's workbench at night. The **cabinet** on the left has one drawer for each room, plus Settings, Story & intro, and Finish & grading. On a phone, tap the brass **Rooms** handle at the top to slide the cabinet out. The drawer you pick is laid out on paper in the middle, with index tabs along the top (for example *Cards & clues*, *Lock*, *Room text*, *Hints*). A small **ⓘ** next to a label opens a short explanation (point at it, tap it, or reach it with the Tab key; **Esc** puts it away).
 
 **The editor is built to be used by everyone.** Everything works from the keyboard alone, with a visible focus ring. Screen readers get real labels, groups and announcements. Before anything is deleted or replaced, the editor asks on its own slip (never a browser pop-up), with **Cancel** selected first. At the foot of the cabinet are two switches, remembered in your browser: **High contrast** (plain black-on-white, heavier outlines; it also follows your system's contrast setting) and **Readable text** (a plain, larger typeface with more spacing). The editor works at 200% text size, at 400% zoom and on a phone, and it is styled for Windows High Contrast (checked with the browser's emulation, not yet on Windows). See [ACCESSIBILITY.md](ACCESSIBILITY.md) for what was tested and what still falls short.
@@ -56,13 +81,13 @@ The editor looks like a curator's workbench at night. The **cabinet** on the lef
   - Existentialism
   ```
   `A:` lists accepted answers (separate alternatives with `|`; capitals and punctuation are ignored). For multiple choice, mark the right answer with `*`.
-- **One escape room per chapter.** Use **New…** to start a blank room or copy the sample. Each escape room is its own file.
+- **One escape room per chapter.** Use **New…** to start a blank room or copy the sample. The escape room you had open stays in this browser too (find it under **Guided steps**, *Your escape rooms*), so a new one never overwrites the last.
 - **See the answers.** Every room has an **Answer key** envelope beside the page (only in the editor). Click it to open the key; it updates as you type. **Answer sheet** shows every room's answers on one page, ready to print.
 - **Accessibility check.** The **Accessibility check** drawer (at the end of the cabinet) reads what you wrote and lists things that often shut students out: directions that depend on colour, position, shape or sound ("the red book", "on the left"), words like "click" or "drag", time pressure, a lock with more than 8 dials, missing titles or instructions, symbols or emoji used as the only meaning, very long clues and reading-heavy rooms, typed answers with only one accepted spelling, long lists to order or sort, and rooms with no hints. Each note says where it is, why it matters, and what to do; clicking it takes you to the spot. The notes are advice only. They never stop you previewing or exporting, and they are printed at the end of the **Answer sheet**.
 - **Hints (optional).** Hints are **off** until you switch them on for a room. Each room can have **two hints** that you write. Students can't open a hint straight away: hint 1 unlocks after 1 wrong try and hint 2 after 3 wrong tries in that room (you can change these numbers in **Settings**). The editor warns you if a hint gives away the answer.
 - **Preview as student** opens the game exactly as students see it, full screen. The brass rail at the top is just for you: jump to any room, switch **Show answers** on or off, **Restart**, or **Exit preview** (or press **Esc**). Each room also has a **Preview this room** button. Nothing in the preview is saved or graded.
 - **Export for students** downloads the game as an `.html` file or a **SCORM `.zip`** for Moodle/Canvas, ready to upload.
-- **Save project** downloads your work so you can reopen it later with **Open…**. You can also reopen an exported game `.html` file. The editor also remembers your work in the browser between visits.
+- **Download a backup** (at the foot of the cabinet) downloads the game `.html`, which reopens with **Open…**. **Save project** downloads the same content as a `.json` file. The editor also remembers your work in this browser between visits, and the line at the foot of the cabinet says when it last saved and whether it is backed up.
 
 ---
 
@@ -207,7 +232,7 @@ npx playwright install chromium
 |---|---|
 | `npm run serve` | Runs the game at http://localhost:8080 |
 | `npm run build` | Rebuilds `index.html`, `editor.html`, and `EscapeRoom_SCORM.zip` from `src/` and `content/` |
-| `npm test` | Builds, then plays the whole game, drives the editor automatically, and runs the game's and the editor's accessibility tests (several minutes). Screenshots go to `tests/screenshots/` |
+| `npm test` | Builds, then plays the whole game, drives the editor and its guided steps automatically (`tests/editor.js`, `tests/wizard.js`), and runs the game's and the editor's accessibility tests (several minutes). Screenshots go to `tests/screenshots/` |
 | `npm run test:a11y` | Builds, then runs only the accessibility tests (`tests/a11y-game.js` and `tests/a11y-editor.js`) |
 
 **Browser control (MCP):** the `.mcp.json` file gives Claude Code the **Playwright** browser tools. The first time you open Claude Code in this folder, it asks whether to allow the `playwright` server. Say yes. After that you can ask things like *"Play the escape room on a phone-sized screen and tell me what's confusing,"* or *"Add a sixth room about Horace Mann and test it."* The `CLAUDE.md` file tells Claude the rules for this project.

@@ -642,6 +642,9 @@
   /* the sheet */
   .wsheet{position:relative;min-height:0;padding:1.6rem 2.6rem 2.2rem;font-size:1.125rem;line-height:1.6}
   .wsheet:focus{outline:none}
+  .wsheet{overflow-wrap:anywhere}
+  .wsheet .plate{white-space:normal;max-width:100%;text-align:center}
+  .wline>.wf{flex-basis:min(14rem,100%)!important}
   .wsheet>.wback{margin:-.2rem 0 .8rem}
   .wcap{margin:0 0 .2rem;font-family:var(--caps);font-size:1rem;letter-spacing:.13em;color:var(--ink-2)}
   #wizard h1,.wq{margin:0 0 .7rem;font-family:var(--read);font-weight:700;font-size:2rem;line-height:1.22;color:var(--ink);overflow-wrap:anywhere}
@@ -653,7 +656,7 @@
   .wsheet p{margin:.6rem 0;max-width:38em}
   .wsheet ul,.wsheet ol{max-width:38em}
   .whint{color:var(--ink-2);margin:.2rem 0 .7rem}
-  .wsheet a{color:var(--ink);text-underline-offset:.2em}
+  .wsheet a{color:var(--ink);text-underline-offset:.2em;padding-block:.2rem}
   .wsheet a:hover{text-decoration-thickness:2px}
   /* help with this step: a fold of paper that opens under the question */
   .whelp{margin:1rem 0 1.2rem;border-top:1px dashed var(--rule);border-bottom:1px dashed var(--rule);padding:.2rem 0}
@@ -768,7 +771,7 @@
   table.wcompare{border-collapse:collapse;margin:.6rem 0;width:100%;font-size:1rem}
   .wcompare th,.wcompare td{border-bottom:1px solid var(--rule);padding:.4rem .5rem;text-align:left;vertical-align:top}
   .wcompare thead th{border-bottom:2px solid var(--ink)}
-  @media (pointer:coarse){ .wsteps a,.wsteps summary{min-height:2.75rem} .wsheet .inkline{min-height:2.75rem} .whelp>summary,.wtrouble>summary{min-height:2.75rem} .tasks li>a,.tasks li>button{min-height:2.75rem;display:inline-flex;align-items:center} .wsheet a{display:inline-block;min-height:2.75rem;line-height:2.75rem} .wsheet p a,.wsheet li a{line-height:inherit} }
+  @media (pointer:coarse){ .wsteps a,.wsteps summary{min-height:2.75rem} .wsheet .inkline{min-height:2.75rem} .whelp>summary,.wtrouble>summary{min-height:2.75rem} .tasks li>a,.tasks li>button{min-height:2.75rem;display:inline-flex;align-items:center} .wsheet a{padding-block:.75rem} .wsheet .stamp,.wkinds .wopt,.wchk{min-height:2.75rem} .wsheet a.inkline{padding-block:0} }
   @media (max-width:51.25em){
     .wtop{padding:.45rem .7rem;gap:.2rem .8rem}
     .wbody{grid-template-columns:minmax(0,1fr);padding:.8rem .5rem 2.5rem;gap:.8rem}
@@ -778,6 +781,7 @@
     .strip{grid-template-columns:minmax(0,1fr)} .strip li{flex-direction:row;text-align:left} .strip svg{width:4rem;height:3.2rem;flex:none}
     .wsum>div{grid-template-columns:minmax(0,1fr) auto} .wsum dd{grid-column:1/2}
     .wreveal{margin-left:.6rem}
+    .wopt{grid-template-columns:auto minmax(0,1fr)} .wopt .pic{display:none}
     .plate.big{white-space:normal}
   }
   @media (max-width:51.25em) and (max-height:30em){ #wizard{min-height:0} }
@@ -2009,7 +2013,7 @@ function readHash(){
 const stepNo = step => { const i = STEP_ORDER.indexOf(step === "add" ? "rooms" : step); return i < 0 ? 0 : i + 1; };
 function setMode(m){
   document.documentElement.dataset.mode = m;
-  const skip = document.querySelector(".skip"); skip.textContent = m === "wizard" ? "Skip to the question" : "Skip to the editing area";
+  const skip = document.querySelector(".skip"); skip.textContent = m === "wizard" ? "Skip to the question" : "Skip to the editing area"; skip.setAttribute("href", m === "wizard" ? "#wiz-main" : "#main");
 }
 document.querySelector(".skip").addEventListener("click", e => { e.preventDefault(); document.getElementById(document.documentElement.dataset.mode === "wizard" ? "wiz-main" : "main").focus(); });
 function wizGo(hash){ WIZ.errors = []; WIZ.warn = null; if (location.hash === hash) routeTo(readHash(), true); else location.hash = hash; }
