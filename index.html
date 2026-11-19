@@ -573,7 +573,7 @@ body{overflow-wrap:break-word}
 #watch{width:auto;min-width:4.1rem;display:flex;flex-direction:column;align-items:center}
 .wl{display:block;margin-top:.1rem;padding:.05rem .3rem;font:400 .85rem/1.2 var(--f-d);letter-spacing:.1em;color:var(--parch);text-shadow:0 1px 2px #000}
 #timer{margin:0;padding:0 .3rem;font:400 .9rem/1.2 var(--f-r);letter-spacing:.04em;color:var(--parch);text-shadow:0 1px 2px #000}
-#draft{flex:0 1 17rem;min-height:2.75rem;margin-top:.8rem;padding:.5rem .7rem .45rem;font:400 .9rem/1.4 var(--f-r);color:#2a1d14;clip-path:none}
+#draft{flex:0 1 17rem;min-height:2.75rem;margin-top:.8rem;padding:.5rem .7rem .45rem;font:400 .9rem/1.5 var(--f-r);color:#2a1d14;clip-path:none}
 #draft::after,.story::after{content:"";position:absolute;right:0;bottom:0;border:.45rem solid;border-color:#b5a47c #17100a #17100a #b5a47c;box-shadow:-1px -1px 1px rgba(0,0,0,.25)}
 #draft u{text-decoration-color:#4a3b2c}
 
@@ -621,7 +621,7 @@ h2.bplate .rn{font-size:.9em;letter-spacing:.12em}
 .clues>li{min-width:0;max-width:none}
 .icard{min-height:7.2rem;padding:.5rem .75rem .6rem}
 .icard .no{font-size:.92rem;line-height:1.3;color:#6e1a12;margin-bottom:.3rem}
-.icard .p{font-size:1rem;line-height:1.42;-webkit-line-clamp:4}
+.icard .p{font-size:1rem;line-height:1.5;-webkit-line-clamp:4}
 .ruled{background:linear-gradient(180deg,transparent 1.62rem,rgba(155,34,24,.5) 1.62rem 1.69rem,transparent 1.69rem),var(--stain),var(--pgrain),linear-gradient(175deg,#efe3c8,#e3d4b2)}
 
 /* ---------- The dial padlock ---------- */
@@ -639,7 +639,7 @@ h2.bplate .rn{font-size:.9em;letter-spacing:.12em}
 .tag{flex-wrap:wrap;max-width:100%}
 .tag span{font-family:var(--f-ty);white-space:normal}
 #answer{min-height:2.2rem;border-bottom:2px dashed #2a1d14;font:700 1.15rem/1.3 var(--f-r);letter-spacing:.14em}
-.how,.msg,#hint-note{margin:0;max-width:21rem;text-align:center;font:400 1rem/1.45 var(--f-r);color:var(--parch);text-shadow:none}
+.how,.msg,#hint-note{margin:0;max-width:21rem;text-align:center;font:400 1rem/1.5 var(--f-r);color:var(--parch);text-shadow:none}
 .how,.msg:not(:empty),#hint-note:not(:empty){padding:.4rem .75rem;background:rgba(12,8,5,.84);box-shadow:inset 0 0 0 1px rgba(176,138,62,.55)}
 .msg{min-height:0;font-size:1.05rem}
 .msg:not(:empty)::before{display:none}
@@ -657,15 +657,15 @@ h2.bplate .rn{font-size:.9em;letter-spacing:.12em}
 #hint-btn[aria-disabled=true]{cursor:default;color:#e9dab0;filter:none}
 #hint-btn svg{flex:none;color:#f1d38a}
 #hint-note{min-height:0}
-.hint{padding:.6rem .75rem .55rem;font:400 1rem/1.45 var(--f-r)}
+.hint{padding:.6rem .75rem .55rem;font:400 1rem/1.5 var(--f-r)}
 .hint .hb{font:400 1em/1.2 var(--f-d);color:#6e1a12}
 
 /* ---------- Quiz ---------- */
 .slip{padding:.8rem .9rem .9rem 3.1rem}
-.slip legend,.qcard legend{font-size:1.08rem;line-height:1.45}
+.slip legend,.qcard legend{font-size:1.08rem;line-height:1.5}
 .slip .qn{font:700 1rem/1 var(--f-r);padding-top:0;opacity:1;border-width:2px}
 .typer input{min-height:2.75rem;font:400 1.1rem/1.3 var(--f-r);letter-spacing:.02em}
-.lever{min-height:2.75rem;padding:.35rem .3rem;font-size:1rem;line-height:1.4}
+.lever{min-height:2.75rem;padding:.35rem .3rem;font-size:1rem;line-height:1.5}
 .lever input:checked~.lt{font-weight:700;text-shadow:none}
 .lever:has(input:focus-visible),.lever:has(input.kf:focus){outline:3px solid var(--fo);outline-offset:3px;box-shadow:0 0 0 3px var(--fi)}
 .qcard .lever:has(input:focus-visible),.qcard .lever:has(input.kf:focus){outline-offset:1px;box-shadow:0 0 0 1px var(--fi),0 0 0 7px var(--fi)}
@@ -674,7 +674,7 @@ h2.bplate .rn{font-size:.9em;letter-spacing:.12em}
 #order{gap:.6rem}
 #order li{flex-wrap:wrap;gap:.5rem;padding:.4rem .5rem .4rem .3rem}
 #order .grip{width:2.75rem;min-height:2.75rem;font:700 1.05rem/1 var(--f-r);color:#6e1a12;border-right:1px solid rgba(110,26,18,.7)}
-#order .t{font-size:1rem;line-height:1.42}
+#order .t{font-size:1rem;line-height:1.5}
 .stud{width:2.75rem;height:2.75rem;color:#1d1205}
 .stud svg{width:1.15rem;height:1.15rem}
 .stud:disabled{opacity:.45}
@@ -683,7 +683,7 @@ h2.bplate .rn{font-size:.9em;letter-spacing:.12em}
 /* ---------- Sorting ---------- */
 .slips{grid-template-columns:repeat(auto-fill,minmax(min(13rem,100%),1fr))}
 .ev .pick{min-height:1.5rem;font-size:.9rem;line-height:1.2;color:#6e1a12}
-.ev .txt{display:block;font-size:1rem;line-height:1.45}
+.ev .txt{display:block;font-size:1rem;line-height:1.5}
 .pick .held{display:none}.pick[aria-pressed=true] .held{display:inline}
 .seg button{min-height:2.75rem;padding:.45rem .35rem .35rem;font-size:.92rem;line-height:1.2;color:#2a1d14;border:1.5px dashed #4a3b2c;min-width:min-content}
 .seg button.on{font-size:.95rem;border-width:2.5px;mix-blend-mode:normal;font-weight:400}
@@ -704,7 +704,11 @@ h2.bplate .rn{font-size:.9em;letter-spacing:.12em}
 #mf .how,#mf .msg{text-align:left;max-width:none;align-self:flex-start}
 
 /* ---------- Title screen ---------- */
-.doorway{height:min(40rem,calc(100vh - 8.5rem))}
+#stage{--dh:min(40rem,calc(100vh - 8.5rem))}
+.doorway{height:var(--dh)}
+/* Begin comes last on the page (after the story, the ledger and the rules), which is also its place in the Tab
+   order. In the wide scene the grid puts it on the door. */
+#begin{position:relative;right:auto;top:auto;left:3.8rem;grid-area:door;align-self:end;justify-self:center;margin-bottom:calc(var(--dh)*.56 - 9.9rem)}
 .placard{margin:1.2rem 0 .3rem;color:#1d1205}
 .placard small{margin-top:.45rem;font:400 .9rem/1.3 var(--f-ty);letter-spacing:.18em;opacity:1}
 h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
@@ -715,7 +719,7 @@ h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
 .ledger .row span{font:400 .95rem/1.2 var(--f-ty)}
 #pname{min-height:2.5rem;border-bottom:2px solid var(--ink);font:400 1.2rem/1.3 var(--f-r);color:#14224a}
 .ledger .old{font-size:.8rem}
-.rules{flex-basis:15rem;padding:.8rem .9rem .7rem;font:400 1rem/1.45 var(--f-r)}
+.rules{flex-basis:15rem;padding:.8rem .9rem .7rem;font:400 1rem/1.5 var(--f-r)}
 .rules .rb{font-size:.95rem;line-height:1.2;color:#6e1a12}
 .rules span{-webkit-line-clamp:6}
 #begin{font-size:1.25rem;color:#1d1205}
@@ -734,7 +738,7 @@ h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
 .cert .code{max-width:100%;overflow-wrap:anywhere;font:700 1.15rem/1.2 var(--f-r)}
 .cert .code.pass{font-size:1.6rem;padding:.5rem .9rem .4rem}
 .seal{font-size:.95rem;color:#ffe3da}
-.result{padding:.9rem 1rem .8rem;font:400 1rem/1.45 var(--f-r)}
+.result{padding:.9rem 1rem .8rem;font:400 1rem/1.5 var(--f-r)}
 .result .h{font-size:1.05rem;color:#6e1a12}
 .note{padding:.6rem .8rem .5rem;font:400 1rem/1.5 var(--f-r);clip-path:none}
 
@@ -761,11 +765,11 @@ h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
 .page li em{font:400 .9rem/1 var(--f-d);font-style:normal;color:#3a2c1c}
 .page li .st{min-width:2.2rem;text-align:right;font:700 1rem/1 var(--f-r);letter-spacing:.02em;color:var(--ink)}
 .page li [aria-checked=true] .st{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.2em}
-.page .why{margin:0 0 .6rem 2.1rem;font-size:.95rem;line-height:1.4}
+.page .why{margin:0 0 .6rem 2.1rem;font-size:.95rem;line-height:1.5}
 .page .howh{margin:1.1rem 0 .4rem;font:400 1.05rem/1.2 var(--f-d);letter-spacing:.14em;color:#6e1a12}
 .page ul.tips{list-style:disc;margin:0;padding-left:1.2rem;font-size:1rem;line-height:1.5;color:var(--ink)}
 .page ul.tips li{border:0;margin-bottom:.35rem}
-#teacher-key{font:400 .95rem/1.45 var(--f-r)}
+#teacher-key{font:400 .95rem/1.5 var(--f-r)}
 #teacher-key h3{font-size:.95rem;color:#6e1a12}
 
 /* ---------- Papers you can pick up ----------
@@ -801,7 +805,8 @@ h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
 [data-shape=tall] .drawer,[data-shape=tall] .desk,[data-shape=tall] #qf{padding:.8rem .7rem 1rem}
 [data-shape=tall] .board{padding:.9rem .6rem .9rem 2.2rem}
 [data-shape=tall] .gallery{grid-template-columns:repeat(auto-fill,minmax(7.4rem,1fr));gap:1.3rem .6rem}
-[data-shape=tall] .mirror{width:min(13rem,60%)}
+[data-shape=tall] .mirror{width:min(8.5rem,42%)}
+[data-shape=tall] .mirrorwrap{padding:1.6rem 0 0}
 [data-shape=tall] .doorway{position:absolute;left:50%;bottom:0;width:21rem;max-width:100%;height:27rem;min-height:0;transform:translateX(-50%);opacity:.5;z-index:-1;grid-area:auto;pointer-events:none}
 [data-shape=tall] .dawn{position:absolute;left:50%;bottom:0;width:20rem;max-width:100%;height:26rem;min-height:0;transform:translateX(-50%);opacity:.5;z-index:-1;pointer-events:none}
 [data-shape=tall] .placard{font-size:1.75rem;padding:.8rem 1.4rem .65rem;margin-top:1rem}
@@ -809,7 +814,7 @@ h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
 [data-shape=tall] .deskrow{padding:0 .3rem 2.1rem}
 [data-shape=tall] .ledger,[data-shape=tall] .rules{flex:1 1 15rem;max-width:none}
 [data-shape=tall] .ink{display:none}
-[data-shape=tall] #begin{position:static;width:100%;min-height:3.4rem;flex-direction:row;gap:.8rem;padding:.9rem 1rem .75rem;margin-top:.2rem}
+[data-shape=tall] #begin{grid-area:auto;align-self:auto;justify-self:stretch;left:0;width:auto;min-height:3.4rem;flex-direction:row;gap:.8rem;padding:.9rem 1rem .75rem;margin:.2rem 0 0}
 [data-shape=tall] #begin small{margin:0}
 [data-shape=tall] #begin::before,[data-shape=tall] #begin::after{display:none}
 [data-shape=tall][data-screen=title] .obj{gap:1rem}
@@ -836,7 +841,7 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
 /* ---------- High contrast (the notebook switch, or a device that asks for more contrast) ----------
    Solid surfaces behind all text, no textures, no lamplight or grain over the page, black on cream and
    white on black, and a 2px border on every control. */
-[data-contrast=more]{--grain:none;--wood:none;--woodh:none;--cork:none;--stain:none;--plate:#f6dfa0;--brassy:#f6dfa0;
+[data-contrast=more]{--grain:none;--pgrain:none;--wood:none;--woodh:none;--cork:none;--stain:none;--plate:#f6dfa0;--brassy:#f6dfa0;
   --parch:#fff;--parch2:#fff;--ink:#000;--paper:#fffaf0;--redink:#7a0f08;--fi:#fff;--fo:#000}
 [data-contrast=more] #light,[data-contrast=more] #grainfx,[data-contrast=more] .beam,[data-contrast=more] .dust,[data-contrast=more] .lantern{display:none}
 [data-contrast=more] *,[data-contrast=more] *::before,[data-contrast=more] *::after{text-shadow:none!important}
@@ -892,7 +897,7 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
    The system picks the colours. Drawn surfaces (gradients, shadows) disappear there, so every control, paper and
    state gets a real border or outline instead, and states use Highlight. Nothing is hidden. */
 @media (forced-colors: active){
-  :root{--grain:none;--wood:none;--woodh:none;--cork:none;--stain:none}
+  :root{--grain:none;--pgrain:none;--wood:none;--woodh:none;--cork:none;--stain:none}
   #bg,#light,#grainfx,.doorway .leafs,.dknob,.dawn{display:none}
   *,*::before,*::after{text-shadow:none!important}
   #scene,#view,.how,.msg,#hint-note,.wl,#timer,.cap,h2.said,.qcard legend{background:Canvas;color:CanvasText}
@@ -1738,7 +1743,7 @@ function dialLock(r, m){
       <div class="dials" role="group" aria-labelledby="lname" aria-describedby="how">${Array.from({ length: n }, (_, k) => `<div class="dial" data-k="${k}" role="spinbutton" tabindex="0" aria-label="Dial ${k+1} of ${n}" aria-valuemin="0" aria-valuemax="${sym.length-1}" aria-valuenow="0" aria-valuetext="blank"><span class="nub" data-d="1" aria-hidden="true">${ICON.up}</span><span class="dwin"><span class="strip" aria-hidden="true"><i></i><i></i><i></i></span></span><span class="nub" data-d="-1" aria-hidden="true">${ICON.down}</span></div>`).join("")}</div>
       <span class="pull" aria-hidden="true">Pull the shackle to try</span></div>
     <label class="tag paper"><span>or type the code</span><input id="answer" type="text" maxlength="${n}" ${m.numbers?'inputmode="numeric"':""} autocomplete="off" autocapitalize="characters" spellcheck="false" aria-describedby="how"></label>
-    <button type="button" id="try" class="shackle" title="Pull the shackle to try the lock">${SHACKLE}<span class="sr">Pull the shackle: try the lock</span></button></div>`;
+    <button type="button" id="try" class="shackle" title="Pull the shackle to try the lock">${SHACKLE}<span class="sr">Pull the shackle to try the lock</span></button></div>`;
 }
 function wireDials(m, onTry){
   const sym = dialSymbols(m.answer), L = sym.length, dials = [...stage.querySelectorAll(".dial")], inp = $("#answer"), pos = dials.map(() => 0);
@@ -1860,8 +1865,7 @@ function intro(){
   ].filter(Boolean);
   const rulesHtml = `<h2>House rules</h2><ul>${rules.map(x => `<li>${x}</li>`).join("")}</ul>${CFG.meta?.learningOutcome ? `<p class="ref">Learning outcome: ${fmt(CFG.meta.learningOutcome)}</p>` : ""}`;
   stage.innerHTML = `
-  <div class="doorway"><div class="leafs" aria-hidden="true"><div class="fan"></div><div class="leaf"></div><div class="leaf"></div></div><span class="dknob" aria-hidden="true"></span>
-    <button type="button" id="begin" class="pushplate">Begin<small>push to enter</small></button></div>
+  <div class="doorway" aria-hidden="true"><div class="leafs"><div class="fan"></div><div class="leaf"></div><div class="leaf"></div></div><span class="dknob"></span></div>
   <div class="head">
     <p class="placard"><span aria-hidden="true">${esc(title)}</span>${CFG.meta?.course ? `<small>${esc(CFG.meta.course)}</small>` : ""}</p>
     <h2 class="said" tabindex="-1">${esc(CFG.intro?.heading || title)}</h2>
@@ -1873,7 +1877,8 @@ function intro(){
       <p class="old" aria-hidden="true">~~ ~~~~ ~~~~~~ &nbsp; ~~~ ~~~~~~~ ~~ &nbsp; ~~~~~ ~~~</p></div>
     <div class="rules paper"><span class="pin" aria-hidden="true"></span><button type="button" class="rb" ${ex(rulesHtml, { label: "House rules" })}>House rules</button><span>${rules[0]} ${rules[1]}</span></div>
     ${svg("0 0 40 60", `<path d="M30 2C22 14 17 26 15.500 41l2 .500C21 28 26 16 33 4z" fill="#d9cdb2" stroke="#6b5a40" stroke-width=".7"/><path d="M16.500 41 31 4" stroke="#6b5a40" stroke-width=".6"/><path d="M8 44h16v3l2 3v8H6v-8l2-3z" fill="#1b2430" stroke="#0b0f14"/><path d="M8 44h16v2.500H8z" fill="#3d4a58"/><path d="M9 51v5" stroke="#8fa3b5" stroke-width="1.200" stroke-linecap="round" opacity=".7"/>`, 'class="ink"')}
-  </div></div>`;
+  </div></div>
+  <button type="button" id="begin" class="pushplate">Begin<small>push to enter</small></button>`;
   const begin = () => { S.player = ($("#pname").value||"").trim() || "Student"; startTimer(); SND.play("press"); go(1); };
   $("#begin").onclick = begin;
   $("#pname").onkeydown = e => { if (e.key === "Enter") begin(); };
@@ -2018,7 +2023,7 @@ function sorting(r, n){
   const items = r.items || [], cats = r.categories || [];
   const pick = new Array(items.length).fill(null); let sel = -1;
   stage.innerHTML = roomHead(r,n) + `<div class="obj"><div class="desk"><ul class="slips" role="list">${items.map((it,i)=>`<li class="ev paper" data-i="${i}" style="--r:${(rot(i)*.6).toFixed(2)}deg">
-     <div class="grab"><button type="button" class="pick" aria-pressed="false" title="Pick up this slip, then press a stamp">Slip ${i+1}<span class="held" aria-hidden="true"> · picked up</span></button><span class="txt">${fmt(it.text)}</span></div>
+     <div class="grab"><button type="button" class="pick" aria-pressed="false" title="Pick up this slip, then press a stamp">Slip ${i+1}<span class="held"> · picked up</span></button><span class="txt">${fmt(it.text)}</span></div>
      <span class="seg" role="group" aria-label="Stamp slip ${i+1} as">${cats.map((c,j)=>`<button type="button" data-i="${i}" data-v="${j}" aria-pressed="false" style="--sc:${INKS[j % INKS.length]};--sr:${[-4,3,-2,5][j % 4]}deg">${esc(c)}</button>`).join("")}</span></li>`).join("")}</ul></div></div>`
     + mech(`<div class="stamps" role="group" aria-label="Rubber stamps: they stamp the slip you picked up">${cats.map((c,j)=>`<button type="button" class="stamp" data-v="${j}" style="--sc:${INKS[j % INKS.length]}"><span class="knob" aria-hidden="true"></span><span class="neck" aria-hidden="true"></span><span class="base">${esc(c)}<span class="sr"> stamp</span></span><span class="rub" aria-hidden="true"></span></button>`).join("")}</div>`
       + keyLock(lockText(r.lockLabel) || "Sorting lock", "Submit", { total: items.length, what: "right" }), r);
@@ -2205,7 +2210,7 @@ if (PREVIEW) window.addEventListener("message", e => {
   if (d.er === "key") { S.showKey = !!d.on; teacherKey(); }
 });
 
-/* ===================== Fitting the scene to the window ===================== */
+/* ===================== Choosing the layout (never the text size) ===================== */
 /* Text size belongs to the reader: the root font size is never set from the window, so the browser's own
    font-size setting and zoom both work, and every size in the game (all in rem) follows them. fit() only
    picks the layout from how many text-widths fit: wide (objects left, the door and its lock right) or tall
@@ -2215,8 +2220,6 @@ function fit(){
   const em = parseFloat(getComputedStyle(root).fontSize) || 16, w = window.innerWidth / em, h = window.innerHeight / em;
   const tall = w < 60 || w / h < .82;
   root.dataset.shape = tall ? "tall" : "wide";
-  const b = $("#begin");          // the Begin plate is on the door in the wide scene and under the ledger in the tall one
-  if (b) { const home = tall ? stage.querySelector(".obj") : stage.querySelector(".doorway"); if (home && b.parentElement !== home) home.append(b); }
   cue();
 }
 /* A small "more below" mark shows whenever the room continues past the bottom of the window. */
@@ -2265,6 +2268,6 @@ fit(); renderDoors(); go(0);
      Special Elite: Copyright (c) 2010 by Brian J. Bonislawsky DBA Astigmatic (AOETI). Licensed under the Apache License, Version 2.0.
      IM Fell English SC: Copyright (c) 2007 Igino Marini (www.iginomarini.com), with Reserved Font Name "IM FELL English SC".
      Licensed under the SIL Open Font License, Version 1.1.
-     Its old-style numerals are left out on purpose (a 1 looks like a capital I), so digits use the typewriter face. -->
+     Its old-style numerals are left out on purpose (a 1 looks like a capital I), so digits use the reading face. -->
 </body>
 </html>
