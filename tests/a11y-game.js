@@ -532,6 +532,31 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     assert.equal(await page.isVisible("#exit-password"), true, "the first press keeps the certificate");
     await done(page);
   }, { solo: true });
+  for (const viewport of [PHONE, { width: 720, height: 450 }, { width: 320, height: 256 }]) test(`after every try the result is in view and not under the more-below tab (${viewport.width}x${viewport.height})`, async () => {
+    if (REPORT) return;
+    const page = await open({ viewport }), bad = [];
+    const check = async what => {
+      const r = await page.evaluate(() => { const m = document.querySelector("#msg").getBoundingClientRect(), more = document.querySelector("#more"), c = more.hidden ? null : more.getBoundingClientRect();
+        return { inView: m.top >= 0 && m.bottom <= innerHeight, covered: !!c && m.left < c.right && m.right > c.left && m.top < c.bottom && m.bottom > c.top, text: document.querySelector("#msg").textContent }; });
+      if (!r.text) bad.push(`${what}: no result shown`);
+      if (!r.inView) bad.push(`${what}: the result “${r.text}” is out of view`);
+      if (r.covered) bad.push(`${what}: the result “${r.text}” is under the more-below tab`);
+    };
+    await page.evaluate(() => { S.player = "T"; });
+    for (let n = 1; n <= 5; n++) {
+      await room(page, n);
+      if (n <= 2) await page.fill("#answer", n === 1 ? "xxxxx" : "1111");
+      if (n === 4) await page.click(".seg button[data-i='0'][data-v='1']");
+      await page.locator("#try").focus(); await page.keyboard.press("Enter"); await page.waitForTimeout(150);
+      await check(`room ${n}, ${n === 3 ? "a wrong order" : n === 4 ? "an incomplete answer" : n === 5 ? "no answer chosen" : "a wrong code"}`);
+    }
+    // and after a right answer: the result stays in view above the door plate, which has focus
+    await room(page, 1); await page.fill("#answer", "learn"); await page.locator("#try").focus(); await page.keyboard.press("Enter"); await page.waitForTimeout(150);
+    await check("room 1, solved");
+    assert.equal(await page.evaluate(() => document.activeElement.id), "onward");
+    assert.equal(bad.length, 0, bad.join("\n"));
+    await done(page);
+  });
   test("the instructions under every lock name the real control, and matching rooms say to take the clues in order", async () => {
     if (REPORT) return;
     const page = await open();
