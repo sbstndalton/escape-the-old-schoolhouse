@@ -11,7 +11,12 @@ fs.mkdirSync(SHOTS, { recursive: true });
 
 const TIMELINE_ORDER = ["Plato", "Rousseau", "Horace", "Montessori", "Dewey", "Freire", "Adler"];
 const OBSERVATIONS = [0, 1, 0, 1, 0, 1, 0, 1]; // 0 = Traditional, 1 = Progressive
-const WAIT = 1500; // rooms advance ~1.3s after a correct answer
+// Nothing moves on by itself after a solve: the player presses "Go through the door" (#onward), and the next
+// screen appears within about 150 ms. door() presses it and waits for the new heading.
+async function door(page, heading) {
+  await page.click("#onward");
+  await page.locator("#stage h2", { hasText: heading }).waitFor();
+}
 
 let passed = 0, failed = 0;
 async function test(name, fn) {
@@ -56,26 +61,28 @@ async function solveTimeline(page) {
 }
 
 async function playThrough(page, shotPrefix) {
-  // The scene fills the window and never scrolls, so a plain screenshot shows all of it. Wait for the doors to finish parting first.
+  // The page itself never scrolls (the room scrolls inside the scene when it is taller than the window), so a
+  // plain screenshot shows the top of each room. Wait for the doors to finish parting first.
   const shot = async n => { if (!shotPrefix) return; await page.waitForTimeout(900); await page.screenshot({ path: path.join(SHOTS, `${shotPrefix}-${n}.png`) }); };
   await shot("0-intro");
   await page.fill("#pname", (await page.inputValue("#pname")) || "Test Student");
   await page.click("#begin");
   await shot("1-library");
-  await page.fill("#answer", "learn"); await page.click("#try"); await page.waitForTimeout(WAIT);
+  await page.fill("#answer", "learn"); await page.click("#try"); await door(page, "Room 2");
   await shot("2-gallery");
-  await page.fill("#answer", "9154"); await page.click("#try"); await page.waitForTimeout(WAIT);
+  await page.fill("#answer", "9154"); await page.click("#try"); await door(page, "Room 3");
   await shot("3-timeline");
   await solveTimeline(page); await page.click("#try");
   assert.match(await page.textContent("#msg"), /lock drops open/);
-  await page.waitForTimeout(WAIT);
+  await door(page, "Room 4");
   await shot("4-observation");
   for (let i = 0; i < 8; i++) await page.click(`.seg button[data-i="${i}"][data-v="${OBSERVATIONS[i]}"]`);
-  await page.click("#try"); await page.waitForTimeout(WAIT);
+  await page.click("#try"); await door(page, "Room 5");
   await shot("5-mirror");
-  // The mirror asks one question at a time and moves on by itself after a click.
-  for (let i = 0; i < 6; i++) await page.locator(`input[name=q${i}]`).nth(2).check();
-  await page.click("#try"); await page.waitForTimeout(WAIT);
+  // The mirror asks one question at a time. Nothing moves on by itself: the plate goes to the next question,
+  // and on the last one it finishes.
+  for (let i = 0; i < 6; i++) { await page.locator(`input[name=q${i}]`).nth(2).check(); await page.click("#try"); }
+  await door(page, "You Escaped");
   await shot("6-escaped");
 }
 
@@ -92,7 +99,7 @@ async function playThrough(page, shotPrefix) {
     assert.match(text, /You Escaped!/);
     assert.match(text, /DEWEY1916/);
     assert.match(text, /Your reflection: Progressivism/);
-    assert.match(await page.textContent("#draft"), /40 of 40 items haven't been checked/);
+    assert.match(await page.textContent("#draft-more"), /40 of 40 items haven't been checked/);
     assert.deepEqual(page.errors, [], "page had JavaScript errors");
     await page.close();
   });
@@ -113,7 +120,7 @@ async function playThrough(page, shotPrefix) {
     await page.click("#begin");
     await page.fill("#answer", "wrong"); await page.click("#try");
     assert.match(await page.textContent("#msg"), /won't budge/);
-    await page.fill("#answer", "learn"); await page.click("#try"); await page.waitForTimeout(WAIT);
+    await page.fill("#answer", "learn"); await page.click("#try"); await door(page, "Room 2");
     await page.fill("#answer", "1234"); await page.click("#try");
     assert.match(await page.textContent("#msg"), /ERROR/);
     await page.close();
@@ -159,7 +166,7 @@ async function playThrough(page, shotPrefix) {
     assert.equal(await page.locator(".vol .band:not([aria-hidden=true])").count(), 0, "decoration is hidden from screen readers");
     await page.fill("#answer", "learn"); await page.click("#try");
     assert.equal(await page.locator(".lock.unlocked").count(), 1, "the padlock opens");
-    await page.locator("#stage h2:has-text('Room 2')").waitFor();
+    await door(page, "Room 2");
     // Room 2 is drawn as framed portraits with brass plates
     assert.equal(await page.locator(".gallery .portrait").count(), 8);
     assert.deepEqual((await page.locator(".plate b").allTextContents()).sort(), ["1", "2", "3", "4", "5", "7", "8", "9"]);
@@ -167,7 +174,7 @@ async function playThrough(page, shotPrefix) {
     assert.match(dewey, /John Dewey.*Code (No\. ?)?9$/);
     assert.equal(await page.locator(".portrait .gilt[aria-hidden=true]").count(), 8);
     await page.fill("#answer", "9154"); await page.click("#try");
-    await page.locator("#stage h2:has-text('Room 3')").waitFor();
+    await door(page, "Room 3");
     // Every portrait is signed with the sitter's initials; an unknown look, or a very long name on a book, falls back to plain cards
     await page.evaluate(() => go(2));
     await page.locator(".portrait", { hasText: "John Dewey" }).locator(".sitter i", { hasText: /^JD$/ }).waitFor();
@@ -194,7 +201,7 @@ async function playThrough(page, shotPrefix) {
     assert.equal(await page.getAttribute(".cert .seal", "aria-hidden"), "true");
     await page.locator("#confetti").waitFor({ state: "attached", timeout: 3000 });
     await page.locator("#confetti").waitFor({ state: "detached", timeout: 5000 });   // it cleans up after itself
-    assert.equal(await page.evaluate(() => document.activeElement.id), "stage", "focus moves to the new screen");
+    assert.equal(await page.evaluate(() => document.activeElement.tagName + ":" + document.activeElement.textContent), "H2:You Escaped!", "focus moves to the new screen's heading");
     assert.deepEqual(page.errors, []);
     await page.close();
   });
@@ -203,7 +210,8 @@ async function playThrough(page, shotPrefix) {
     const page = await newPage(browser, base, { reducedMotion: "reduce" });
     assert.equal(await page.getAttribute("html", "data-motion"), "off");
     assert.equal(await page.isDisabled("#motion-toggle"), true);
-    assert.match(await page.textContent("#motion-toggle"), /Motion: off/);
+    assert.equal(await page.getAttribute("#motion-toggle", "aria-checked"), "false");
+    assert.equal(await page.evaluate(() => document.querySelector("#motion-why").hidden), false, "the notebook says why the switch can't be turned on");
     await page.click("#begin");
     assert.equal(await page.evaluate(() => document.getAnimations().length), 0, "nothing animates when a room opens");
     await page.fill("#answer", "wrong"); await page.click("#try");
@@ -226,7 +234,8 @@ async function playThrough(page, shotPrefix) {
     const page = await newPage(browser, base);
     await page.click("#watch");                                    // the pocket watch opens the notebook (pause menu)
     await page.click("#motion-toggle");
-    assert.match(await page.textContent("#motion-toggle"), /Motion: off/);
+    assert.equal(await page.getAttribute("#motion-toggle", "aria-checked"), "false");
+    assert.equal(await page.textContent("#motion-toggle .st"), "off", "the state is also written out");
     assert.equal(await page.getAttribute("html", "data-motion"), "off");
     await page.keyboard.press("Escape");
     assert.equal(await page.isHidden("#pause"), true, "Esc closes the notebook");
@@ -250,7 +259,7 @@ async function playThrough(page, shotPrefix) {
     await blocked.click("#resume");
     await blocked.click("#begin");
     await blocked.fill("#answer", "learn"); await blocked.click("#try");
-    await blocked.locator("#stage h2:has-text('Room 2')").waitFor();
+    await door(blocked, "Room 2");
     assert.deepEqual(blocked.errors, []);
     await blocked.close();
   });
@@ -263,7 +272,7 @@ async function playThrough(page, shotPrefix) {
     assert.equal(await dial.count(), 5, "one dial per character");
     await dial.first().focus();
     for (let i = 0; i < 12; i++) await page.keyboard.press("ArrowUp");      // blank, A, B ... L
-    assert.equal(await dial.first().getAttribute("aria-valuetext"), "L");
+    assert.equal(await dial.first().getAttribute("aria-valuetext"), "L, 12 of 26");
     await page.keyboard.press("ArrowUp"); await page.keyboard.press("ArrowDown");
     assert.equal(await page.inputValue("#answer"), "L", "the text field follows the dials");
     await page.keyboard.press("ArrowRight");
@@ -272,6 +281,8 @@ async function playThrough(page, shotPrefix) {
     assert.deepEqual(await dial.evaluateAll(els => els.map(e => e.querySelectorAll(".strip i")[1].textContent)), ["L", "E", "A", "R", "N"]);
     await page.keyboard.press("Enter");
     assert.equal(await page.locator(".lock.unlocked").count(), 1);
+    assert.equal(await page.evaluate(() => document.activeElement.id), "onward", "focus moves to the door plate");
+    await page.keyboard.press("Enter");
     await page.locator("#stage h2:has-text('Room 2')").waitFor();
     // and the other way round: typing in the field turns the dials; a click on a dial's stud turns it one notch
     await page.fill("#answer", "91");
@@ -296,7 +307,7 @@ async function playThrough(page, shotPrefix) {
     await page.keyboard.press("Escape");
     assert.equal(await page.isHidden("#examine"), true);
     assert.equal(await page.isHidden("#pause"), true, "that Esc only put the paper back");
-    assert.equal(await page.evaluate(() => document.activeElement.classList.contains("icard")), true, "focus returns to the card");
+    assert.equal(await page.evaluate(() => document.activeElement.matches(".icard > button.no")), true, "focus returns to the card's button");
     await page.locator(".vol").first().click();                            // a book tips out and shows its catalogue card
     assert.match(await page.textContent("#examine"), /Code [A-Z]/);
     await page.mouse.click(8, 8);                                           // click outside
@@ -338,21 +349,23 @@ async function playThrough(page, shotPrefix) {
 
   await test("sound: the mute button is remembered, and the game runs with no Web Audio at all", async () => {
     const page = await newPage(browser, base);
-    assert.equal(await page.getAttribute("#sound-toggle", "aria-pressed"), "true", "sound starts on");
+    assert.equal(await page.getAttribute("#sound-toggle", "aria-checked"), "true", "sound starts on");
+    assert.equal(await page.getAttribute("#sound-toggle", "role"), "switch");
     assert.equal(await page.evaluate(() => typeof SND.play), "function");
     await page.click("#sound-toggle");
-    assert.equal(await page.getAttribute("#sound-toggle", "aria-pressed"), "false");
-    assert.match(await page.textContent("#sound-label"), /Sound: off/);
+    assert.equal(await page.getAttribute("#sound-toggle", "aria-checked"), "false");
+    assert.equal(await page.getAttribute("#sound-toggle", "title"), "Sound is off");
     await page.reload();
-    assert.equal(await page.getAttribute("#sound-toggle", "aria-pressed"), "false", "the choice is remembered");
+    assert.equal(await page.getAttribute("#sound-toggle", "aria-checked"), "false", "the choice is remembered");
     await page.click("#watch");
-    assert.match(await page.textContent("#sound-toggle-2"), /Sound: off/);
+    assert.equal(await page.getAttribute("#sound-toggle-2", "aria-checked"), "false");
+    assert.equal(await page.textContent("#sound-toggle-2 .st"), "off");
     await page.click("#sound-toggle-2");                                     // the notebook has the same switch
-    assert.equal(await page.getAttribute("#sound-toggle", "aria-pressed"), "true");
+    assert.equal(await page.getAttribute("#sound-toggle", "aria-checked"), "true");
     await page.click("#resume");
     await page.click("#begin");
     await page.fill("#answer", "learn"); await page.click("#try");
-    await page.locator("#stage h2:has-text('Room 2')").waitFor();
+    await door(page, "Room 2");
     assert.deepEqual(page.errors, []);
     await page.close();
     for (const init of [() => { window.AudioContext = undefined; window.webkitAudioContext = undefined; },
@@ -361,6 +374,7 @@ async function playThrough(page, shotPrefix) {
       await mute.click("#begin");
       await mute.fill("#answer", "wrong"); await mute.click("#try");
       await mute.locator(".dial").first().focus(); await mute.keyboard.type("learn"); await mute.keyboard.press("Enter");
+      await mute.keyboard.press("Enter");                                  // focus is on "Go through the door"
       await mute.locator("#stage h2:has-text('Room 2')").waitFor();
       assert.deepEqual(mute.errors, [], "no errors without audio");
       await mute.close();
@@ -385,19 +399,23 @@ async function playThrough(page, shotPrefix) {
     await page.keyboard.press("Escape");
     assert.equal(await page.isHidden("#pause"), true);
     assert.match(await page.textContent("#stage h2"), /Room 1/, "still in the room");
+    const name = await page.textContent("#draft");
     await page.click("#draft");                                              // the pencilled note unfolds
     assert.equal(await page.getAttribute("#draft", "aria-expanded"), "true");
-    assert.equal(await page.isVisible("#draft .more"), true);
+    assert.equal(await page.isVisible("#draft-more"), true);
+    assert.equal(await page.getAttribute("#draft", "aria-controls"), "draft-more");
+    assert.equal(await page.textContent("#draft"), name, "the note keeps the same name when it unfolds");
     assert.deepEqual(page.errors, []);
     await page.close();
   });
 
-  await test("a wide desktop window and a short LMS frame both fit without the page scrolling", async () => {
+  await test("a wide desktop window and a short LMS frame: the page never scrolls, and the room scrolls inside the scene when it must", async () => {
     for (const viewport of [{ width: 1440, height: 900 }, { width: 1100, height: 620 }]) {
       const page = await newPage(browser, base, { viewport });
       await playThrough(page, viewport.width === 1440 ? "wide" : null);
       const o = await page.evaluate(() => ({ x: document.documentElement.scrollWidth - innerWidth, y: document.documentElement.scrollHeight - innerHeight }));
       assert.ok(o.x <= 1 && o.y <= 1, `page scrolls by ${o.x} x ${o.y}px at ${viewport.width}x${viewport.height}`);
+      assert.equal(await page.evaluate(() => { const v = document.querySelector("#view"); return v.scrollWidth <= v.clientWidth + 1 && getComputedStyle(v).overflowY === "auto"; }), true, "the room scrolls up and down only");
       assert.match(await page.textContent("#stage"), /DEWEY1916/);
       assert.deepEqual(page.errors, []);
       await page.close();
