@@ -72,6 +72,9 @@ async function makeQuizRoom(page) {
   const server = await start(0);
   const base = `http://127.0.0.1:${server.address().port}`;
   const browser = await engine.launch();
+  // every page starts as a returning visitor: the first-visit accessibility prompt is tested in tests/a11y-prompt.js
+  const plainPage = browser.newPage.bind(browser);
+  browser.newPage = async (...a) => { const p = await plainPage(...a); await p.addInitScript(require("./skip-ask.js")); return p; };
   console.log("\nEscape room editor tests\n");
 
   await test("opens with the sample content, all 40 items unchecked", async () => {
@@ -316,6 +319,7 @@ async function makeQuizRoom(page) {
     assert.equal(await game.isDisabled("#hint-btn"), true, "hint 2 still locked");
     assert.match(await game.textContent("#hint-note"), /after 2 more wrong tries/);
     for (let i = 0; i < 2; i++) { await game.fill("#answer", "yyyyy"); await game.click("#try"); }
+    await game.waitForFunction(() => !document.querySelector("#hint-btn").disabled);   // the second hint unlocks a moment after the third wrong try
     await game.click("#hint-btn");
     assert.equal(await game.locator("#hints .hint").count(), 2);
     assert.match(await game.textContent("#hints"), /surest about/);

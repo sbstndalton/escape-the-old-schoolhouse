@@ -23,6 +23,7 @@ async function test(name, fn) {
 let base, browser;
 async function fresh(viewport = { width: 1280, height: 900 }) {
   const ctx = await browser.newContext({ viewport, acceptDownloads: true });
+  await ctx.addInitScript(require("./skip-ask.js"));            // a returning visitor: the first-visit prompt is tested in tests/a11y-prompt.js
   const page = await ctx.newPage();
   page.errors = [];
   page.on("pageerror", e => page.errors.push(e.message));
