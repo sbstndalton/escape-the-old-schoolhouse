@@ -748,6 +748,7 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     assert.equal(await key.evaluate(el => getComputedStyle(el).position), "relative", "the answer strip is in the flow, not an overlay");
     await key.locator("#tk-hide").click();
     await key.waitFor({ state: "detached" });
+    await page.waitForFunction(() => !document.getElementById("preview-answers").checked, null, { timeout: 3000 });     // the game tells the rail by postMessage
     assert.equal(await sw.isChecked(), false, "Hide answers turns the rail's switch off too");
     assert.equal((await active(page)).id, "preview-answers", "and the keyboard lands on that switch");
     await page.focus("#preview-exit"); await page.keyboard.press("Escape");
