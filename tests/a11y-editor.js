@@ -629,7 +629,8 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     await step("Try it as a student");
     await tabTo(page, "#wiz-continue"); await K.press("Enter");
     await step("How will your students get");
-    await tabTo(page, "#where-moodle"); await K.press("Space");
+    await tabTo(page, "#where-link"); assert.equal((await active(page)).id, "where-link", "a class link is the first choice");
+    await K.press("ArrowDown");
     assert.equal((await active(page)).id, "where-moodle", "the keyboard stays on the choice when the next question opens");
     await K.press("Tab"); assert.equal((await active(page)).id, "how-quiz");
     await K.press("ArrowDown"); assert.equal((await active(page)).id, "how-scorm");

@@ -765,7 +765,7 @@
   .copy code,.copy .val{font-family:var(--type);font-size:1.3rem;letter-spacing:.08em;padding:.1rem .5rem;border:1.5px dashed var(--ink);background:rgba(255,250,235,.5)}
   .copy .val.text{font-family:var(--read);font-size:1.05rem;letter-spacing:0}
   .copy .done{font-style:italic}
-  textarea.wlink{display:block;width:100%;height:6.5em;min-height:4.5em;margin:.3rem 0 .4rem;padding:.45rem .55rem;font:400 .95rem/1.35 var(--mono);color:var(--ink);background:rgba(255,250,235,.7);border:1.5px solid var(--ink);resize:vertical;word-break:break-all}
+  textarea.wlink{display:block;width:100%;height:6.5em;min-height:4.5em;overflow:auto;margin:.3rem 0 .4rem;padding:.45rem .55rem;font:400 .95rem/1.35 var(--mono);color:var(--ink);background:rgba(255,250,235,.7);border:1.5px solid var(--ink);resize:vertical;word-break:break-all}
   .wqr{margin:1rem 0 .4rem;display:flex;flex-wrap:wrap;align-items:center;gap:.6rem 1.2rem}
   .wqr svg{width:12rem;height:12rem;flex:none;border:2px solid var(--ink);background:#fff}
   .wqr figcaption{flex:1 1 12rem;font-size:1rem}
@@ -1905,7 +1905,7 @@ document.getElementById("btn-export").onclick = () => {
           const btn = e.currentTarget, url = await makeClassLink(); if (!url) return;
           const box = document.getElementById("export-link-box");
           box.replaceChildren(h("label", { class: "lbl", for: "export-link-text" }, "Your class link"), h("textarea", { id: "export-link-text", class: "wlink", readonly: true, rows: 3, spellcheck: "false", value: url, onfocus: ev => ev.target.select() }), ...linkNotes(url, "export"));
-          box.hidden = false; copyText(url, btn, "The class link"); toast("Class link copied. Paste it into your course or an email.");
+          box.hidden = false; copyText(url, btn, "The class link");      // "Copied." is written beside the button and announced (no toast: it would cover the buttons below)
         } }, icon("link"), "Copy class link"), h("span", { class: "done" }), h("div", { id: "export-link-box", class: "linkbox", hidden: true })),
       h("div", { class: "slip" }, h("div", { class: "to" }, "To: Moodle or Canvas gradebook"), h("h3", {}, "SCORM package", tip("Moodle: Add an activity → SCORM package. Canvas: SCORM tool. Upload the zip without unzipping it.", "SCORM package")),
         h("button", { id: "export-scorm", class: "stamp", onclick: async () => { if (await readyToDownload()) { download(`${slug()}-SCORM.zip`, ER.scorm(gameHtml(), cfg.meta.title), "application/zip"); toast("SCORM package downloaded."); } } }, icon("save"), "Download SCORM .zip")),
@@ -2799,7 +2799,7 @@ WSTEPS.deliver = {
         hint: "Next you get step-by-step instructions for the one you choose.",
         options: [{ value: "link", title: "Share a class link (recommended)", desc: "Works anywhere: paste it into Moodle, Canvas, Google Classroom or an email. Students click it and play. The grade comes from a one-question quiz with the exit password." },
           { value: "moodle", title: "Moodle", reveal: () => how("moodle") }, { value: "canvas", title: "Canvas", reveal: () => how("canvas") },
-          { value: "other", title: "Another course system", desc: "Such as Blackboard, D2L Brightspace or Google Classroom." },
+          { value: "other", title: "Another course system", desc: "Such as Blackboard or D2L Brightspace, with a file. (For Google Classroom, a class link is easiest.)" },
           { value: "file", title: "I'll email or post a file", desc: "Students download one file and open it in their browser." }] }),
       wHelp(h("p", {}, "Which should I pick?"),
         h("table", { class: "wcompare" }, h("thead", {}, h("tr", {}, h("th", { scope: "col" }, ""), h("th", { scope: "col" }, "Grade file (SCORM)"), h("th", { scope: "col" }, "File and exit-password quiz"))),
