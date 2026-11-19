@@ -2349,7 +2349,8 @@ function setMode(m){
 }
 document.querySelector(".skip").addEventListener("click", e => { e.preventDefault(); document.getElementById(document.documentElement.dataset.mode === "wizard" ? "wiz-main" : "main").focus(); });
 function wizGo(hash){ WIZ.errors = []; WIZ.warn = null; if (location.hash === hash) routeTo(readHash(), true); else location.hash = hash; }
-addEventListener("hashchange", () => { const r = readHash(); if (r) { WIZ.errors = []; WIZ.warn = null; routeTo(r, true); } });
+const homeRoute = () => (/[?&]mode=advanced/.test(location.search) ? { advanced: true } : { step: stored ? "hub" : "welcome", r: 0, part: "", q: new URLSearchParams() });
+addEventListener("hashchange", () => { const r = readHash() || (location.hash.length <= 1 ? homeRoute() : null); if (r) { WIZ.errors = []; WIZ.warn = null; routeTo(r, true); } });
 function routeTo(r, focus){
   if (r.advanced) {
     const was = document.documentElement.dataset.mode;
@@ -3181,7 +3182,7 @@ WSTEPS.walk = {
 
 applyDisplay();
 render();
-routeTo(readHash() || (/[?&]mode=advanced/.test(location.search) ? { advanced: true } : { step: stored ? "hub" : "welcome", r: 0, part: "", q: new URLSearchParams() }), false);
+routeTo(readHash() || homeRoute(), false);
 </script>
 </body>
 </html>

@@ -1,0 +1,387 @@
+// Tests for the guided steps (the wizard) in the teacher editor. Run with `npm test`, or `node tests/wizard.js`.
+// The wizard edits the same content and browser storage as Advanced mode; these tests walk it the way a teacher would.
+const playwright = require("playwright");
+const engine = playwright[process.env.BROWSER || "chromium"];
+const assert = require("assert/strict");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const { execFileSync } = require("child_process");
+const { start } = require("../scripts/serve.js");
+const ER = require("../src/shared.js");
+
+const SHOTS = path.join(__dirname, "screenshots");
+fs.mkdirSync(SHOTS, { recursive: true });
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "escape-wizard-"));
+
+let passed = 0, failed = 0;
+async function test(name, fn) {
+  try { await fn(); passed++; console.log(`  ✔ ${name}`); }
+  catch (e) { failed++; console.log(`  ✘ ${name}\n      ${String(e.stack || e).split("\n").slice(0, 5).join("\n      ")}`); }
+}
+
+let base, browser;
+async function fresh(viewport = { width: 1280, height: 900 }) {
+  const ctx = await browser.newContext({ viewport, acceptDownloads: true });
+  const page = await ctx.newPage();
+  page.errors = [];
+  page.on("pageerror", e => page.errors.push(e.message));
+  page.on("dialog", d => { if (d.type() !== "beforeunload") page.errors.push("native dialog: " + d.message()); d.dismiss().catch(() => {}); });
+  await page.goto(base + "/editor.html");
+  return page;
+}
+// Wait for a step: the address changes first, then the page is drawn and the heading takes focus.
+const heading = (page, text) => page.waitForFunction(t => { const h = document.getElementById("wiz-h1"); return h && h.textContent.includes(t); }, text, { timeout: 5000 });
+const go = async (page, text) => { await page.click("#wiz-continue"); await heading(page, text); };
+const h1 = page => page.textContent("#wiz-h1");
+const active = page => page.evaluate(() => document.activeElement && document.activeElement.id);
+async function download(page, selector, answer = []) {
+  // Slips may ask first (the exit password, then unchecked items); `answer` says what to do with each.
+  const [dl] = await Promise.all([page.waitForEvent("download", { timeout: 8000 }), (async () => {
+    await page.click(selector);
+    for (const a of answer) { await page.locator(".modal #ask-ok").waitFor(); if (typeof a === "function") await a(); await page.click("#ask-ok"); await page.waitForTimeout(60); }
+  })()]);
+  const file = path.join(TMP, `${Date.now()}-${dl.suggestedFilename()}`);
+  await dl.saveAs(file);
+  return file;
+}
+async function startWith(page, how) {
+  await go(page, "How do you want to start?");
+  await page.click(`label[for=start-${how}]`);
+  await page.click("#wiz-continue");
+}
+
+(async () => {
+  const server = await start(0);
+  base = `http://127.0.0.1:${server.address().port}`;
+  browser = await engine.launch();
+  console.log("\nGuided steps (wizard) tests\n");
+
+  await test("a first visit opens the guided steps at Welcome: the question is the heading, the step is in the title", async () => {
+    const page = await fresh();
+    assert.equal(await page.getAttribute("html", "data-mode"), "wizard");
+    assert.equal(await h1(page), "Make an escape room for your class");
+    assert.equal(await page.title(), "Step 1 of 10: Make an escape room for your class – Escape room maker");
+    assert.equal(await page.locator("#wiz-steps li").count(), 10);
+    assert.equal(await page.locator("#wiz-steps li[aria-current=step]").textContent(), "Welcome (this step)");
+    assert.equal(await page.isVisible("#main"), false, "Advanced mode is put away");
+    assert.match(await page.textContent("#wiz-save"), /Nothing saved in this browser yet\. If you worked on this before, open your saved file\./);
+    await page.screenshot({ path: path.join(SHOTS, "wizard-welcome.png") });
+    await go(page, "How do you want to start?");
+    assert.equal(await active(page), "wiz-h1", "focus moves to the new question");
+    assert.equal(await page.locator("fieldset legend #wiz-h1").count(), 1, "the radio question is the legend");
+    assert.match(await page.textContent("#wiz-start-note"), /Nothing saved in this browser yet/);
+    await page.goBack(); await heading(page, "Make an escape room");
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("the error summary: linked errors that focus their field, Error: in the title, inline errors", async () => {
+    const page = await fresh();
+    await go(page, "How do you want to start?");
+    await page.click("#wiz-continue");
+    await page.locator("#wiz-errors").waitFor();
+    assert.equal(await active(page), "wiz-errors", "focus moves to the summary");
+    assert.match(await page.title(), /^Error: Step 2 of 10/);
+    assert.equal(await page.textContent("#wiz-errors h2"), "There is a problem");
+    await page.click("#wiz-errors a");
+    assert.equal(await active(page), "start-sample", "the link focuses the first choice");
+    await page.click("label[for=start-sample]"); await page.click("#wiz-continue");
+    await heading(page, "What is this escape room called?");
+    await page.fill("#wiz-title", "   ");
+    await page.click("#wiz-continue");
+    await page.locator("#wiz-errors").waitFor();
+    assert.match(await page.textContent("#wiz-errors"), /Enter a name for your escape room/);
+    assert.equal(await page.getAttribute("#wiz-title", "aria-invalid"), "true");
+    assert.match(await page.getAttribute("#wiz-title", "aria-describedby"), /wiz-title-err/);
+    await page.click("#wiz-errors a");
+    assert.equal(await active(page), "wiz-title");
+    await page.fill("#wiz-title", "Chapter 3: Progressive education");
+    await go(page, "Your rooms");
+    assert.doesNotMatch(await page.title(), /^Error/);
+    // a quiz room's errors link to the very box
+    await page.goto(base + "/editor.html#step=add"); await heading(page, "What kind of puzzle");
+    await page.click("label[for=kind-quiz]"); await go(page, "Write your questions");
+    await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor();
+    assert.deepEqual(await page.$$eval("#wiz-errors a", a => a.map(x => x.textContent)), ["Write question 1", "Question 1 needs a correct answer"]);
+    await page.click("#wiz-errors a >> nth=1");
+    assert.equal(await active(page), "q1-a0");
+    await page.screenshot({ path: path.join(SHOTS, "wizard-errors.png") });
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("the full journey: sample, change a question, check facts, try it, Moodle grade file, then the Canvas password route", async () => {
+    const page = await fresh();
+    await startWith(page, "sample");
+    await heading(page, "What is this escape room called?");
+    assert.equal(await page.inputValue("#wiz-title"), "Escape the Old Schoolhouse");
+    await page.fill("#wiz-title", "Chapter 3: Philosophies");
+    await go(page, "Your rooms");
+    assert.equal(await page.locator("#wiz-room-list > li").count(), 5);
+    // room 1 (matching): names, then clues with the live lock line, then the story
+    await go(page, "Room 1: Who or what is on each card?");
+    assert.match(await page.textContent("#wiz-cap"), /Step 5 of 10 · Room 1 of 5/);
+    await go(page, "Room 1: Write the clue for each card");
+    assert.match(await page.textContent("#wiz-lock-line"), /Students will open the lock with LEARN\./);
+    await page.fill("#c1-clue", "Every student masters a shared core of knowledge.");
+    assert.match(await page.textContent("#wiz-lock-line"), /LEARN/);
+    await page.check("#c1-extra");
+    assert.match(await page.textContent("#wiz-lock-line"), /Students will open the lock with [A-Z]{4}\./, "a card marked extra drops out of the lock");
+    await page.uncheck("#c1-extra");
+    assert.equal(await page.inputValue("#c1-clue"), "Every student masters a shared core of knowledge.", "its clue comes back");
+    await go(page, "Room 1: What do students read");
+    await go(page, "Room 2: Who or what");
+    // timeline, sorting and reflection rooms are set up in Advanced mode
+    await page.goto(base + "/editor.html#step=room&room=3"); await heading(page, "Room 3: Put in order");
+    assert.equal(await page.getAttribute("#wiz-room-advanced", "href"), "#advanced&room=3");
+    // add a quiz room and write a question
+    await page.goto(base + "/editor.html#step=add"); await heading(page, "What kind of puzzle");
+    await page.click("label[for=kind-quiz]"); await go(page, "Room 6: Write your questions");
+    await page.fill("#q1-prompt", "Who wrote Democracy and Education (1916)?");
+    await page.fill("#q1-a0", "John Dewey");
+    await page.click("#q1-add-a"); assert.equal(await active(page), "q1-a1");
+    await page.fill("#q1-a1", "Dewey");
+    await page.click("#wiz-add-q"); assert.equal(await active(page), "q2-prompt");
+    await page.fill("#q2-prompt", "Which philosophy is built around the Great Books?");
+    await page.click("label[for=q2-kind-choice]");
+    await page.fill("#q2-c0", "Essentialism"); await page.fill("#q2-c1", "Perennialism");
+    await page.check("#q2-ok1");
+    assert.equal(await page.evaluate(() => cfg.rooms[5].questions[0].answers), "John Dewey | Dewey");
+    await page.screenshot({ path: path.join(SHOTS, "wizard-questions.png"), fullPage: true });
+    await go(page, "Room 6: What do students read");
+    await page.fill("#room-title", "The Strongbox"); await page.fill("#room-story", "Answer every slip to open the box.");
+    await go(page, "Check your facts");
+    // check your facts: nothing checked for you; Next not checked; one tick
+    assert.match(await page.textContent("#wiz-facts-count"), /0 of 42 checked/);
+    assert.match(await page.textContent("#wiz-ai-note"), /written with AI help/);
+    await page.click("#wiz-next-unchecked"); assert.equal(await active(page), "f1-cards-1-ok");
+    await page.fill("#f6-questions-1-src", "Course text, ch. 3");
+    await page.check("#f6-questions-1-ok");
+    assert.match(await page.textContent("#wiz-facts-count"), /1 of 42 checked/);
+    assert.equal(await page.evaluate(() => cfg.rooms[5].questions[0].verified), true);
+    await page.click("#wiz-continue"); await page.locator("#wiz-warn").waitFor();
+    assert.equal(await active(page), "wiz-warn", "an inline note, not a dialog");
+    assert.match(await page.textContent("#wiz-warn"), /41 items aren't checked yet/);
+    await page.click("#wiz-continue-anyway"); await heading(page, "Try it as a student");
+    // try it: the same preview as Advanced mode; Esc comes back here
+    await page.click("#wiz-try");
+    await page.frameLocator(".preview iframe").locator("#begin").waitFor();
+    assert.equal(await page.frameLocator(".preview iframe").locator("#doors .door").count(), 6);
+    await page.keyboard.press("Escape"); await page.locator(".preview").waitFor({ state: "detached" });
+    assert.equal(await active(page), "wiz-try");
+    // how students get it: Moodle, grade file
+    await go(page, "How will your students get to the escape room?");
+    await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor();
+    assert.match(await page.textContent("#wiz-errors"), /Choose where your students will play/);
+    await page.click("label[for=where-moodle]");
+    await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor();
+    assert.match(await page.textContent("#wiz-errors"), /Choose how the grade gets to Moodle/);
+    await page.click("label[for=how-scorm]");
+    await go(page, "Put it in Moodle (grade file)");
+    assert.equal((await page.textContent("#wiz-download")).trim(), "Download the Moodle grade file (.zip)");
+    assert.match(await page.textContent("ol.walk"), /Add an activity or resource.*SCORM package.*Package file.*Save and display/s);
+    assert.match(await page.textContent("ol.walk"), /Menus can differ by version\./);
+    assert.ok(await page.locator("details.wtrouble").count() >= 3, "troubleshooting folds");
+    // a changed copy of the sample is asked for its own exit password
+    let suggested = "";
+    const zip = await download(page, "#wiz-download", [async () => { suggested = await page.inputValue("#ask-password"); }, null]);
+    assert.equal(suggested, "CHAPTER3", "suggested from the title");
+    assert.match(path.basename(zip), /Chapter-3-Philosophies-SCORM\.zip$/);
+    assert.match(execFileSync("unzip", ["-l", zip]).toString(), /imsmanifest\.xml/);
+    const inner = ER.configFromHtml(execFileSync("unzip", ["-p", zip, "index.html"]).toString());
+    assert.equal(inner.finish.exitPassword, "CHAPTER3");
+    assert.equal(inner.rooms[5].questions[0].answers, "John Dewey | Dewey");
+    assert.equal(inner.__preview, undefined);
+    // the Canvas route with the exit-password quiz: no second password question
+    await page.click("#wiz-backlink"); await heading(page, "How will your students get");
+    await page.click("label[for=where-canvas]"); await page.click("label[for=how-quiz]");
+    await go(page, "Put it in Canvas (file and exit-password quiz)");
+    assert.equal(await page.textContent("#wiz-password"), "CHAPTER3");
+    assert.match(await page.textContent("#wiz-quiz-q"), /Type the exit password/);
+    assert.equal(await page.textContent("#wiz-quiz-a"), "CHAPTER3");
+    assert.match(await page.textContent("ol.walk"), /Fill in the Blank/);
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
+    await page.click("#wiz-password-copy");
+    await page.waitForFunction(() => /Copied|Couldn't copy/.test(document.querySelector("#wiz-password-copy").parentElement.querySelector(".done").textContent));
+    const html = await download(page, "#wiz-download", [null]);           // only the unchecked-items slip now
+    assert.match(path.basename(html), /Chapter-3-Philosophies\.html$/);
+    assert.equal(ER.configFromHtml(fs.readFileSync(html, "utf8")).finish.exitPassword, "CHAPTER3");
+    await page.screenshot({ path: path.join(SHOTS, "wizard-walkthrough.png"), fullPage: true });
+    await go(page, "Your escape room is ready");
+    assert.match(await page.textContent("#wiz-summary"), /Chapter 3: Philosophies.*6 rooms.*1 of 42 checked.*Canvas, file and exit-password quiz.*CHAPTER3/s);
+    assert.match(await page.textContent("#wiz-done-backup-note"), /also your backup/, "the game file just downloaded is the backup");
+    await go(page, "Your escape room");
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("the untouched sample keeps DEWEY1916; an empty escape room is asked for a password, and can go back", async () => {
+    let page = await fresh();
+    await startWith(page, "sample"); await heading(page, "What is this escape room called?");
+    await page.goto(base + "/editor.html#step=deliver"); await heading(page, "How will your students");
+    await page.click("label[for=where-file]"); await go(page, "Share it as a file");
+    const f = await download(page, "#wiz-download", [null]);              // no password slip, only the draft one
+    assert.equal(ER.configFromHtml(fs.readFileSync(f, "utf8")).finish.exitPassword, "DEWEY1916");
+    await page.context().close();
+
+    page = await fresh();
+    await startWith(page, "empty"); await heading(page, "What is this escape room called?");
+    await page.fill("#wiz-title", "Week 2 review"); await go(page, "Your rooms");
+    await go(page, "Room 1: Write your questions");
+    await page.fill("#q1-prompt", "What is 2 + 2?"); await page.fill("#q1-a0", "4");
+    await page.goto(base + "/editor.html#step=deliver"); await heading(page, "How will your students");
+    await page.click("label[for=where-other]"); await go(page, "Put it in your course system");
+    assert.match(await page.textContent("#wiz-password-later"), /You choose it when you download/);
+    await page.click("#wiz-download");
+    await page.locator("#ask-password").waitFor();
+    assert.equal(await page.getAttribute(".modal", "role"), "dialog");
+    assert.equal(await page.textContent("#ask-password-title"), "What should the exit password be?");
+    assert.match(await page.textContent("#ask-password-why"), /no exit password yet/);
+    assert.equal(await active(page), "ask-password", "the keyboard starts in the box");
+    assert.equal(await page.inputValue("#ask-password"), "WEEK2");
+    await page.fill("#ask-password", ""); await page.click("#ask-ok");
+    assert.equal(await page.isVisible("#ask-password-err"), true);
+    assert.equal(await page.getAttribute("#ask-password", "aria-invalid"), "true");
+    await page.click("#ask-cancel");
+    assert.equal(await page.locator(".modal").count(), 0);
+    assert.equal(await page.evaluate(() => cfg.finish.exitPassword), "", "going back changes nothing");
+    assert.equal(await active(page), "wiz-download");
+    const g = await download(page, "#wiz-download", [async () => { await page.fill("#ask-password", "SQUARE4"); }, null]);
+    assert.equal(ER.configFromHtml(fs.readFileSync(g, "utf8")).finish.exitPassword, "SQUARE4");
+    assert.equal(await page.textContent("#wiz-password"), "SQUARE4");
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("leaving and coming back: Save and finish later goes to the hub, and a new visit lands there", async () => {
+    const page = await fresh();
+    await startWith(page, "empty"); await heading(page, "What is this escape room called?");
+    await page.fill("#wiz-title", "Unit 5 escape room");
+    await page.click("#wiz-later"); await heading(page, "Your escape room");
+    assert.match(await page.title(), /^Your escape room – Escape room maker$/);
+    assert.equal(await page.textContent("#wiz-hub-title"), "Unit 5 escape room");
+    assert.match(await page.textContent("#task-facts"), /1 not checked/);
+    assert.match(await page.textContent("#task-deliver"), /Not started/);
+    assert.match(await page.textContent("#wiz-save"), /Saved in this browser at .*Not backed up yet\./);
+    // a new visit (another tab, same browser) opens on the hub, not the welcome
+    const again = await page.context().newPage();
+    await again.goto(base + "/editor.html");
+    await heading(again, "Your escape room");
+    assert.equal(await again.textContent("#wiz-hub-title"), "Unit 5 escape room");
+    await again.click("#task-room-1 a"); await heading(again, "Room 1: Write your questions");
+    // Advanced mode and back
+    await again.click("#wiz-advanced");
+    await again.waitForFunction(() => document.documentElement.dataset.mode === "advanced");
+    assert.equal(await again.textContent("#page-title"), "New question room");
+    assert.equal(await again.evaluate(() => document.activeElement.id), "page-title");
+    await again.click("#btn-guided"); await heading(again, "Your escape room");
+    await again.goBack(); await again.waitForFunction(() => document.documentElement.dataset.mode === "advanced");
+    await page.screenshot({ path: path.join(SHOTS, "wizard-hub.png"), fullPage: true });
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("two escape rooms live side by side; Make a copy; neither overwrites the other", async () => {
+    const page = await fresh();
+    await startWith(page, "sample"); await heading(page, "What is this escape room called?");
+    await page.fill("#wiz-title", "Chapter 3"); await page.click("#wiz-later"); await heading(page, "Your escape room");
+    await page.click("#wiz-another"); await heading(page, "How do you want to start?");
+    assert.match(await page.textContent("#wiz-start-note"), /You already have “Chapter 3” in this browser\. Starting another one keeps that one too/);
+    await page.click("label[for=start-empty]"); await page.click("#wiz-continue"); await heading(page, "What is this escape room called?");
+    await page.fill("#wiz-title", "Chapter 4"); await page.click("#wiz-later"); await heading(page, "Your escape room");
+    assert.deepEqual((await page.$$eval("#wiz-lib > li b", b => b.map(x => x.textContent))).sort(), ["Chapter 3", "Chapter 4"]);
+    assert.match(await page.textContent("#wiz-lib"), /Chapter 4\s*\(open now\)/);
+    const first = await page.evaluate(() => lib.list.find(e => e.title === "Chapter 3").id);
+    await page.click(`#lib-open-${first}`); await heading(page, "Your escape room");
+    assert.equal(await page.textContent("#wiz-hub-title"), "Chapter 3");
+    assert.equal(await page.evaluate(() => cfg.rooms.length), 5, "the first one still has the sample's five rooms");
+    await page.click("#wiz-copy"); await heading(page, "Your escape room");
+    assert.equal(await page.textContent("#wiz-hub-title"), "Chapter 3 (copy)");
+    assert.equal(await page.locator("#wiz-lib > li").count(), 3);
+    // the same list survives a new visit, and Advanced mode's New adds rather than replaces
+    const again = await page.context().newPage();
+    await again.goto(base + "/editor.html?mode=advanced");
+    await again.click("#btn-new"); await again.click("#new-blank");
+    assert.equal(await again.evaluate(() => lib.list.length), 4);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("the backup is the game file: it reopens in a browser with nothing saved", async () => {
+    let page = await fresh();
+    await startWith(page, "empty"); await heading(page, "What is this escape room called?");
+    await page.fill("#wiz-title", "Backup test"); await page.click("#wiz-later"); await heading(page, "Your escape room");
+    const file = await download(page, "#wiz-hub-backup");
+    assert.match(path.basename(file), /Backup test \(backup\)\.html$/);
+    await heading(page, "Your escape room");
+    assert.match(await page.textContent("#task-backup"), /Backed up at/);
+    assert.match(await page.textContent("#wiz-save"), /Backup downloaded at/);
+    await page.context().close();
+
+    page = await fresh();                                             // another computer: nothing saved here
+    await page.click("#wiz-have-one"); await heading(page, "How do you want to start?");
+    assert.equal(await page.isChecked("#start-file"), true, "“I've made one before” picks the file choice");
+    await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor();
+    assert.match(await page.textContent("#wiz-errors"), /Choose the file you saved/);
+    await page.setInputFiles("#wiz-file", file);
+    await page.locator("#wiz-file-name").waitFor();
+    assert.match(await page.textContent("#wiz-file-name"), /Backup test/);
+    await page.click("#wiz-continue"); await heading(page, "Your escape room");
+    assert.equal(await page.textContent("#wiz-hub-title"), "Backup test");
+    assert.match(await page.textContent("#wiz-save"), /Backup downloaded at/, "an opened backup counts as backed up");
+    // a file that isn't an escape room
+    await page.click("#wiz-another"); await heading(page, "How do you want to start?");
+    await page.click("label[for=start-file]");
+    await page.setInputFiles("#wiz-file", { name: "notes.html", mimeType: "text/html", buffer: Buffer.from("<p>hello</p>") });
+    await page.locator("#wiz-file-err").waitFor();
+    assert.match(await page.textContent("#wiz-file-err"), /couldn't be opened/);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("the leave warning: only while there are changes since the last backup", async () => {
+    const page = await fresh();
+    const warned = async p => { let seen = false; p.on("dialog", d => { if (d.type() === "beforeunload") seen = true; }); await p.close({ runBeforeUnload: true }); await new Promise(r => setTimeout(r, 400)); return seen; };
+    assert.equal(await page.evaluate(() => unbacked()), false, "nothing to lose on a first visit");
+    await startWith(page, "empty"); await heading(page, "What is this escape room called?");
+    await page.fill("#wiz-title", "Leave test");
+    const second = await page.context().newPage(); await second.goto(base + "/editor.html"); await heading(second, "Your escape room");
+    assert.equal(await page.evaluate(() => unbacked()), true);
+    assert.equal(await warned(page), true, "closing with changes that are only in this browser warns");
+    await download(second, "#wiz-hub-backup");
+    assert.equal(await second.evaluate(() => unbacked()), false);
+    await second.click("#wiz-hub-title");                                // a click, so the browser lets the page warn at all
+    assert.equal(await warned(second), false, "after a backup, closing does not warn");
+    await second.context().close();
+  });
+
+  await test("phone width: no sideways scrolling, the step list folds away", async () => {
+    const page = await fresh({ width: 390, height: 844 });
+    assert.equal(await page.evaluate(() => document.querySelector("#wiz-steps details").open), false);
+    await startWith(page, "sample"); await heading(page, "What is this escape room called?");
+    for (const step of ["rooms", "facts", "deliver", "hub"]) {
+      await page.goto(base + "/editor.html#step=" + step); await page.waitForTimeout(150);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `no sideways scrolling on ${step}`);
+    }
+    await page.screenshot({ path: path.join(SHOTS, "wizard-phone-hub.png"), fullPage: true });
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("the guided steps ask for nothing from the internet", async () => {
+    const page = await fresh();
+    const outside = [];
+    page.on("request", r => { const u = r.url(); if (!u.startsWith(base) && !/^(data|blob|about):/.test(u)) outside.push(u); });
+    await page.reload(); await startWith(page, "sample"); await heading(page, "What is this escape room called?");
+    for (const step of ["rooms", "facts", "try", "deliver", "walk", "done", "hub"]) { await page.goto(base + "/editor.html#step=" + step); await page.waitForTimeout(80); }
+    assert.deepEqual(outside, []);
+    await page.context().close();
+  });
+
+  await browser.close();
+  server.close();
+  fs.rmSync(TMP, { recursive: true, force: true });
+  console.log(`\n${passed} passed, ${failed} failed.`);
+  process.exit(failed ? 1 : 0);
+})();
