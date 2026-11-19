@@ -127,7 +127,8 @@ const visibleListens = page => page.locator(".listen:visible").count();
     assert.equal(await clue.getAttribute("aria-pressed"), null, "not a toggle: a toggle keeps one name");
     assert.equal(await page.evaluate(() => document.querySelector("#live").textContent), "", "nothing is added to the live region");
     // the sentence being read is highlighted
-    assert.equal(await page.evaluate(() => CSS.highlights.has("er-read") && [...CSS.highlights.get("er-read")][0].toString()), "Clue 1");
+    await page.waitForFunction(() => CSS.highlights.has("er-read"));   // drawn when the voice starts the sentence, a moment after the press
+    assert.equal(await page.evaluate(() => [...CSS.highlights.get("er-read")][0].toString()), "Clue 1");
     await clue.click();
     assert.equal(await clue.getAttribute("data-reading"), null); assert.equal(await clue.textContent(), "Listen to Clue 1");
     assert.equal(await page.evaluate(() => speechSynthesis.speaking), false, "speech is cancelled");
