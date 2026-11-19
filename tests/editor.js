@@ -38,7 +38,7 @@ async function openEditor(browser, base) {
   page.errors = [];
   page.on("pageerror", e => page.errors.push(e.message));
   page.on("dialog", d => { page.errors.push("native dialog: " + d.message()); d.dismiss(); });   // the editor asks on its own slips now
-  await page.goto(base + "/editor.html");
+  await page.goto(base + "/editor.html?mode=advanced");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   return page;
@@ -47,7 +47,8 @@ async function download(page, clickSelector) {
   // Exporting a draft asks first on an in-app slip ("Export anyway"); a teacher would press it, so the helper does too.
   const [dl] = await Promise.all([page.waitForEvent("download"), (async () => {
     await page.click(clickSelector); await page.waitForTimeout(50);
-    if (await page.locator(".modal #ask-ok").count()) await page.click("#ask-ok");
+    // up to two slips: the exit password (changed sample or none yet), then the unchecked-items one
+    for (let i = 0; i < 2; i++) { if (!(await page.locator(".modal #ask-ok").count())) break; await page.click("#ask-ok"); await page.waitForTimeout(50); }
   })()]);
   const file = path.join(TMP, dl.suggestedFilename());
   await dl.saveAs(file);
@@ -664,7 +665,7 @@ async function makeQuizRoom(page) {
     const page = await browser.newPage();
     const outside = [];
     page.on("request", r => { const u = r.url(); if (!u.startsWith(base) && !/^(data|blob|about):/.test(u)) outside.push(u); });
-    await page.goto(base + "/editor.html");
+    await page.goto(base + "/editor.html?mode=advanced");
     await page.click("#btn-review"); await page.keyboard.press("Escape");
     await page.click("#btn-preview"); await page.frameLocator(".preview iframe").locator("#begin").waitFor();
     assert.deepEqual(outside, []);
