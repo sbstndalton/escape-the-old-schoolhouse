@@ -31,7 +31,9 @@ To download everything at once, go to the main repository page and click the gre
 
 Download **`editor.html`** and double-click it. Everything happens in the browser, with no account and no internet needed.
 
-The editor looks like a curator's workbench at night. The **cabinet** on the left has one drawer for each room, plus Settings, Story & intro, and Finish & grading. On a phone, tap the brass **Rooms** handle at the top to slide the cabinet out. The drawer you pick is laid out on paper in the middle, with index tabs along the top (for example *Cards & clues*, *Lock*, *Room text*, *Hints*). A small **ⓘ** next to a label opens a short explanation (point at it, tap it, or reach it with the Tab key).
+The editor looks like a curator's workbench at night. The **cabinet** on the left has one drawer for each room, plus Settings, Story & intro, and Finish & grading. On a phone, tap the brass **Rooms** handle at the top to slide the cabinet out. The drawer you pick is laid out on paper in the middle, with index tabs along the top (for example *Cards & clues*, *Lock*, *Room text*, *Hints*). A small **ⓘ** next to a label opens a short explanation (point at it, tap it, or reach it with the Tab key; **Esc** puts it away).
+
+**The editor is built to be used by everyone.** Everything works from the keyboard alone, with a visible focus ring. Screen readers get real labels, groups and announcements. Before anything is deleted or replaced, the editor asks on its own slip (never a browser pop-up), with **Cancel** selected first. At the foot of the cabinet are two switches, remembered in your browser: **High contrast** (plain black-on-white, heavier outlines; it also follows your system's contrast setting) and **Readable text** (a plain, larger typeface with more spacing). The editor works at 200% text size, at 400% zoom and on a phone, and it is styled for Windows High Contrast (checked with the browser's emulation, not yet on Windows). See [ACCESSIBILITY.md](ACCESSIBILITY.md) for what was tested and what still falls short.
 
 - **Change anything students see.** Story text, clues, questions, answers, hints, the exit password, and grading are all lines you type on.
 - **Add, remove, or reorder rooms.** **Add a room** in the cabinet lists the five kinds of rooms:
@@ -55,6 +57,7 @@ The editor looks like a curator's workbench at night. The **cabinet** on the lef
   `A:` lists accepted answers (separate alternatives with `|`; capitals and punctuation are ignored). For multiple choice, mark the right answer with `*`.
 - **One escape room per chapter.** Use **New…** to start a blank room or copy the sample. Each escape room is its own file.
 - **See the answers.** Every room has an **Answer key** envelope beside the page (only in the editor). Click it to open the key; it updates as you type. **Answer sheet** shows every room's answers on one page, ready to print.
+- **Accessibility check.** The **Accessibility check** drawer (at the end of the cabinet) reads what you wrote and lists things that often shut students out: directions that depend on colour, position, shape or sound ("the red book", "on the left"), words like "click" or "drag", time pressure, a lock with more than 8 dials, missing titles or instructions, symbols or emoji used as the only meaning, very long clues and reading-heavy rooms, typed answers with only one accepted spelling, long lists to order or sort, and rooms with no hints. Each note says where it is, why it matters, and what to do; clicking it takes you to the spot. The notes are advice only. They never stop you previewing or exporting, and they are printed at the end of the **Answer sheet**.
 - **Hints (optional).** Hints are **off** until you switch them on for a room. Each room can have **two hints** that you write. Students can't open a hint straight away: hint 1 unlocks after 1 wrong try and hint 2 after 3 wrong tries in that room (you can change these numbers in **Settings**). The editor warns you if a hint gives away the answer.
 - **Preview as student** opens the game exactly as students see it, full screen. The brass rail at the top is just for you: jump to any room, switch **Show answers** on or off, **Restart**, or **Exit preview** (or press **Esc**). Each room also has a **Preview this room** button. Nothing in the preview is saved or graded.
 - **Export for students** downloads the game as an `.html` file or a **SCORM `.zip`** for Moodle/Canvas, ready to upload.
@@ -196,7 +199,8 @@ npx playwright install chromium
 |---|---|
 | `npm run serve` | Runs the game at http://localhost:8080 |
 | `npm run build` | Rebuilds `index.html`, `editor.html`, and `EscapeRoom_SCORM.zip` from `src/` and `content/` |
-| `npm test` | Builds, then plays the whole game and drives the editor automatically, and saves screenshots to `tests/screenshots/` |
+| `npm test` | Builds, then plays the whole game, drives the editor automatically, and runs the editor's accessibility tests (a few minutes). Screenshots go to `tests/screenshots/` |
+| `node tests/a11y-editor.js` | Only the editor's accessibility tests. `A11Y_VARIANTS=default` scans just the default look; `A11Y_AUDIT=1` lists every finding instead of stopping at the first |
 
 **Browser control (MCP):** the `.mcp.json` file gives Claude Code the **Playwright** browser tools. The first time you open Claude Code in this folder, it asks whether to allow the `playwright` server. Say yes. After that you can ask things like *"Play the escape room on a phone-sized screen and tell me what's confusing,"* or *"Add a sixth room about Horace Mann and test it."* The `CLAUDE.md` file tells Claude the rules for this project.
 
