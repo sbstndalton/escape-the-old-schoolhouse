@@ -250,4 +250,77 @@ const ER = (() => {
   return { esc, fmt, paras, norm, accepted, hash, scramble, matching, LOOKS, look, initials, answerKey, HINT_ROOMS, hintRules, hintWarnings, reviewItems, reviewStatus, validate,
     encodeConfig, decodeConfig, buildGame, configFromHtml, zip, crc32, manifest, scorm, fileSlug };
 })();
+/* ---------- accessibility helpers (ER.a11y…) ----------
+ * a11yHow(room): one plain sentence on how to work the room's lock (shown under the lock in the game).
+ * a11yDescribe(room, state): the "Describe this room" text: everything in the room, in reading order,
+ *   as sections { h, text: [paragraphs], list: [items], ordered }. Strings may use **bold** (render with ER.fmt).
+ *   `state` is optional live state from the game: { order: [item indexes as placed], picks: [category index or null] }.
+ * a11yCheck(cfg): advisory, plain-language notes for teachers about content that may be hard for some students.
+ *   Returns [{ room (index, or -1 for the whole game), message }]. It never blocks anything. */
+ER.a11yHow = room => {
+  const t = room && room.type;
+  if (t === "matching") return "Set each dial with its up and down arrows or the arrow keys, or type the code in the box. Then pull the shackle.";
+  if (t === "quiz") return "Answer every question, then turn the handle to check.";
+  if (t === "ordering") return "Use each card's up and down buttons to put the cards in order, then turn the handle to check.";
+  if (t === "sorting") return "Stamp every slip with one of the stamps, then turn the handle to check.";
+  if (t === "reflection") return "Choose the answer closest to your view for each question. There are no wrong answers.";
+  return "";
+};
+ER.a11yDescribe = (room, state = {}) => {
+  const out = [], t = room.type, s = v => String(v == null ? "" : v).trim();
+  if (s(room.story)) out.push({ h: "The note", text: s(room.story).split(/\n\s*\n/).map(x => x.trim()).filter(Boolean).concat(s(room.reference) ? [s(room.reference)] : []) });
+  if (t === "matching") {
+    const m = ER.matching(room), look = ER.look(room), label = i => m.numbers ? String.fromCharCode(65 + i) : String(i + 1);
+    const what = look === "books" ? "books on the shelf" : look === "portraits" ? "portraits on the wall" : "cards in the drawer";
+    out.push({ h: `${m.display.length} ${what}`, text: [`Each one carries a code ${m.numbers ? "number" : "letter"}.`],
+      list: m.display.map(c => `Code **${m.code[c.k]}**: ${s(c.term)}${s(c.detail) ? ` (${s(c.detail)})` : ""}`) });
+    out.push({ h: s(room.cluesHeading) || "Clues", text: ["Each clue describes one of them. Take the clues in order: their codes, in that order, open the lock."],
+      list: m.answerCards.map((c, i) => `Clue ${label(i)}: ${s(c.clue)}`) });
+    out.push({ h: "The lock", text: [`A combination padlock with ${m.answer.length} dials, one for each ${m.numbers ? "number" : "letter"} of the code.`, ER.a11yHow(room)] });
+  } else if (t === "quiz") {
+    out.push({ h: `${(room.questions || []).length} questions`, ordered: true, list: (room.questions || []).map(q => s(q.prompt) + (q.kind === "choice"
+      ? " Choices: " + (q.choices || []).filter(c => s(c)).map(s).join("; ") + "." : " Type a short answer.")) });
+    out.push({ h: "The lock", text: ["A strongbox with a handle. After each try, a counter shows how many answers were right.", ER.a11yHow(room)] });
+  } else if (t === "ordering") {
+    const items = room.items || [], order = state.order || ER.scramble(items.length, (room.title || "") + items.map(i => i.text).join("|"));
+    out.push({ h: `${items.length} cards on the timeline, as they are placed now`, ordered: true, list: order.map(i => s(items[i] && items[i].text)) });
+    out.push({ h: "The lock", text: ["A handle with a counter. After each try, it shows how many cards are in the right place.", ER.a11yHow(room)] });
+  } else if (t === "sorting") {
+    const cats = (room.categories || []).map(s), picks = state.picks || [];
+    out.push({ h: `${cats.length} stamps`, list: cats });
+    out.push({ h: `${(room.items || []).length} slips to stamp`, ordered: true, list: (room.items || []).map((it, i) => s(it.text) + (picks[i] != null ? ` (stamped **${cats[picks[i]]}**)` : " (not stamped yet)")) });
+    out.push({ h: "The lock", text: ["A handle with a counter. After each try, it shows how many slips were stamped correctly.", ER.a11yHow(room)] });
+  } else if (t === "reflection") {
+    out.push({ h: `${(room.questions || []).length} questions, one at a time`, ordered: true, list: (room.questions || []).map(q => s(q.prompt) + " Options: " + (q.options || []).map(o => s(o.text)).join("; ") + ".") });
+    out.push({ h: "How it works", text: [ER.a11yHow(room), "Your most-chosen view is shown on the certificate."] });
+  }
+  return out;
+};
+ER.a11yCheck = cfg => {
+  const out = [], add = (room, message) => out.push({ room, message }), s = v => String(v == null ? "" : v).trim();
+  const SENSE = /\b(red|green|blue|yellow|orange|purple|pink|brown|grey|gray|left|right|above|below|top|bottom|round|square|corner)\b/i;
+  let PIC; try { PIC = new RegExp("^[\\p{Extended_Pictographic}\\uFE0F\\u200D\\s]+$", "u"); } catch (e) { PIC = /^[☀-➿\uD83C-🠀-\uDFFF️\s]+$/; }
+  if (!s(cfg.intro && cfg.intro.story)) add(-1, "The opening page has no story. A sentence or two tells students what to expect.");
+  (cfg.rooms || []).forEach((room, r) => {
+    const texts = [];
+    if (!s(room.story)) add(r, "This room has no story or instructions. Students who can't take in the picture rely on that text.");
+    if (room.type === "matching") {
+      const m = ER.matching(room);
+      if (m.answer.length > 8) add(r, `The lock code has ${m.answer.length} characters. More than 8 dials is slow with a keyboard, a switch or a screen reader.`);
+      (room.cards || []).forEach(c => { texts.push(c.clue, c.term);
+        if (s(c.clue).length > 300) add(r, `The clue for "${s(c.term)}" is long (${s(c.clue).length} characters). Shorter clues are easier to read and remember.`);
+        if (PIC.test(s(c.term))) add(r, "A card is named with a picture only. A picture alone can't be read aloud; add a name in words."); });
+    }
+    if (room.type === "quiz") (room.questions || []).forEach((q, i) => { texts.push(q.prompt);
+      if (q.kind !== "choice" && ER.accepted(q.answers).length < 2) add(r, `Question ${i + 1} accepts only one typed answer. Add other spellings or forms (separated by |) so a small typing difference isn't marked wrong.`); });
+    if (room.type === "ordering" || room.type === "sorting") (room.items || []).forEach(it => texts.push(it.text));
+    if (room.type === "ordering" && (room.items || []).length > 9) add(r, `There are ${(room.items || []).length} cards to put in order. More than 9 takes many moves without a mouse.`);
+    texts.push(room.story, ...(room.hints || []));
+    const hit = texts.map(s).map(x => (x.match(SENSE) || [])[0]).filter(Boolean)[0];
+    if (hit) add(r, `Some text uses the word "${hit}". Check that it doesn't point to something by its colour, shape or place alone.`);
+    const long = texts.map(s).reduce((a, x) => a + x.length, 0);
+    if (long > 2500) add(r, `This room has a lot of reading (about ${Math.round(long / 5)} words). Consider splitting it into two rooms.`);
+  });
+  return out;
+};
 if (typeof module !== "undefined") module.exports = ER;
