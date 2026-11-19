@@ -48,7 +48,7 @@ async function open(browser, base, viewport, opts = {}) {
   page.errors = [];
   page.on("pageerror", e => page.errors.push(e.message));
   page.on("dialog", d => { page.errors.push("native dialog: " + d.message()); d.accept(); });
-  await page.goto(base + "/editor.html");
+  await page.goto(base + "/editor.html?mode=advanced");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.evaluate(() => document.fonts.ready);

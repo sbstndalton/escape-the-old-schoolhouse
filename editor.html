@@ -10,7 +10,9 @@
 (function(){ var d = document.documentElement, g = function(k){ try { return localStorage.getItem(k); } catch(e){ return null; } };
   var c = g("escape-room-contrast"), mq = function(q){ return window.matchMedia && matchMedia(q).matches; };
   if (c === "on" || mq("(forced-colors: active)") || (c !== "off" && mq("(prefers-contrast: more)"))) d.setAttribute("data-contrast", "more");
-  if (g("escape-room-readable") === "on") d.setAttribute("data-readable", "on"); })();
+  if (g("escape-room-readable") === "on") d.setAttribute("data-readable", "on");
+  /* Guided steps unless the address asks for Advanced mode (#advanced, or ?mode=advanced) */
+  d.setAttribute("data-mode", /^#advanced(&|$)/.test(location.hash) || /[?&]mode=advanced/.test(location.search) ? "advanced" : "wizard"); })();
 </script>
 <style>
   /* =====================================================================
@@ -450,7 +452,7 @@
     .note{flex:1 1 15rem;max-width:26rem} .answerkey{flex:1 1 15rem;max-width:22rem} .loose .plate{align-self:flex-start}
     .answerkey summary{height:4.2rem} .answerkey[open]{margin-top:2.4rem}
   }
-  @media (max-width:77.5em){ header h1{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap} header{gap:.4rem .7rem;flex-wrap:wrap} }
+  @media (max-width:91em){ header h1{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap} header{gap:.4rem .7rem;flex-wrap:wrap} }
   /* ---------- phones: the cabinet slides out from a brass handle ---------- */
   @media (max-width:51.25em){
     body{grid-template-columns:minmax(0,1fr)}
@@ -601,6 +603,201 @@
     html[data-contrast=more] button:disabled{opacity:1;color:GrayText;border-color:GrayText}
     html[data-contrast=more] :focus-visible,html[data-contrast=more] .rotary input:focus-visible+span,html[data-contrast=more] .verify label.chk input:focus-visible~.spot,html[data-contrast=more] .ring input:focus-visible+span,html[data-contrast=more] .switch input:focus-visible+.track{outline-color:Highlight}
   }
+
+  /* =====================================================================
+     Guided steps (the wizard): the same bench and paper, but calmer and plainer than the workshop.
+     One question per sheet, big reading type, one obvious brass button. <html data-mode="wizard|advanced">.
+     ===================================================================== */
+  html[data-mode=wizard]{height:auto;min-height:100%}
+  html[data-mode=wizard] body{display:block;height:auto;min-height:100%;overflow:visible;background-attachment:fixed}
+  .wbody.solo{grid-template-columns:minmax(0,46rem)}
+  .tasks .kind{display:block;font-weight:400;font-size:1rem}
+  .wtop .i{color:var(--brass-hi);--on:var(--night)}
+  html[data-mode=wizard] :is(body>header,body>nav,body>main,#cab-scrim){display:none!important}
+  html:not([data-mode=wizard]) #wizard{display:none}
+  #wizard{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;font-size:1.125rem}
+  .wtop{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem 1.4rem;padding:.5rem 1.4rem;color:var(--parch);
+    background:var(--grain),linear-gradient(180deg,#4a2f18,#352010 55%,#241509);
+    box-shadow:inset 0 1px 0 rgba(255,214,160,.22),inset 0 -1px 0 #0b0603,0 1px 0 rgba(176,138,62,.55),0 8px 18px rgba(0,0,0,.6)}
+  .wtop .brand{margin:0 auto 0 0;font-family:var(--caps);font-size:1.1rem;letter-spacing:.14em;color:var(--brass-hi);text-shadow:0 -1px 0 rgba(0,0,0,.85)}
+  .wtop .save{display:flex;flex-wrap:wrap;align-items:center;gap:0 .6rem;font-size:.95rem}
+  .wtop .save .line{margin:0} .wtop .save .line span+span{margin-left:.25rem}
+  .wtop .cut{font-size:.92rem}
+  .wtop a.cut{text-decoration:none}
+  .wbody{flex:1;display:grid;grid-template-columns:15.5rem minmax(0,44rem);justify-content:center;align-items:start;gap:1.5rem 2.4rem;padding:2rem 1.4rem 4rem}
+  /* the list of steps: typed on a strip of card pinned to the wood */
+  .wsteps{position:sticky;top:1rem;color:var(--parch);font-size:1rem}
+  .wsteps summary{list-style:none;cursor:pointer;font-family:var(--caps);letter-spacing:.12em;color:var(--brass-hi);min-height:2rem;display:flex;align-items:center;gap:.5rem;text-decoration:underline;text-underline-offset:.25em}
+  .wsteps summary::-webkit-details-marker{display:none}
+  .wsteps summary::before{content:"+";display:inline-grid;place-items:center;width:1.3rem;height:1.3rem;border:1.5px solid currentColor;border-radius:50%;font-family:var(--read);line-height:1}
+  .wsteps details[open] summary::before{content:"−"}
+  .wsteps ol{list-style:none;margin:.5rem 0 0;padding:0;counter-reset:st}
+  .wsteps li{counter-increment:st;display:grid;grid-template-columns:2rem 1fr;align-items:baseline;padding:.3rem 0;line-height:1.35}
+  .wsteps li::before{content:counter(st);width:1.5rem;height:1.5rem;display:inline-grid;place-items:center;font-family:var(--type);font-size:.9rem;color:var(--parch);border:1px solid rgba(232,217,181,.5);border-radius:50%}
+  .wsteps li[aria-current=step]{font-weight:700;color:#fff3d6}
+  .wsteps li[aria-current=step]::before{border:2px solid var(--brass-hi);color:var(--brass-hi)}
+  .wsteps a{color:var(--parch);text-underline-offset:.2em;min-height:1.6rem;display:inline-block}
+  .wsteps a:hover{color:var(--brass-hi)}
+  .wsteps .now{display:block;font-weight:400;font-size:.9rem;font-family:var(--caps);letter-spacing:.1em;color:var(--brass-hi)}
+  /* the sheet */
+  .wsheet{position:relative;min-height:0;padding:1.6rem 2.6rem 2.2rem;font-size:1.125rem;line-height:1.6}
+  .wsheet:focus{outline:none}
+  .wsheet>.wback{margin:-.2rem 0 .8rem}
+  .wcap{margin:0 0 .2rem;font-family:var(--caps);font-size:1rem;letter-spacing:.13em;color:var(--ink-2)}
+  #wizard h1,.wq{margin:0 0 .7rem;font-family:var(--read);font-weight:700;font-size:2rem;line-height:1.22;color:var(--ink);overflow-wrap:anywhere}
+  #wizard h1:focus{outline:none} #wizard h1:focus-visible{outline:3px solid var(--ink);outline-offset:4px}
+  #wizard h1 label{cursor:default}
+  #wizard h2{margin:2rem 0 .5rem;font-family:var(--read);font-weight:700;font-size:1.35rem;line-height:1.3;color:var(--ink);text-shadow:none}
+  #wizard h3{margin:1.4rem 0 .3rem;font-family:var(--read);font-weight:700;font-size:1.15rem;color:var(--ink);letter-spacing:0;display:block}
+  #wizard h3::after{content:none}
+  .wsheet p{margin:.6rem 0;max-width:38em}
+  .wsheet ul,.wsheet ol{max-width:38em}
+  .whint{color:var(--ink-2);margin:.2rem 0 .7rem}
+  .wsheet a{color:var(--ink);text-underline-offset:.2em}
+  .wsheet a:hover{text-decoration-thickness:2px}
+  /* help with this step: a fold of paper that opens under the question */
+  .whelp{margin:1rem 0 1.2rem;border-top:1px dashed var(--rule);border-bottom:1px dashed var(--rule);padding:.2rem 0}
+  .whelp>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.5rem;min-height:2.4rem;font-weight:700;text-decoration:underline;text-underline-offset:.22em}
+  .whelp>summary::-webkit-details-marker{display:none}
+  .whelp>summary::before{content:"+";display:inline-grid;place-items:center;width:1.4rem;height:1.4rem;border:1.5px solid currentColor;border-radius:50%;font-weight:400;line-height:1;text-decoration:none}
+  .whelp[open]>summary::before{content:"−"}
+  .whelp>div{padding:0 0 .6rem 1.9rem}
+  /* fields: a label you can read, an underline to write on */
+  .wf{margin:1.3rem 0 0}
+  .wlabel,.wlegend{display:block;font-weight:700;font-size:1.125rem;color:var(--ink);margin-bottom:.1rem}
+  .wf input[type=text],.wf textarea{font-size:1.15rem}
+  .wf .whint{margin:.1rem 0 .3rem}
+  .ferr{color:var(--red-ink);font-weight:700;margin:.3rem 0 .2rem!important}
+  .ferr::before{content:"!";display:inline-grid;place-items:center;width:1.2rem;height:1.2rem;margin-right:.4rem;border:1.5px solid currentColor;border-radius:50%;font-size:.85rem;line-height:1;vertical-align:.1em}
+  .wf.bad input[type=text],.wf.bad textarea{border-bottom-color:var(--red-ink);border-bottom-width:3px}
+  .wf.bad textarea{background-image:linear-gradient(transparent calc(1.75rem - 3px),var(--red-ink) calc(1.75rem - 3px))}
+  /* "There is a problem": red ink between two ruled lines, at the top of the sheet */
+  .errsum{margin:.4rem 0 1.4rem;padding:.6rem 0 .8rem;color:var(--red-ink);border-top:3px double var(--red-ink);border-bottom:3px double var(--red-ink)}
+  .errsum:focus{outline:3px solid var(--ink);outline-offset:4px}
+  #wizard .errsum h2{margin:0 0 .3rem;color:var(--red-ink);font-size:1.3rem}
+  .errsum ul{margin:0;padding-left:1.3rem}
+  .errsum a{color:var(--red-ink);font-weight:700}
+  /* radio "cards": each choice is a slip with a drawn ring; the real radio is laid over it */
+  fieldset.wradios{border:0;margin:0;padding:0;min-width:0}
+  fieldset.wradios>legend{padding:0;margin:0;width:100%}
+  .wopts{display:flex;flex-direction:column;gap:.65rem;margin-top:.6rem}
+  .wopt{position:relative;display:grid;grid-template-columns:auto auto minmax(0,1fr);align-items:start;gap:.2rem .9rem;padding:.85rem 1rem .9rem .9rem;cursor:pointer;
+    background:rgba(255,250,235,.38);border:1.5px solid var(--line)}
+  .wopt input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+  .wopt .dot{width:1.6rem;height:1.6rem;margin-top:.1rem;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;background:var(--paper)}
+  .wopt .dot::after{content:"";width:.8rem;height:.8rem;border-radius:50%;background:var(--ink);transform:scale(0)}
+  .wopt .pic{color:var(--ink);font-size:1.7rem;line-height:1;margin-top:.05rem}
+  .wopt .pic:empty{display:none}
+  .wopt .t b{display:block;font-size:1.15rem;line-height:1.35}
+  .wopt .t .d{display:block;color:var(--ink-2);margin-top:.15rem}
+  .wopt .t .eg{display:block;margin-top:.35rem;font-style:italic;color:var(--ink-2)}
+  .wopt:hover{border-color:var(--ink)}
+  .wopt:has(input:checked){border:3px solid var(--ink);padding:calc(.85rem - 1.5px) calc(1rem - 1.5px) calc(.9rem - 1.5px) calc(.9rem - 1.5px);background:rgba(255,250,235,.7)}
+  .wopt:has(input:checked) .dot::after{transform:none}
+  .wopt:has(input:focus-visible){outline:3px solid var(--ink);outline-offset:3px}
+  .wopt-wrap.bad .wopt{border-color:var(--red-ink)}
+  .wreveal{margin:.3rem 0 .3rem 2.5rem;padding:.2rem 0 .4rem 1rem;border-left:3px solid var(--rule)}
+  /* the buttons at the foot of a step */
+  .wacts{display:flex;flex-wrap:wrap;align-items:center;gap:.8rem 1.6rem;margin-top:2rem}
+  .plate.big{font-size:1.1rem;min-height:3rem;padding:.4rem 2rem;letter-spacing:.1em}
+  .wfoot{display:flex;flex-wrap:wrap;gap:.4rem 1.6rem;margin-top:2.2rem;padding-top:.9rem;border-top:1px solid var(--rule)}
+  .wsheet .inkline{font-size:1rem}
+  .wsheet .stamp{font-size:1rem;min-height:2.6rem}
+  .wnote{color:var(--ink);font-style:italic}
+  /* welcome: three small pictures in a row */
+  .strip{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin:1.2rem 0 1rem;padding:0}
+  .strip li{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.4rem;font-size:1rem;line-height:1.4}
+  .strip svg{width:5.5rem;height:4.4rem;fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  /* lists of things the teacher made: rooms, questions, cards, escape rooms */
+  .wlist{list-style:none;margin:.8rem 0 0;padding:0;border-top:3px double var(--rule)}
+  .wlist>li{padding:.8rem 0 .9rem;border-bottom:1px solid var(--rule)}
+  .wlist .row1{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2rem 1rem}
+  .wlist .row1 b{font-size:1.15rem}
+  .wlist .kind{color:var(--ink-2)}
+  .wlist .tools{display:flex;flex-wrap:wrap;gap:.2rem 1.2rem;margin-top:.3rem}
+  .wq-item{border:0;margin:0;padding:.9rem 0 1.1rem;border-bottom:1px solid var(--rule);min-width:0}
+  .wq-item>legend{float:left;width:100%;padding:0;margin:0 0 .2rem;font-family:var(--caps);letter-spacing:.12em;font-size:1rem;color:var(--ink-2)}
+  .wq-item>legend+*{clear:both}
+  .wq-item .wf:first-of-type{margin-top:.4rem}
+  .wkinds{display:flex;flex-wrap:wrap;gap:.4rem 1.4rem;margin:.8rem 0 .2rem}
+  .wkinds .wopt{padding:.45rem .9rem .45rem .6rem;grid-template-columns:auto auto;align-items:center}
+  .wkinds .wopt:has(input:checked){padding:calc(.45rem - 1.5px) calc(.9rem - 1.5px) calc(.45rem - 1.5px) calc(.6rem - 1.5px)}
+  .wkinds .wopt .dot{margin-top:0;width:1.35rem;height:1.35rem} .wkinds .wopt .dot::after{width:.65rem;height:.65rem}
+  .wline{display:flex;flex-wrap:wrap;align-items:flex-end;gap:.2rem .8rem}
+  .wline>.wf{flex:1 1 14rem}
+  .wline>button{margin-bottom:.15rem}
+  .lockline{margin:1.2rem 0 .4rem;padding:.6rem 0;border-top:1px dashed var(--rule);border-bottom:1px dashed var(--rule);font-size:1.15rem}
+  .lockline b{font-family:var(--type);font-weight:400;font-size:1.35rem;letter-spacing:.12em;text-decoration:underline;text-underline-offset:.2em}
+  /* check your facts: one row per item */
+  .wfacts{list-style:none;margin:.4rem 0 0;padding:0;border-top:3px double var(--rule)}
+  .wfacts>li{padding:.8rem 0 1rem;border-bottom:1px solid var(--rule)}
+  .wfacts .what{margin:0}
+  .wfacts .ans{margin:.2rem 0 0;color:var(--ink)}
+  .wfacts .again{color:var(--red-ink);font-style:italic;margin:.2rem 0 0}
+  .wfacts .wline{margin-top:.2rem}
+  .wchk{position:relative;display:inline-flex;align-items:center;gap:.6rem;min-height:2.75rem;cursor:pointer;font-weight:700}
+  .wchk input{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer}
+  .wchk .box{width:1.7rem;height:1.7rem;flex:none;border:2px solid var(--ink);background:var(--paper);display:grid;place-items:center;color:var(--ink)}
+  .wchk .box .icw{opacity:0} .wchk input:checked~.box .icw{opacity:1}
+  .wchk input:checked~.box{border-width:3px}
+  .wchk input:focus-visible~.box{outline:3px solid var(--ink);outline-offset:3px}
+  /* summaries (the hub, Done): label, value, a Change link */
+  .wsum{margin:.6rem 0 0;border-top:3px double var(--rule)}
+  .wsum>div{display:grid;grid-template-columns:minmax(0,13rem) minmax(0,1fr) auto;gap:.2rem 1.2rem;padding:.7rem 0;border-bottom:1px solid var(--rule);align-items:baseline}
+  .wsum dt{font-weight:700} .wsum dd{margin:0;overflow-wrap:anywhere}
+  .tasks{list-style:none;margin:.6rem 0 0;padding:0;border-top:3px double var(--rule)}
+  .tasks li{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.1rem 1rem;padding:.75rem 0;border-bottom:1px solid var(--rule)}
+  .tasks li>a,.tasks li>button{font-size:1.15rem;font-weight:700;min-height:1.75rem;text-align:left}
+  .tasks li>button{text-decoration:underline;text-underline-offset:.2em}
+  .tasks .st{font-style:italic;color:var(--ink-2)}
+  .tasks .st.todo{color:var(--red-ink);font-style:normal}
+  /* walkthroughs: numbered steps, things to copy */
+  ol.walk{padding-left:0;list-style:none;counter-reset:w;margin:1rem 0 0}
+  ol.walk>li{counter-increment:w;position:relative;padding:.7rem 0 .8rem 3rem;border-bottom:1px solid var(--rule)}
+  ol.walk>li::before{content:counter(w);position:absolute;left:0;top:.6rem;width:2rem;height:2rem;display:grid;place-items:center;border:2px solid var(--ink);border-radius:50%;font-family:var(--type);font-size:1.05rem}
+  ol.walk b{font-weight:700}
+  .menus{font-style:italic;color:var(--ink-2);font-size:1rem}
+  .copy{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem 1rem;margin:.5rem 0}
+  .copy code,.copy .val{font-family:var(--type);font-size:1.3rem;letter-spacing:.08em;padding:.1rem .5rem;border:1.5px dashed var(--ink);background:rgba(255,250,235,.5)}
+  .copy .val.text{font-family:var(--read);font-size:1.05rem;letter-spacing:0}
+  .copy .done{font-style:italic}
+  .wtrouble{margin:.3rem 0;border-bottom:1px dashed var(--rule)}
+  .wtrouble>summary{cursor:pointer;min-height:2.4rem;display:flex;align-items:center;font-weight:700;text-decoration:underline;text-underline-offset:.2em}
+  .wtrouble>div{padding:0 0 .6rem 1rem}
+  table.wcompare{border-collapse:collapse;margin:.6rem 0;width:100%;font-size:1rem}
+  .wcompare th,.wcompare td{border-bottom:1px solid var(--rule);padding:.4rem .5rem;text-align:left;vertical-align:top}
+  .wcompare thead th{border-bottom:2px solid var(--ink)}
+  @media (pointer:coarse){ .wsteps a,.wsteps summary{min-height:2.75rem} .wsheet .inkline{min-height:2.75rem} .whelp>summary,.wtrouble>summary{min-height:2.75rem} .tasks li>a,.tasks li>button{min-height:2.75rem;display:inline-flex;align-items:center} .wsheet a{display:inline-block;min-height:2.75rem;line-height:2.75rem} .wsheet p a,.wsheet li a{line-height:inherit} }
+  @media (max-width:51.25em){
+    .wtop{padding:.45rem .7rem;gap:.2rem .8rem}
+    .wbody{grid-template-columns:minmax(0,1fr);padding:.8rem .5rem 2.5rem;gap:.8rem}
+    .wsteps{position:static;padding:0 .4rem}
+    .wsheet{padding:1.1rem 1rem 1.6rem}
+    #wizard h1,.wq{font-size:1.6rem}
+    .strip{grid-template-columns:minmax(0,1fr)} .strip li{flex-direction:row;text-align:left} .strip svg{width:4rem;height:3.2rem;flex:none}
+    .wsum>div{grid-template-columns:minmax(0,1fr) auto} .wsum dd{grid-column:1/2}
+    .wreveal{margin-left:.6rem}
+    .plate.big{white-space:normal}
+  }
+  @media (max-width:51.25em) and (max-height:30em){ #wizard{min-height:0} }
+  html[data-readable=on] :is(.wcap,.wsteps summary,.wsteps .now,.wq-item>legend,.wtop .brand){letter-spacing:.02em;font-weight:600}
+  /* High contrast: plain surfaces, real 2px edges */
+  html[data-contrast=more] .wtop{background:#000;box-shadow:none;border-bottom:2px solid #fff}
+  html[data-contrast=more] .wsteps li[aria-current=step]{color:#fff;text-decoration:underline}
+  html[data-contrast=more] .wopt{background:#fff;border:2px solid #000}
+  html[data-contrast=more] .wopt:has(input:checked){border:4px solid #000;background:#fff}
+  html[data-contrast=more] .wopt .dot{background:#fff;border-color:#000}
+  html[data-contrast=more] .copy :is(code,.val){background:#fff;border:2px solid #000}
+  html[data-contrast=more] .wchk .box{background:#fff;border-color:#000}
+  html[data-contrast=more] .whelp>summary::before{border-width:2px}
+  html[data-contrast=more] .errsum{border-width:4px}
+  @media (forced-colors:active){
+    .wopt{border:2px solid CanvasText} .wopt:has(input:checked){border:4px solid Highlight}
+    .wopt .dot{border-color:CanvasText} .wopt:has(input:checked) .dot::after{forced-color-adjust:none;background:Highlight}
+    .wchk .box{border-color:CanvasText} .wchk input:checked~.box{forced-color-adjust:none;background:Highlight;color:HighlightText;border-color:Highlight}
+    .wsteps li[aria-current=step]{text-decoration:underline}
+    .errsum{border-color:CanvasText}
+  }
   @media print{ .light,.shade{display:none} }
 </style>
 <!-- Embedded fonts, so the editor needs no internet connection. All three are subset to Latin letters.
@@ -626,6 +823,7 @@
     <button class="cut" id="btn-open" data-ic="folder">Open…</button>
     <button class="cut" id="btn-save" data-ic="save">Save project</button>
     <button class="cut" id="btn-review" data-ic="sheet" title="Every room with its answers, for checking against your sources">Answer sheet</button>
+    <button class="cut" id="btn-guided" data-ic="back" title="Back to the guided steps and the list of what is left to do">Guided steps</button>
   </div>
   <div class="run">
     <button class="plate" id="btn-preview" data-ic="play" title="Preview as student"><span class="w">Preview as student</span></button>
@@ -636,6 +834,17 @@
 </header>
 <nav id="nav" aria-label="Cabinet of rooms"><div id="cab"></div></nav>
 <main id="main" tabindex="-1"></main>
+<!-- Guided steps (the wizard). Its landmarks are roles on plain boxes, so the workshop's header/nav/main styles never reach them. -->
+<div id="wizard">
+  <div class="wtop" role="banner">
+    <p class="brand">Escape room maker</p>
+    <div id="wiz-save-slot"></div>
+  </div>
+  <div class="wbody">
+    <div class="wsteps" id="wiz-steps" role="navigation" aria-label="Steps"></div>
+    <div id="wiz-main" role="main" tabindex="-1"><div class="paper wsheet" id="wiz-sheet"></div></div>
+  </div>
+</div>
 <div id="cab-scrim" data-keep aria-hidden="true"></div>
 <div class="light" data-keep aria-hidden="true"></div><div class="shade" data-keep aria-hidden="true"></div>
 <!-- What changed is said here for screen readers (seals, moves, deletions); the typed strips of #toasts are read too. -->
@@ -1010,7 +1219,7 @@ function applyDisplay(){
   if (readableOn()) d.dataset.readable = "on"; else delete d.dataset.readable;
   const c = document.getElementById("contrast-toggle"), r = document.getElementById("readable-toggle");
   if (c) c.checked = contrastOn(); if (r) r.checked = readableOn();
-  document.querySelectorAll("main textarea").forEach(grow);
+  document.querySelectorAll("main textarea, #wizard textarea").forEach(grow);
 }
 [mqContrast, mqForced].forEach(m => m.addEventListener && m.addEventListener("change", applyDisplay));
 
@@ -1188,7 +1397,7 @@ function tip(text, about){
   const show = () => {
     clearTimeout(timer); if (open()) return; if (tipClose) tipClose(); tipClose = hide; tipPlace = place;
     // The slip is laid in the nearest landmark or dialog (never inside a tilted or sliding piece), so it stays inside a region.
-    (btn.closest(".modal,.overlay,.preview,main,#cab,header") || document.body).append(pop);
+    (btn.closest(".modal,.overlay,.preview,main,#cab,header,[role=main],[role=banner]") || document.body).append(pop);
     pop.hidden = false; btn.setAttribute("aria-expanded", "true"); place();
   };
   const later = () => { clearTimeout(timer); timer = setTimeout(() => { if (!pinned && !over && document.activeElement !== btn) hide(); }, 350); };      // time to cross from the mark to the slip
@@ -1989,6 +2198,8 @@ document.getElementById("btn-export").onclick = () => {
       notes ? h("button", { class: "inkline", onclick: () => { document.querySelector(".overlay")?.close(); choose("a11y"); } }, "Read the notes") : null));
   overlay("Export", box);
 };
+document.getElementById("btn-guided").onclick = () => { closeTools(); wizGo(hashFor(stored ? "hub" : "welcome")); };
+document.getElementById("wiz-save-slot").replaceWith(saveStatus("wiz-save", "save"));
 document.getElementById("btn-save").onclick = () => { download(`${slug()}-project.json`, JSON.stringify(cfg, null, 2), "application/json"); toast("Project saved. Open it again with Open…"); };
 document.getElementById("btn-open").onclick = () => document.getElementById("file").click();
 document.getElementById("file").onchange = async e => {
@@ -2073,8 +2284,322 @@ document.getElementById("btn-review").onclick = () => {
   overlay("Answer sheet: for instructors only", frame, [h("button", { class: "inkline", id: "sheet-print", onclick: () => frame.contentWindow.print() }, icon("print"), "Print")], true);
 };
 
+
+/* =====================================================================
+   Guided steps (the wizard). The first way in for a teacher: one question per page, ten steps, then a hub
+   ("Your escape room") to come back to. It edits the same content (cfg) and the same browser storage as the
+   workshop, which is "Advanced mode" (all settings). Every step can open Advanced mode, and Advanced mode can come
+   back. The page address says where you are (#step=name, #step=room&room=2&part=questions, #advanced&room=2), so
+   the browser's Back and Forward buttons work, and a reload stays put.
+   ===================================================================== */
+const STEP_ORDER = ["welcome", "start", "name", "rooms", "room", "facts", "try", "deliver", "walk", "done"];
+const STEP_LABEL = { welcome: "Welcome", start: "How to start", name: "Name it", rooms: "Your rooms", room: "Fill in each room", facts: "Check your facts",
+  try: "Try it as a student", deliver: "How students get it", walk: "Put it in your course", done: "Done" };
+const WSTEPS = {};
+const WIZ = { route: null, errors: [], start: null, fileCfg: null, fileName: "", fileErr: "", stepsOpen: null };
+const hashFor = (step, extra = {}) => "#" + new URLSearchParams({ step, ...extra }).toString();
+function readHash(){
+  const raw = location.hash.replace(/^#/, "");
+  if (/^advanced(&|$)/.test(raw)) { const q = new URLSearchParams(raw.slice(8)); return { advanced: true, room: q.get("room"), page: q.get("page") }; }
+  const q = new URLSearchParams(raw), step = q.get("step");
+  if (!step) return null;                                   // some other mark in the address (the skip link's #main): not a page
+  return { step, r: Math.max(0, (parseInt(q.get("room"), 10) || 1) - 1), part: q.get("part") || "", q };
+}
+const stepNo = step => { const i = STEP_ORDER.indexOf(step === "add" ? "rooms" : step); return i < 0 ? 0 : i + 1; };
+function setMode(m){
+  document.documentElement.dataset.mode = m;
+  const skip = document.querySelector(".skip"); skip.textContent = m === "wizard" ? "Skip to the question" : "Skip to the editing area";
+}
+document.querySelector(".skip").addEventListener("click", e => { e.preventDefault(); document.getElementById(document.documentElement.dataset.mode === "wizard" ? "wiz-main" : "main").focus(); });
+function wizGo(hash){ WIZ.errors = []; WIZ.warn = null; if (location.hash === hash) routeTo(readHash(), true); else location.hash = hash; }
+addEventListener("hashchange", () => { const r = readHash(); if (r) { WIZ.errors = []; WIZ.warn = null; routeTo(r, true); } });
+function routeTo(r, focus){
+  if (r.advanced) {
+    const was = document.documentElement.dataset.mode;
+    setMode("advanced");
+    if (r.room != null && cfg.rooms[+r.room - 1]) sel = +r.room - 1; else if (r.page && (PAGES[r.page])) sel = r.page;
+    render();
+    if (focus || was === "wizard") document.getElementById("page-title").focus({ preventScroll: true });
+    return;
+  }
+  if (!WSTEPS[r.step] || (r.step === "hub" && !stored)) r = { step: stored ? "hub" : "welcome", r: 0, part: "", q: new URLSearchParams() };
+  if (r.step === "room") { const seq = roomSeq(); if (!seq.some(([k, p]) => k === r.r && p === r.part)) { const first = seq.find(([k]) => k === r.r) || seq[0]; if (first) { r.r = first[0]; r.part = first[1]; } else r.step = "rooms"; } }
+  closeCabinet(false);
+  setMode("wizard");
+  WIZ.route = r;
+  const n = stepNo(r.step); if (n > (meta.reached || 0) && stored) { meta.reached = n; saveMeta(); }
+  renderWizard(focus ? "heading" : null);
+  if (focus) scrollTo(0, 0);
+}
+function saveMeta(){ try { localStorage.setItem(META, JSON.stringify(meta)); } catch(e){} }
+
+/* ---------- small builders for the steps ---------- */
+const wErr = key => WIZ.errors.find(e => e.key === key);
+const wbtn = (props, ...kids) => h("button", { type: "button", ...props }, ...kids);
+const wHelp = (...kids) => h("details", { class: "whelp", id: "wiz-help" }, h("summary", {}, "Help with this step"), h("div", {}, ...kids));
+const H1 = text => h("h1", { id: "wiz-h1", tabindex: "-1" }, text);
+/* A field: a label you can read (or the page's question as its label), an optional hint, the error if any, then the box. */
+function wField({ id, label, value, set, hint, area, rows, asH1, placeholder, item, key }){
+  const err = wErr(key || id);
+  const desc = [hint ? id + "-hint" : null, err ? id + "-err" : null].filter(Boolean).join(" ") || null;
+  const input = h(area ? "textarea" : "input", { id, type: area ? null : "text", rows: area ? (rows || 3) : null, value: value ?? "", autocomplete: "off", spellcheck: area ? "true" : null,
+    placeholder, "aria-describedby": desc, "aria-invalid": err ? "true" : null,
+    oninput: e => { set(e.target.value); if (area) grow(e.target); if (item) wUnverify(item); changed(); } });
+  const lab = h("label", { for: id, class: asH1 ? null : "wlabel" }, label);
+  return h("div", { class: "wf" + (err ? " bad" : "") }, asH1 ? h("h1", { id: "wiz-h1", tabindex: "-1" }, lab) : lab,
+    hint ? h("p", { class: "whint", id: id + "-hint" }, hint) : null,
+    err ? h("p", { class: "ferr", id: id + "-err" }, h("span", { class: "sr" }, "Error: "), err.text) : null, input);
+}
+/* Radio "cards": a real fieldset and legend (the page's question when asH1), real radios, one slip per choice. */
+function wRadios({ name, legend, asH1, hint, options, value, set, cls }){
+  const err = wErr(name);
+  const desc = [hint ? name + "-hint" : null, err ? name + "-err" : null].filter(Boolean).join(" ") || null;
+  return h("fieldset", { class: "wradios", "aria-describedby": desc },
+    h("legend", {}, asH1 ? h("h1", { id: "wiz-h1", tabindex: "-1" }, legend) : h("span", { class: "wlegend" }, legend)),
+    hint ? h("p", { class: "whint", id: name + "-hint" }, hint) : null,
+    err ? h("p", { class: "ferr", id: name + "-err" }, h("span", { class: "sr" }, "Error: "), err.text) : null,
+    h("div", { class: cls || "wopts" }, options.map(o => {
+      const id = `${name}-${o.value}`, on = String(value) === String(o.value);
+      return h("div", { class: "wopt-wrap" + (err ? " bad" : "") },
+        h("label", { class: "wopt", for: id },
+          h("input", { type: "radio", id, name, value: o.value, checked: on, "aria-describedby": o.desc ? id + "-d" : null, onchange: () => set(o.value) }),
+          h("span", { class: "dot", "aria-hidden": "true" }),
+          o.pic ? h("span", { class: "pic", "aria-hidden": "true" }, icon(o.pic)) : null,
+          h("span", { class: "t" }, h("b", {}, o.title), o.desc ? h("span", { class: "d", id: id + "-d" }, o.desc) : null, o.eg ? h("span", { class: "eg" }, o.eg) : null)),
+        on && o.reveal ? h("div", { class: "wreveal" }, o.reveal()) : null);
+    })));
+}
+function errorSummary(){
+  return h("section", { class: "errsum", id: "wiz-errors", tabindex: "-1", "aria-labelledby": "wiz-errors-title" },
+    h("h2", { id: "wiz-errors-title" }, "There is a problem"),
+    h("ul", {}, WIZ.errors.map(e => h("li", {}, h("a", { href: "#" + e.target, onclick: ev => { ev.preventDefault(); const el = document.getElementById(e.target); if (el) { el.focus(); el.scrollIntoView({ block: "center" }); } } }, e.text)))));
+}
+/* An edit in the guided steps lifts the item's check, the same as in Advanced mode, and Check your facts says why. */
+const changedAfterCheck = new WeakSet();
+function wUnverify(item){ if (item && item.verified) { item.verified = false; changedAfterCheck.add(item); say("You changed this after checking it, so it needs checking again."); } }
+function advHash(r){
+  const s = r && r.step;
+  if (s === "room" || (s === "rooms" && false)) return `#advanced&room=${r.r + 1}`;
+  if (s === "name") return "#advanced&page=settings";
+  if (s === "deliver" || s === "walk" || s === "done") return "#advanced&page=finish";
+  return "#advanced";
+}
+function wFooter(r){
+  return h("div", { class: "wfoot" },
+    stored && r.step !== "hub" ? wbtn({ class: "inkline", id: "wiz-later", onclick: () => { saveNow(); wizGo(hashFor("hub")); toast("Saved in this browser. Open this page again to carry on, and download a backup to keep a copy of your own."); } }, icon("save"), "Save and finish later") : null,
+    h("a", { class: "inkline", id: "wiz-advanced", href: advHash(r) }, icon("gear"), "Show all settings (Advanced mode)"));
+}
+function renderSteps(n){
+  const box = document.getElementById("wiz-steps"), body = document.querySelector(".wbody");
+  box.hidden = !n; body.classList.toggle("solo", !n);
+  if (!n) return;
+  const open = WIZ.stepsOpen ?? !benchMq.matches;
+  const d = h("details", { open, ontoggle: e => { WIZ.stepsOpen = e.target.open; } },
+    h("summary", {}, `All ${STEP_ORDER.length} steps`),
+    h("ol", {}, STEP_ORDER.map((id, i) => {
+      const cur = i + 1 === n, can = !cur && (stored ? id !== "welcome" || true : i + 1 < n);
+      return h("li", { class: i + 1 < n ? "done" : null, "aria-current": cur ? "step" : null },
+        can ? h("a", { href: hashFor(id) }, STEP_LABEL[id]) : h("span", {}, STEP_LABEL[id]),
+        cur ? h("span", { class: "sr" }, " (this step)") : null);
+    })));
+  box.replaceChildren(d);
+}
+function renderWizard(focus){
+  const r = WIZ.route, def = WSTEPS[r.step];
+  const sheet = document.getElementById("wiz-sheet");
+  const keep = !focus && sheet.contains(document.activeElement) ? document.activeElement.id : null;
+  if (tipClose) tipClose();
+  const n = stepNo(r.step), back = def.back ? def.back(r) : null, title = def.title(r);
+  const form = h("form", { id: "wiz-form", novalidate: true, "aria-labelledby": "wiz-h1", onsubmit: e => { e.preventDefault(); wizContinue(def, r); } },
+    back ? h("a", { class: "inkline wback", id: "wiz-backlink", href: back }, icon("back"), "Back") : null,
+    n ? h("p", { class: "wcap", id: "wiz-cap" }, `Step ${n} of ${STEP_ORDER.length}`, def.cap ? def.cap(r) : null) : null,
+    WIZ.errors.length ? errorSummary() : null,
+    def.body(r),
+    def.continue === false ? null : h("div", { class: "wacts" },
+      h("button", { type: "submit", class: "plate big", id: "wiz-continue" }, def.go ? def.go(r) : "Continue"),
+      back ? h("a", { class: "inkline", id: "wiz-back", href: back }, "Back") : null),
+    wFooter(r));
+  sheet.replaceChildren(form);
+  sheet.querySelectorAll("textarea").forEach(grow);
+  renderSteps(n);
+  document.title = `${WIZ.errors.length ? "Error: " : ""}${n ? `Step ${n} of ${STEP_ORDER.length}: ` : ""}${title} – Escape room maker`;
+  if (focus === "errors") document.getElementById("wiz-errors").focus();
+  else if (focus) document.getElementById("wiz-h1")?.focus({ preventScroll: true });
+  else if (keep && document.getElementById(keep)) document.getElementById(keep).focus({ preventScroll: true });
+}
+async function wizContinue(def, r){
+  WIZ.errors = def.check ? def.check(r) : [];
+  if (WIZ.errors.length) { renderWizard("errors"); return; }
+  if (def.save && (await def.save(r)) === false) return;
+  wizGo(def.next(r));
+}
+
+/* ---------- the welcome pictures (decoration: the words beside them say the same) ---------- */
+const STRIP = [
+  ["You write the puzzles", '<path d="M14 8h40l10 10v46H14zM54 8v10h10M22 28h30M22 36h34M22 44h26"/><path d="M48 62l4-14 22-22 6 6-22 22zM70 30l6 6"/>'],
+  ["Students play them in a browser", '<rect x="6" y="8" width="76" height="52" rx="2"/><path d="M6 18h76M12 13h2M18 13h2M24 13h2"/><rect x="34" y="34" width="20" height="16"/><path d="M38 34v-5a6 6 0 0 1 12 0v5M44 40v4"/>'],
+  ["Your course records the grade", '<path d="M10 10h60v52H10zM10 22h60M10 34h60M10 46h60M30 10v52"/><path d="M46 27l5 5 11-12" stroke-width="2.4"/>']];
+const strip = () => h("ol", { class: "strip" }, STRIP.map(([t, d]) => { const li = h("li", {}); li.innerHTML = `<svg viewBox="0 0 88 70" aria-hidden="true" focusable="false">${d}</svg>`; li.append(h("span", {}, t)); return li; }));
+
+/* ---------- 1 Welcome ---------- */
+WSTEPS.welcome = {
+  title: () => "Make an escape room for your class",
+  body: () => [H1("Make an escape room for your class"),
+    h("p", {}, "Students solve a few short puzzles about your chapter to “escape”. At the end they get an exit password to type into a quiz in Moodle or Canvas, or Moodle or Canvas records the grade by itself."),
+    strip(),
+    h("p", {}, `There are ${STEP_ORDER.length} steps. It takes about 30 to 45 minutes. Your work is saved in this browser as you go, and the steps help you download a backup copy to keep.`),
+    h("p", {}, "You don't need an account, and nothing you write is sent anywhere."),
+    wHelp(h("p", {}, "You can start from a finished sample about the foundations of education and change it, or start with an empty escape room."),
+      h("p", {}, "You can stop at any step with “Save and finish later”. When you come back to this page in the same browser, you'll see your escape room and what is left to do.")),
+    h("p", {}, h("a", { id: "wiz-have-one", href: hashFor("start", { open: "1" }) }, "I've made one before: open a saved escape room"))],
+  go: () => "Start",
+  next: () => hashFor("start")
+};
+
+/* ---------- 2 Start point ---------- */
+function readStartFile(f){
+  WIZ.fileCfg = null; WIZ.fileErr = ""; WIZ.fileName = f ? f.name : "";
+  if (!f) return renderWizard();
+  f.text().then(text => {
+    try { WIZ.fileCfg = parseSaved(text, f.name); }
+    catch (err) { WIZ.fileErr = "That file couldn't be opened. Choose a backup copy or a game file made with this editor."; }
+    WIZ.errors = WIZ.errors.filter(e => e.key !== "start-file");
+    renderWizard();
+    say(WIZ.fileCfg ? `Chosen: ${f.name}.` : WIZ.fileErr);
+  });
+}
+function parseSaved(text, name){
+  const next = /\.json$/i.test(name) ? JSON.parse(text) : ER.configFromHtml(text);
+  if (!next || !Array.isArray(next.rooms)) throw new Error("This file doesn't contain an escape room.");
+  return next;
+}
+WSTEPS.start = {
+  title: () => "How do you want to start?",
+  back: () => hashFor("welcome"),
+  body: r => {
+    if (WIZ.start == null && r.q.get("open")) WIZ.start = "file";
+    const title = cfg.meta?.title || "Untitled";
+    return [
+      wRadios({ name: "start", legend: "How do you want to start?", asH1: true, value: WIZ.start,
+        hint: [stored ? h("span", { id: "wiz-start-note" }, `You already have “${title}” in this browser. Starting another one takes its place, so download a backup of it first. `)
+          : h("span", { id: "wiz-start-note" }, "Nothing saved in this browser yet. If you worked on this before, open your saved file. "), "You can change everything later."],
+        set: v => { WIZ.start = v; renderWizard(); },
+        options: [
+          { value: "sample", title: "Change the sample", pic: "books", desc: "“Escape the Old Schoolhouse”, about the foundations of education: five rooms, ready to play. Swap in your own questions." },
+          { value: "empty", title: "Start with an empty escape room", pic: "page", desc: "One empty quiz room for you to fill in." },
+          { value: "file", title: "Open one I saved before", pic: "folder", desc: "A backup copy, or a game file you downloaded from here (it ends in .html).",
+            reveal: () => {
+              const err = wErr("start-file") || (WIZ.fileErr ? { text: WIZ.fileErr } : null);
+              return [err ? h("p", { class: "ferr", id: "wiz-file-err" }, h("span", { class: "sr" }, "Error: "), err.text) : null,
+                wbtn({ class: "stamp", id: "wiz-file-btn", "aria-describedby": err ? "wiz-file-err" : null, onclick: () => document.getElementById("wiz-file").click() }, icon("folder"), WIZ.fileCfg ? "Choose a different file" : "Choose the file"),
+                WIZ.fileCfg ? h("p", { id: "wiz-file-name" }, "Chosen: ", h("b", {}, WIZ.fileName), ` (“${WIZ.fileCfg.meta?.title || "Untitled"}”).`) : null,
+                h("input", { type: "file", id: "wiz-file", accept: ".html,.htm,.json", hidden: true, tabindex: "-1", "aria-hidden": "true", onchange: e => { readStartFile(e.target.files[0]); e.target.value = ""; } })];
+            } }] })];
+  },
+  check: () => {
+    if (!WIZ.start) return [{ key: "start", target: "start-sample", text: "Choose how you want to start" }];
+    if (WIZ.start === "file" && !WIZ.fileCfg) return [{ key: "start-file", target: "wiz-file-btn", text: WIZ.fileErr || "Choose the file you saved" }];
+    return [];
+  },
+  save: async () => {
+    const next = WIZ.start === "sample" ? clone(SAMPLE) : WIZ.start === "empty" ? blankConfig() : WIZ.fileCfg;
+    if (!(await startEscapeRoom(next, WIZ.start === "file"))) return false;
+    const was = WIZ.start; WIZ.start = null; WIZ.fileCfg = null; WIZ.fileName = ""; WIZ.lastStart = was;
+  },
+  next: () => WIZ.lastStart === "file" ? hashFor("hub") : hashFor("name")
+};
+/* Put a new escape room on the bench (from the sample, empty, or a file). */
+async function startEscapeRoom(next, fromFile){
+  if (stored && unbacked() && !(await ask("Start a new escape room?", [`“${cfg.meta?.title || "Untitled"}” has changes that are not in a backup yet, and a new escape room takes its place in this browser.`, "Download a backup first if you want to keep it."], { ok: "Start the new one", cancel: "Go back", danger: true }))) return false;
+  cfg = next; sel = "settings"; tabOf.clear(); meta = { rev: 0, backupRev: 0, backupAt: 0, savedAt: 0, reached: 3 };
+  changed(); if (fromFile) backedUp(); else saveNow();
+  return true;
+}
+
+/* ---------- 3 Name it ---------- */
+WSTEPS.name = {
+  title: () => "What is this escape room called?",
+  back: () => hashFor("start"),
+  body: () => [
+    wField({ id: "wiz-title", label: "What is this escape room called?", asH1: true, value: cfg.meta?.title, set: v => { cfg.meta.title = v; },
+      hint: "For example: Chapter 4, learning theories. Students see it on the first screen and on their certificate." }),
+    wField({ id: "wiz-course", label: "Which course is it for? (optional)", value: cfg.meta?.course, set: v => { cfg.meta.course = v; }, hint: "For example: EDU 216. It is printed on the certificate." }),
+    wHelp(h("p", {}, "A short, plain name works best, so students know which chapter it is about. It also names the files you download."))],
+  check: () => String(cfg.meta?.title || "").trim() ? [] : [{ key: "wiz-title", target: "wiz-title", text: "Enter a name for your escape room" }],
+  next: () => hashFor("rooms")
+};
+
+/* ---------- a step that is not built yet: use Advanced mode ---------- */
+const later = (title, words) => ({ title: () => title, body: r => [H1(title), h("p", {}, words), h("p", {}, h("a", { href: advHash(r) }, "Open Advanced mode"))] });
+
+/* ---------- 10 Done ---------- */
+function deliveryWords(){
+  const d = meta.delivery || {};
+  const where = { moodle: "Moodle", canvas: "Canvas", other: "Another course system", file: "A file you share" }[d.where];
+  if (!where) return null;
+  const how = d.where === "moodle" || d.where === "canvas" ? (d.how === "scorm" ? ", grade file" : d.how === "quiz" ? ", file and exit-password quiz" : "") : "";
+  return where + how;
+}
+WSTEPS.done = {
+  title: () => "Your escape room is ready",
+  back: () => hashFor("walk"),
+  body: () => {
+    const st = ER.reviewStatus(cfg), pw = String(cfg.finish?.exitPassword || "").trim();
+    const row = (label, value, step, what) => h("div", {}, h("dt", {}, label), h("dd", {}, value),
+      h("dd", {}, h("a", { href: hashFor(step) }, "Change", h("span", { class: "sr" }, " " + what))));
+    const fresh = meta.backupAt && !unbacked();
+    return [H1("Your escape room is ready"),
+      h("dl", { class: "wsum", id: "wiz-summary" },
+        row("Name", cfg.meta?.title || "Untitled", "name", "the name"),
+        row("Rooms", `${cfg.rooms.length} ${cfg.rooms.length === 1 ? "room" : "rooms"}: ${cfg.rooms.map(x => x.title || "Untitled").join(", ")}`, "rooms", "the rooms"),
+        row("Facts checked", `${st.verified} of ${st.total} checked`, "facts", "which facts are checked"),
+        row("How students get it", deliveryWords() || "Not chosen yet", "deliver", "how students get it"),
+        row("Exit password", pw || "Not chosen yet", "walk", "the exit password")),
+      h("h2", {}, "Keep a backup"),
+      fresh ? h("p", { id: "wiz-done-backup-note" }, "The file you downloaded is also your backup copy: it opens in this maker. Keep it somewhere safe, such as your course folder.")
+        : h("p", { id: "wiz-done-backup-note" }, "Download a backup copy and keep it somewhere safe, such as your course folder. It is one file: it plays as the game in any browser, and it opens again in this maker."),
+      fresh ? null : wbtn({ class: "stamp", id: "wiz-done-backup", onclick: () => { backup(); renderWizard(); document.getElementById("wiz-done-backup-note")?.focus?.(); } }, icon("save"), "Download a backup copy"),
+      h("h2", {}, "Changing it later"),
+      h("p", {}, "Open this maker, choose “Open one I saved before”, and pick your file. Make the change, download it again, and replace the old file in Moodle or Canvas.")];
+  },
+  go: () => "Go to your escape room",
+  next: () => hashFor("hub")
+};
+
+/* ---------- the hub: "Your escape room", for coming back ---------- */
+const ROOM_KIND = { quiz: "Quiz questions", matching: "Match clues to cards", ordering: "Put in order (timeline)", sorting: "Sort into groups", reflection: "Reflection (no wrong answers)" };
+WSTEPS.hub = {
+  title: () => "Your escape room",
+  continue: false,
+  body: () => {
+    const st = ER.reviewStatus(cfg);
+    const task = (id, label, href, status, todo) => h("li", { id }, h("a", { href }, label), h("span", { class: "st" + (todo ? " todo" : "") }, status));
+    return [H1("Your escape room"),
+      h("p", { class: "wcap", id: "wiz-hub-title" }, cfg.meta?.title || "Untitled"),
+      h("p", {}, "Choose what to work on. You can do these in any order."),
+      h("ul", { class: "tasks", id: "wiz-tasks" },
+        task("task-name", "Name and course", hashFor("name"), String(cfg.meta?.title || "").trim() ? "Done" : "Not started", !String(cfg.meta?.title || "").trim()),
+        cfg.rooms.map((room, r) => { const s = roomStatus(r); return task("task-room-" + (r + 1), [`Room ${r + 1}: ${room.title || "Untitled"}`, h("span", { class: "kind" }, ROOM_KIND[room.type] || room.type)],
+          hashFor("room", { room: r + 1 }), s.total ? (s.left ? `${s.total - s.left} of ${s.total} checked` : "All checked") : "Nothing to check", false); }),
+        task("task-add", "Add another room", hashFor("add"), `${cfg.rooms.length} ${cfg.rooms.length === 1 ? "room" : "rooms"} so far`),
+        task("task-facts", "Check your facts", hashFor("facts"), st.unverified ? `${st.unverified} not checked` : "All checked", !!st.unverified),
+        task("task-try", "Try it as a student", hashFor("try"), ""),
+        task("task-deliver", "Get it to students", hashFor("deliver"), deliveryWords() || "Not started", !deliveryWords()),
+        h("li", { id: "task-backup" }, wbtn({ id: "wiz-hub-backup", onclick: () => { backup(); renderWizard(); } }, "Download a backup"),
+          h("span", { class: "st" + (unbacked() ? " todo" : "") }, meta.backupAt ? (unbacked() ? `Changed since your backup ${when(meta.backupAt)}` : `Backed up ${when(meta.backupAt)}`) : "Not backed up yet")))];
+  }
+};
+
+/* Steps not built yet open Advanced mode. */
+for (const [id, t, w] of [["rooms", "Your rooms", "Add, remove and order your rooms in Advanced mode for now."], ["add", "What kind of puzzle should the next room be?", "Add rooms in Advanced mode for now."],
+  ["room", "Fill in each room", "Fill in your rooms in Advanced mode for now."], ["facts", "Check your facts", "Check your facts in Advanced mode for now."], ["try", "Try it as a student", "Use “Preview as student” in Advanced mode for now."],
+  ["deliver", "How will your students get to the escape room?", "Use Export in Advanced mode for now."], ["walk", "Put it in your course", "Use Export in Advanced mode for now."]])
+  WSTEPS[id] = { ...later(t, w), back: () => hashFor(STEP_ORDER[Math.max(0, stepNo(id) - 2)]), next: () => hashFor(STEP_ORDER[stepNo(id)] || "hub") };
+const roomSeq = () => cfg.rooms.map((x, r) => [r, "advanced"]);
+
 applyDisplay();
 render();
+routeTo(readHash() || (/[?&]mode=advanced/.test(location.search) ? { advanced: true } : { step: stored ? "hub" : "welcome", r: 0, part: "", q: new URLSearchParams() }), false);
 </script>
 </body>
 </html>

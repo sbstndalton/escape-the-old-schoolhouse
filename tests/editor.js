@@ -38,7 +38,7 @@ async function openEditor(browser, base) {
   page.errors = [];
   page.on("pageerror", e => page.errors.push(e.message));
   page.on("dialog", d => { page.errors.push("native dialog: " + d.message()); d.dismiss(); });   // the editor asks on its own slips now
-  await page.goto(base + "/editor.html");
+  await page.goto(base + "/editor.html?mode=advanced");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   return page;
@@ -664,7 +664,7 @@ async function makeQuizRoom(page) {
     const page = await browser.newPage();
     const outside = [];
     page.on("request", r => { const u = r.url(); if (!u.startsWith(base) && !/^(data|blob|about):/.test(u)) outside.push(u); });
-    await page.goto(base + "/editor.html");
+    await page.goto(base + "/editor.html?mode=advanced");
     await page.click("#btn-review"); await page.keyboard.press("Escape");
     await page.click("#btn-preview"); await page.frameLocator(".preview iframe").locator("#begin").waitFor();
     assert.deepEqual(outside, []);
