@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" data-contrast="normal" data-readable="off">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#120d09">
+<!-- Nothing is fetched from anywhere: everything this page needs is inside it. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'">
+<title>Quick-start guide for teachers: Escape the Old Schoolhouse</title>
+<script>
+/* The same display choices as the front page, the game and the maker, before the first paint. */
+(function(){
+  var get = function(k){ try { return localStorage.getItem(k); } catch (e) { return null; } };
+  var hc = get("escape-room-contrast"), rd = get("escape-room-readable");
+  var auto = window.matchMedia && matchMedia("(prefers-contrast: more)").matches;
+  document.documentElement.dataset.contrast = hc === "on" || (hc == null && auto) ? "more" : "normal";
+  document.documentElement.dataset.readable = rd === "on" ? "on" : "off";
+})();
+</script>
+<style>
+/*__FONTS__*/
+/* =====================================================================================
+   The teachers' quick-start guide: one sheet of paper on the lamplit wall, to read on screen or print.
+   On screen: the front page's dark wall, the words on plain paper, sizes in rem (the reader's text size works).
+   Printed: black on white, no wall, no textures, no buttons or site links, one page on US Letter and on A4.
+   Every name in bold (class "ui") is the exact label of a real button, link or field: tests/guide.js checks
+   each one against the front page and the maker, so change them together.
+   ===================================================================================== */
+:root{
+  --night:#120d09; --ink:#22170f; --ink2:#43342a; --parch:#efe3c6; --red:#6e140c;
+  --f-r:"Atkinson Hyperlegible",Verdana,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --f-d:"IM Fell English SC","Atkinson Hyperlegible",Georgia,serif;
+  --plate:linear-gradient(170deg,#f3dc9c 0%,#dcbd72 34%,#c9a656 66%,#bd9a4a 100%);
+  --pgrain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  --fi:#ffe7ae; --fo:#120d09;
+}
+*{box-sizing:border-box}
+html{background:var(--night)}
+body{margin:0;min-height:100vh;font:400 1.125rem/1.55 var(--f-r);overflow-wrap:break-word;color:var(--parch);-webkit-font-smoothing:antialiased;
+  background:radial-gradient(ellipse 60rem 44rem at 18% 8%,rgba(255,206,140,.15),rgba(255,180,110,.05) 45%,transparent 72%),linear-gradient(180deg,#1d150e 0%,#140e09 60%,#0f0a07 100%)}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.skip{position:absolute;left:1rem;top:-10rem;z-index:5;padding:.7rem 1rem;background:var(--parch);color:var(--ink);font-weight:700}
+.skip:focus{top:1rem}
+.top{display:flex;flex-wrap:wrap;gap:.6rem 2rem;align-items:center;max-width:52rem;margin:0 auto;padding:1rem clamp(1rem,4vw,2rem) .4rem}
+.top a{color:var(--parch);font-weight:700;display:inline-flex;align-items:center;min-height:2.75rem;text-underline-offset:.2em}
+
+/* ---------- the sheet ---------- */
+main{display:block;max-width:52rem;margin:.6rem auto 3rem;padding:0 clamp(.5rem,3vw,2rem)}
+main:focus{outline:none}
+.sheet{padding:clamp(1.1rem,4vw,2.6rem) clamp(1rem,4vw,2.8rem) 2rem;color:var(--ink);background:var(--pgrain),#f1e7cf;border:1px solid #6b5636;border-radius:1px;box-shadow:.2rem .45rem .9rem rgba(0,0,0,.6)}
+.head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.4rem 1.6rem;align-items:start;padding-bottom:1rem;border-bottom:3px double var(--ink)}
+.placard{margin:0 0 .5rem;justify-self:start;display:inline-block;padding:.3rem .8rem .2rem;font:400 .95rem/1.3 var(--f-d);letter-spacing:.14em;color:#2b1c08;background:var(--plate);border:1px solid #5a4317;border-radius:2px}
+h1{margin:0;font:700 clamp(1.6rem,1.2rem + 1.6vw,2.2rem)/1.2 var(--f-r)}
+.sub{margin:.5rem 0 0;max-width:36em}
+.where{margin:.7rem 0 0;font-weight:700}
+.where .addr{display:block;font-size:1.05rem;word-break:break-all}
+.qr{display:grid;justify-items:center;gap:.2rem;margin:0;font-size:.85rem;text-align:center;color:var(--ink2);max-width:8rem}
+.qr svg{display:block;width:7rem;height:7rem;border:1px solid var(--ink)}
+.acts{display:flex;flex-wrap:wrap;gap:.8rem 1.4rem;align-items:center;margin:1.1rem 0 0}
+.btn{display:inline-flex;align-items:center;gap:.6rem;min-height:2.9rem;padding:.6rem 1.2rem .5rem;font:700 1.1rem/1.2 var(--f-r);color:#21160a;cursor:pointer;
+  background:var(--plate);border:2px solid #4a3612;border-radius:3px;box-shadow:inset 0 1px 0 rgba(255,246,214,.7),inset 0 -3px 0 rgba(70,48,12,.35),0 .15rem .3rem rgba(0,0,0,.35)}
+.btn:hover{filter:brightness(1.07)}
+.btn svg{width:1.3rem;height:1.3rem;flex:none}
+.acts .note{margin:0;font-size:1rem;color:var(--ink2)}
+
+h2{margin:1.6rem 0 .6rem;font:700 1.3rem/1.3 var(--f-r)}
+ol.steps{list-style:none;margin:0;padding:0;counter-reset:s}
+ol.steps.more{counter-reset:s 4}
+ol.steps>li{counter-increment:s;position:relative;margin:0 0 1rem;padding-left:2.7rem;break-inside:avoid}
+ol.steps>li::before{content:counter(s);position:absolute;left:0;top:-.05rem;width:1.9rem;height:1.9rem;display:grid;place-items:center;font-weight:700;border:2px solid var(--ink);border-radius:50%}
+ol.steps h3{margin:0 0 .2rem;font:700 1.15rem/1.35 var(--f-r)}
+ol.steps p{margin:0 0 .35rem}
+.ui{font-weight:700}
+.lms{font-weight:700}
+kbd{font:inherit;font-weight:700;padding:0 .3em;border:1px solid var(--ink2);border-radius:3px}
+.quote{margin:.3rem 0 .45rem;padding:.35rem .7rem;border-left:4px solid var(--ink);background:rgba(255,250,236,.6);font-weight:700}
+.menus{color:var(--ink2);font-style:italic}
+
+.box{margin:1.4rem 0 0;padding:.9rem 1.1rem 1rem;border:3px solid var(--ink);background:rgba(255,250,236,.55)}
+.trouble{margin-top:1.4rem}
+.box h2{margin:0 0 .4rem;font-size:1.2rem}
+.box p{margin:0 0 .5rem}
+.trouble h2{margin:0 0 .5rem;font-size:1.3rem}
+.trouble dl{margin:0}
+.trouble dt{font-weight:700;margin:.6rem 0 .1rem}
+.trouble div:first-child dt{margin-top:0}
+.trouble dd{margin:0}
+.fine{margin:1.4rem 0 0;padding-top:.7rem;border-top:1px solid #8a7a60;font-size:1rem;color:var(--ink2)}
+
+/* ---------- focus: one two-tone ring for everything ---------- */
+:focus-visible{outline:3px solid var(--fo)!important;outline-offset:3px!important;box-shadow:0 0 0 3px var(--fi),0 0 0 9px var(--fo)!important}
+.top :focus-visible{outline-color:var(--fi)!important;box-shadow:0 0 0 3px var(--fo),0 0 0 9px var(--fi)!important}
+
+/* ---------- Readable text ---------- */
+html[data-readable=on]{font-size:112.5%}
+html[data-readable=on] body{line-height:1.75;word-spacing:.06em;letter-spacing:.01em}
+html[data-readable=on] .placard{font-family:var(--f-r);letter-spacing:.02em;font-weight:700}
+
+/* ---------- High contrast ---------- */
+html[data-contrast=more],html[data-contrast=more] body{background:#000;color:#fff}
+html[data-contrast=more] .top a{color:#fff}
+html[data-contrast=more] .sheet{background:#fff;color:#000;border:3px solid #fff;box-shadow:none}
+html[data-contrast=more] .placard,html[data-contrast=more] .btn{background:#fff;color:#000;border:3px solid #000;box-shadow:none}
+html[data-contrast=more] .qr,html[data-contrast=more] .menus,html[data-contrast=more] .fine,html[data-contrast=more] .acts .note{color:#000}
+html[data-contrast=more] .box,html[data-contrast=more] .quote{background:#fff}
+html[data-contrast=more] .skip{background:#fff;color:#000;border:3px solid #000}
+html[data-contrast=more] :focus-visible{outline-color:#000!important;box-shadow:0 0 0 3px #fff,0 0 0 9px #000!important}
+html[data-contrast=more] .top :focus-visible{outline-color:#fff!important;box-shadow:0 0 0 3px #000,0 0 0 9px #fff!important}
+
+/* ---------- forced colours ---------- */
+@media (forced-colors: active){
+  body,.sheet{background:Canvas;color:CanvasText}
+  .sheet,.placard,.box{border:2px solid CanvasText}
+  .btn{border:2px solid ButtonText;background:ButtonFace;color:ButtonText}
+  .top a{color:LinkText}
+  ol.steps>li::before{border-color:CanvasText}
+  .qr svg{forced-color-adjust:none}
+  :focus-visible{outline-color:Highlight!important}
+}
+@media (max-width:34em){
+  .head{grid-template-columns:minmax(0,1fr)}
+  .qr{justify-self:start;max-width:none;grid-template-columns:auto 1fr;justify-items:start;align-items:center;gap:.8rem;text-align:left}
+  .qr svg{width:5.5rem;height:5.5rem}
+  ol.steps>li{padding-left:2.4rem}
+}
+
+/* ---------- printed: one clean page, black on white, on US Letter and on A4 ---------- */
+@page{size:auto;margin:10mm 11mm}
+@media print{
+  html,body,html[data-contrast=more],html[data-contrast=more] body{background:#fff!important;color:#000!important}
+  html{font-size:9.6pt!important}
+  body{min-height:0;line-height:1.33;letter-spacing:0;word-spacing:0}
+  .skip,.top,.acts{display:none!important}
+  main{max-width:none;margin:0;padding:0}
+  .sheet{padding:0;background:none!important;border:0!important;box-shadow:none!important;color:#000!important}
+  .placard{background:none!important;border:1px solid #000!important;color:#000!important;font-size:.95rem;padding:.1rem .5rem 0;margin-bottom:.3rem}
+  .head{grid-template-columns:minmax(0,1fr) auto;padding-bottom:.55rem;border-bottom:2.5pt double #000}
+  h1{font-size:1.85rem}
+  .sub{margin-top:.25rem;max-width:none}
+  .where{margin-top:.35rem}
+  .where .addr{display:inline;font-size:1rem}
+  .qr{color:#000;max-width:none;font-size:.85rem}
+  .qr svg{width:22mm;height:22mm;border:0}
+  h2{margin:.7rem 0 .35rem;font-size:1.15rem}
+  .cols{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;column-gap:7mm}
+  #steps{grid-column:1;grid-row:1}
+  #steps-more{grid-column:2;grid-row:1 / span 2}
+  .box{grid-column:1;grid-row:2;align-self:start;margin:.2rem 0 .5rem}
+  ol.steps>li{margin:0 0 .55rem;padding-left:2.1rem}
+  ol.steps>li::before{width:1.55rem;height:1.55rem;border-width:1.2pt;top:0}
+  ol.steps h3{font-size:1.08rem;margin-bottom:.05rem}
+  ol.steps p{margin:0 0 .2rem}
+  .quote{background:none!important;padding:.15rem .5rem;margin:.15rem 0 .25rem;border-left:2.5pt solid #000}
+  .menus,.fine,.qr{color:#000!important}
+  kbd{border-color:#000}
+  .box{background:none!important;border:2pt solid #000;padding:.45rem .65rem .4rem}
+  .box h2,.trouble h2{font-size:1.08rem;margin-bottom:.2rem}
+  .box p{margin:0 0 .25rem}
+  .trouble{margin-top:.2rem;padding-top:.35rem;border-top:.75pt solid #000}
+  .trouble dl{display:grid;grid-template-columns:repeat(3,1fr);gap:5mm}
+  .trouble dt{margin:0}
+  .fine{margin-top:.5rem;padding-top:.3rem;border-top:.75pt solid #000;font-size:.9rem}
+  a{color:#000;text-decoration:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#guide">Skip to the guide</a>
+<div class="top" role="banner"><a href="index.html" id="home">Back to the front page</a><a href="editor.html" id="open-maker">Open the maker</a></div>
+<main id="guide" tabindex="-1">
+<article class="sheet" aria-labelledby="guide-h">
+  <header class="head">
+    <div>
+      <p class="placard">Escape the Old Schoolhouse</p>
+      <h1 id="guide-h">Quick-start guide for teachers</h1>
+      <p class="sub">Make an escape room for your class: students solve short puzzles about your chapter, then type the exit password from their certificate into a quiz. Keep this page beside your screen.</p>
+      <p class="where">Start here: <span class="addr" id="site-address"><!--__SITE__--></span></p>
+    </div>
+    <figure class="qr" id="site-qr"><!--__QR__--><figcaption>Scan to open the site</figcaption></figure>
+  </header>
+  <div class="acts">
+    <button type="button" class="btn" id="print-guide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 9V3h12v6M6 18H4v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7h-2M7 14h10v7H7z"/></svg>Print this guide</button>
+    <p class="note" id="print-note">It fits on one page, on Letter or A4 paper.</p>
+  </div>
+
+  <h2 id="steps-h">Seven steps</h2>
+  <div class="cols">
+  <!-- Two lists (1-4 and 5-7) so the printed page can set them side by side with the box under the shorter one. -->
+  <ol class="steps" id="steps" aria-labelledby="steps-h">
+    <li><h3>Open the maker</h3>
+      <p>Go to the address above and press <b class="ui">Make an escape room</b>. You don't need an account or anything to install.</p></li>
+    <li><h3>Follow the steps (about 30 to 45 minutes)</h3>
+      <p>The maker asks one question per page, in 10 steps. Choose <b class="ui">Change the sample</b> or <b class="ui">Start with an empty escape room</b>, then press <b class="ui">Continue</b> on each page. Stuck? Open <b class="ui">Help with this step</b>. To stop, press <b class="ui">Save and finish later</b>.</p></li>
+    <li><h3>Check your facts</h3>
+      <p>On <b class="ui">Check your facts</b>, compare each item with your textbook, fill in <b class="ui">Where you checked it</b>, and tick <b class="ui">I checked this is correct</b>. Until every item is ticked, students see a “Draft” notice. The sample was written with AI help, so check every item from it.</p></li>
+    <li><h3>Try it as a student</h3>
+      <p>Press <b class="ui">Start the student view</b> and play it. <b class="ui">Show answers</b> lets you skip ahead. Press <kbd>Esc</kbd> or <b class="ui">Exit preview</b> to come back.</p></li>
+  </ol>
+  <ol class="steps more" id="steps-more" start="5" aria-labelledby="steps-h">
+    <li><h3>Share a class link</h3>
+      <p>Choose <b class="ui">Share a class link (recommended)</b>, press <b class="ui">Make the class link</b>, then <b class="ui">Copy link</b>. Paste it into Moodle, Canvas, Google Classroom or an email; the maker shows where it goes in Moodle and Canvas.</p>
+      <p>The link holds the escape room as it is now. Changed something? Press <b class="ui">Make a new class link</b> and share the new one: the old link keeps the old version.</p></li>
+    <li><h3>Make the one-question exit-password quiz</h3>
+      <p>The grade comes from a quiz in your course with one question:</p>
+      <p class="quote" id="quiz-question">Type the exit password from the certificate at the end of the escape room.</p>
+      <p>The answer is your exit password (the maker shows it, with a <b class="ui">Copy</b> button). Make the quiz ignore capital letters. In Moodle: a <b class="lms">Short answer</b> question, <b class="lms">Case sensitivity</b>: <b class="lms">No, case is unimportant</b>. In Canvas: a <b class="lms">Fill in the Blank</b> question with <b class="lms">Close enough</b> and <b class="lms">Spelling only (ignore case)</b>, or add the password in small letters as a second answer. <span class="menus">Menus can differ by version.</span></p></li>
+    <li><h3>Keep your backup</h3>
+      <p>Press <b class="ui">Download a backup</b> and keep the file somewhere safe, such as your course folder. It plays as the game in any browser and opens again in the maker. Your class link is a backup too.</p></li>
+  </ol>
+    <section class="box" id="saved-box" aria-labelledby="saved-h">
+      <h2 id="saved-h">Your work is saved in this browser only</h2>
+      <p>It stays in this browser, on this computer. Another browser or computer won't have it, and clearing your browsing history removes it. So keep your backup file or your class link.</p>
+    </section>
+  </div>
+    <section class="trouble" id="trouble" aria-labelledby="trouble-h">
+      <h2 id="trouble-h">If something goes wrong</h2>
+      <dl>
+        <div><dt>My work is gone, or I'm on a new computer</dt>
+        <dd>Open the maker and choose <b class="ui">Open one I saved before</b>. Then press <b class="ui">Choose the file</b> and pick your backup, or paste your class link.</dd></div>
+        <div><dt>A student says the link doesn't open</dt>
+        <dd>If it says “This class link is incomplete”, part of it was cut off. Copy it again with <b class="ui">Copy link</b> and paste all of it. If it keeps happening, choose <b class="ui">I'll email or post a file</b> instead.</dd></div>
+        <div><dt>I want to change the exit password</dt>
+        <dd>Press <b class="ui">Show all settings (Advanced mode)</b>, open <b class="ui">Finish &amp; grading</b>, and change <b class="ui">Exit password</b>. Then make a new class link. In your quiz, keep the old password as a second correct answer.</dd></div>
+      </dl>
+    </section>
+  <p class="fine">Nothing you write is sent anywhere. No accounts, no tracking, no cookies. The accessibility statement is linked from the front page.</p>
+</article>
+</main>
+<script>
+document.getElementById("print-guide").addEventListener("click", () => window.print());
+</script>
+</body>
+</html>
