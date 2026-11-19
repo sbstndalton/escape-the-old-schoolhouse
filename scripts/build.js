@@ -46,6 +46,8 @@ const front = read("src/front.html")
    headings on the page. Headings get the same ids GitHub gives them, so the file's own links still work. */
 function markdown(md){
   const E = ER.esc;
+  const used = new Map();     // a repeated heading gets -1, -2 … like on GitHub
+  const unique = id => { const n = used.get(id) || 0; used.set(id, n + 1); return n ? `${id}-${n}` : id; };
   const slug = t => t.toLowerCase().replace(/<[^>]+>/g, "").replace(/[^\p{L}\p{N}\s-]/gu, "").trim().replace(/\s/g, "-");
   const inline = t => E(t)
     .replace(/`([^`]+)`/g, "<code>$1</code>")
@@ -61,7 +63,7 @@ function markdown(md){
     const l = lines[i];
     if (!l.trim()) { i++; continue; }
     let m;
-    if ((m = l.match(/^(#{1,4})\s+(.*)$/))) { const n = m[1].length, t = inline(m[2]); out.push(`<h${n} id="${slug(m[2].replace(/[*`]/g, ""))}">${t}</h${n}>`); i++; continue; }
+    if ((m = l.match(/^(#{1,4})\s+(.*)$/))) { const n = m[1].length, t = inline(m[2]); out.push(`<h${n} id="${unique(slug(m[2].replace(/[*`]/g, "")))}">${t}</h${n}>`); i++; continue; }
     if (/^---+\s*$/.test(l)) { out.push("<hr>"); i++; continue; }
     if (/^\|/.test(l)) {
       const rows = []; while (i < lines.length && /^\|/.test(lines[i])) rows.push(lines[i++]);

@@ -1608,7 +1608,8 @@ function room(n){
   wireHints(r);
   const desc = $("#describe"); if (desc) desc.onclick = () => examine(describeHtml(r, n), { from: desc, label: "Room description", cls: "about" });
 }
-function unknown(r, n){ stage.innerHTML = roomHead(r,n) + `<div class="obj"><p class="note">This room type isn't supported.</p><p><button type="button" class="pushplate small" onclick="go(${n+1})">Skip</button></p></div>`; }
+function unknown(r, n){ stage.innerHTML = roomHead(r,n) + `<div class="obj"><p class="note">This room type isn't supported.</p><p><button type="button" class="pushplate small" id="skip-room">Skip</button></p></div>`;
+  $("#skip-room").onclick = () => go(n+1); }
 
 /* ---- Matching: objects with codes, numbered clues, turn the dials to the code ----
    room.look chooses how the objects are drawn: "cards" (a catalogue drawer, the default), "books" or
