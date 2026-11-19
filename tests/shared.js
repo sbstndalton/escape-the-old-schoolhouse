@@ -36,4 +36,32 @@ t("a matching room's look falls back to plain cards; portrait initials skip smal
   assert.equal(ER.initials("Élise von Stein"), "ÉS");
   assert.equal(ER.initials(""), "?");
 });
+t("a11yDescribe lists a room as text in reading order; a11yHow says how to work each lock", () => {
+  const room = { type: "matching", title: "Shelf", look: "books", story: "Find the word.", codeWord: "AB", cardsHeading: "", cards: [{ term: "Zeta", clue: "first clue" }, { term: "Alpha", clue: "second clue", detail: "1900" }] };
+  const d = ER.a11yDescribe(room);
+  assert.deepEqual(d.map(p => p.h), ["The note", "2 books on the shelf", "Clues", "The lock"]);
+  assert.deepEqual(d[1].list, ["Code **B**: Alpha (1900)", "Code **A**: Zeta"]);
+  assert.deepEqual(d[2].list, ["Clue 1: first clue", "Clue 2: second clue"]);
+  assert.match(d[3].text.join(" "), /2 dials.*arrow keys, or type the code/);
+  assert.ok(!JSON.stringify(d).includes("AB"), "the description never contains the answer");
+  const sort = { type: "sorting", categories: ["Old", "New"], items: [{ text: "one", category: 0 }, { text: "two", category: 1 }] };
+  assert.deepEqual(ER.a11yDescribe(sort, { picks: [1, null] })[1].list, ["one (stamped **New**)", "two (not stamped yet)"]);
+  const order = { type: "ordering", title: "T", items: [{ text: "a" }, { text: "b" }, { text: "c" }] };
+  assert.deepEqual(ER.a11yDescribe(order, { order: [2, 0, 1] })[0].list, ["c", "a", "b"]);
+  for (const type of ["matching", "quiz", "ordering", "sorting", "reflection"]) assert.ok(ER.a11yHow({ type }).length > 20, type);
+  assert.equal(ER.a11yHow({ type: "other" }), "");
+});
+t("a11yCheck gives teachers advisory notes about content that is hard to use", () => {
+  const cfg = { intro: {}, rooms: [
+    { type: "matching", title: "m", codeWord: "ABCDEFGHIJ", cards: "ABCDEFGHIJ".split("").map(x => ({ term: x, clue: "the red one on the left" })) },
+    { type: "quiz", title: "q", story: "s", questions: [{ kind: "short", prompt: "p", answers: "Dewey" }, { kind: "short", prompt: "p", answers: "Dewey|John Dewey" }] }] };
+  const notes = ER.a11yCheck(cfg), text = notes.map(n => n.room + ": " + n.message).join("\n");
+  assert.match(text, /-1: The opening page has no story/);
+  assert.match(text, /0: This room has no story/);
+  assert.match(text, /0: The lock code has 10 characters/);
+  assert.match(text, /0: Some text uses the word "red"/);
+  assert.match(text, /1: Question 1 accepts only one typed answer/);
+  assert.doesNotMatch(text, /Question 2/);
+  assert.deepEqual(ER.a11yCheck({ intro: { story: "x" }, rooms: [{ type: "quiz", story: "s", questions: [{ kind: "choice", prompt: "p", choices: ["a", "b"], correct: 0 }] }] }), []);
+});
 console.log(`\n${n} passed, 0 failed.`);

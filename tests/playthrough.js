@@ -56,7 +56,8 @@ async function solveTimeline(page) {
 }
 
 async function playThrough(page, shotPrefix) {
-  // The scene fills the window and never scrolls, so a plain screenshot shows all of it. Wait for the doors to finish parting first.
+  // The page itself never scrolls (the room scrolls inside the scene when it is taller than the window), so a
+  // plain screenshot shows the top of each room. Wait for the doors to finish parting first.
   const shot = async n => { if (!shotPrefix) return; await page.waitForTimeout(900); await page.screenshot({ path: path.join(SHOTS, `${shotPrefix}-${n}.png`) }); };
   await shot("0-intro");
   await page.fill("#pname", (await page.inputValue("#pname")) || "Test Student");
@@ -73,9 +74,10 @@ async function playThrough(page, shotPrefix) {
   for (let i = 0; i < 8; i++) await page.click(`.seg button[data-i="${i}"][data-v="${OBSERVATIONS[i]}"]`);
   await page.click("#try"); await page.waitForTimeout(WAIT);
   await shot("5-mirror");
-  // The mirror asks one question at a time and moves on by itself after a click.
-  for (let i = 0; i < 6; i++) await page.locator(`input[name=q${i}]`).nth(2).check();
-  await page.click("#try"); await page.waitForTimeout(WAIT);
+  // The mirror asks one question at a time. Nothing moves on by itself: the plate goes to the next question,
+  // and on the last one it finishes.
+  for (let i = 0; i < 6; i++) { await page.locator(`input[name=q${i}]`).nth(2).check(); await page.click("#try"); }
+  await page.waitForTimeout(WAIT);
   await shot("6-escaped");
 }
 
@@ -194,7 +196,7 @@ async function playThrough(page, shotPrefix) {
     assert.equal(await page.getAttribute(".cert .seal", "aria-hidden"), "true");
     await page.locator("#confetti").waitFor({ state: "attached", timeout: 3000 });
     await page.locator("#confetti").waitFor({ state: "detached", timeout: 5000 });   // it cleans up after itself
-    assert.equal(await page.evaluate(() => document.activeElement.id), "stage", "focus moves to the new screen");
+    assert.equal(await page.evaluate(() => document.activeElement.tagName + ":" + document.activeElement.textContent), "H2:You Escaped!", "focus moves to the new screen's heading");
     assert.deepEqual(page.errors, []);
     await page.close();
   });
@@ -203,7 +205,8 @@ async function playThrough(page, shotPrefix) {
     const page = await newPage(browser, base, { reducedMotion: "reduce" });
     assert.equal(await page.getAttribute("html", "data-motion"), "off");
     assert.equal(await page.isDisabled("#motion-toggle"), true);
-    assert.match(await page.textContent("#motion-toggle"), /Motion: off/);
+    assert.equal(await page.getAttribute("#motion-toggle", "aria-checked"), "false");
+    assert.equal(await page.evaluate(() => document.querySelector("#motion-why").hidden), false, "the notebook says why the switch can't be turned on");
     await page.click("#begin");
     assert.equal(await page.evaluate(() => document.getAnimations().length), 0, "nothing animates when a room opens");
     await page.fill("#answer", "wrong"); await page.click("#try");
@@ -226,7 +229,8 @@ async function playThrough(page, shotPrefix) {
     const page = await newPage(browser, base);
     await page.click("#watch");                                    // the pocket watch opens the notebook (pause menu)
     await page.click("#motion-toggle");
-    assert.match(await page.textContent("#motion-toggle"), /Motion: off/);
+    assert.equal(await page.getAttribute("#motion-toggle", "aria-checked"), "false");
+    assert.equal(await page.textContent("#motion-toggle .st"), "off", "the state is also written out");
     assert.equal(await page.getAttribute("html", "data-motion"), "off");
     await page.keyboard.press("Escape");
     assert.equal(await page.isHidden("#pause"), true, "Esc closes the notebook");
@@ -263,7 +267,7 @@ async function playThrough(page, shotPrefix) {
     assert.equal(await dial.count(), 5, "one dial per character");
     await dial.first().focus();
     for (let i = 0; i < 12; i++) await page.keyboard.press("ArrowUp");      // blank, A, B ... L
-    assert.equal(await dial.first().getAttribute("aria-valuetext"), "L");
+    assert.equal(await dial.first().getAttribute("aria-valuetext"), "L, 12 of 26");
     await page.keyboard.press("ArrowUp"); await page.keyboard.press("ArrowDown");
     assert.equal(await page.inputValue("#answer"), "L", "the text field follows the dials");
     await page.keyboard.press("ArrowRight");
@@ -296,7 +300,7 @@ async function playThrough(page, shotPrefix) {
     await page.keyboard.press("Escape");
     assert.equal(await page.isHidden("#examine"), true);
     assert.equal(await page.isHidden("#pause"), true, "that Esc only put the paper back");
-    assert.equal(await page.evaluate(() => document.activeElement.classList.contains("icard")), true, "focus returns to the card");
+    assert.equal(await page.evaluate(() => document.activeElement.matches(".icard > button.no")), true, "focus returns to the card's button");
     await page.locator(".vol").first().click();                            // a book tips out and shows its catalogue card
     assert.match(await page.textContent("#examine"), /Code [A-Z]/);
     await page.mouse.click(8, 8);                                           // click outside
@@ -338,17 +342,19 @@ async function playThrough(page, shotPrefix) {
 
   await test("sound: the mute button is remembered, and the game runs with no Web Audio at all", async () => {
     const page = await newPage(browser, base);
-    assert.equal(await page.getAttribute("#sound-toggle", "aria-pressed"), "true", "sound starts on");
+    assert.equal(await page.getAttribute("#sound-toggle", "aria-checked"), "true", "sound starts on");
+    assert.equal(await page.getAttribute("#sound-toggle", "role"), "switch");
     assert.equal(await page.evaluate(() => typeof SND.play), "function");
     await page.click("#sound-toggle");
-    assert.equal(await page.getAttribute("#sound-toggle", "aria-pressed"), "false");
-    assert.match(await page.textContent("#sound-label"), /Sound: off/);
+    assert.equal(await page.getAttribute("#sound-toggle", "aria-checked"), "false");
+    assert.equal(await page.getAttribute("#sound-toggle", "title"), "Sound is off");
     await page.reload();
-    assert.equal(await page.getAttribute("#sound-toggle", "aria-pressed"), "false", "the choice is remembered");
+    assert.equal(await page.getAttribute("#sound-toggle", "aria-checked"), "false", "the choice is remembered");
     await page.click("#watch");
-    assert.match(await page.textContent("#sound-toggle-2"), /Sound: off/);
+    assert.equal(await page.getAttribute("#sound-toggle-2", "aria-checked"), "false");
+    assert.equal(await page.textContent("#sound-toggle-2 .st"), "off");
     await page.click("#sound-toggle-2");                                     // the notebook has the same switch
-    assert.equal(await page.getAttribute("#sound-toggle", "aria-pressed"), "true");
+    assert.equal(await page.getAttribute("#sound-toggle", "aria-checked"), "true");
     await page.click("#resume");
     await page.click("#begin");
     await page.fill("#answer", "learn"); await page.click("#try");
@@ -392,12 +398,13 @@ async function playThrough(page, shotPrefix) {
     await page.close();
   });
 
-  await test("a wide desktop window and a short LMS frame both fit without the page scrolling", async () => {
+  await test("a wide desktop window and a short LMS frame: the page never scrolls, and the room scrolls inside the scene when it must", async () => {
     for (const viewport of [{ width: 1440, height: 900 }, { width: 1100, height: 620 }]) {
       const page = await newPage(browser, base, { viewport });
       await playThrough(page, viewport.width === 1440 ? "wide" : null);
       const o = await page.evaluate(() => ({ x: document.documentElement.scrollWidth - innerWidth, y: document.documentElement.scrollHeight - innerHeight }));
       assert.ok(o.x <= 1 && o.y <= 1, `page scrolls by ${o.x} x ${o.y}px at ${viewport.width}x${viewport.height}`);
+      assert.equal(await page.evaluate(() => { const v = document.querySelector("#view"); return v.scrollWidth <= v.clientWidth + 1 && getComputedStyle(v).overflowY === "auto"; }), true, "the room scrolls up and down only");
       assert.match(await page.textContent("#stage"), /DEWEY1916/);
       assert.deepEqual(page.errors, []);
       await page.close();
