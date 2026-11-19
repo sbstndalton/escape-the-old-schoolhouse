@@ -1,5 +1,6 @@
 // Automated tests for the teacher editor (editor.html). Run with `npm test`.
-const { chromium } = require("playwright");
+const playwright = require("playwright");
+const engine = playwright[process.env.BROWSER || "chromium"];   // BROWSER=webkit npm test also runs the editor in WebKit
 const assert = require("assert/strict");
 const fs = require("fs");
 const os = require("os");
@@ -64,12 +65,12 @@ async function makeQuizRoom(page) {
 (async () => {
   const server = await start(0);
   const base = `http://127.0.0.1:${server.address().port}`;
-  const browser = await chromium.launch();
+  const browser = await engine.launch();
   console.log("\nEscape room editor tests\n");
 
   await test("opens with the sample content, all 40 items unchecked", async () => {
     const page = await openEditor(browser, base);
-    assert.match(await page.textContent("#meter"), /0 of 40 checked/);
+    assert.match(await page.textContent("#meter"), /0 \/ 40 checked/);
     assert.equal(await page.locator("#nav .item:has-text('to check')").count(), 5);
     await page.click("#nav .item:has-text('1.')");
     assert.match(await page.textContent("#answer-key"), /Lock combination: LEARN/);
@@ -83,9 +84,9 @@ async function makeQuizRoom(page) {
     await page.click("#nav .item:has-text('1.')");
     const first = page.locator(".entry").first();
     await first.locator("text=I checked this is correct").click();
-    assert.match(await page.textContent("#meter"), /1 of 40/);
+    assert.match(await page.textContent("#meter"), /1 \/ 40/);
     await first.locator("textarea").first().fill("Changed clue text");
-    assert.match(await page.textContent("#meter"), /0 of 40/);
+    assert.match(await page.textContent("#meter"), /0 \/ 40/);
     assert.equal(await first.locator(".verify input[type=checkbox]").isChecked(), false);
     await page.close();
   });
@@ -93,6 +94,7 @@ async function makeQuizRoom(page) {
   await test("changing a code word updates the lock combination", async () => {
     const page = await openEditor(browser, base);
     await page.click("#nav .item:has-text('1.')");
+    await page.click("#tab-lock");
     await page.fill("text=Code word (optional) >> xpath=.. >> input", "STUDY");
     assert.match(await page.textContent("#answer-key"), /Lock combination: STUDY/);
     await page.close();
@@ -102,7 +104,7 @@ async function makeQuizRoom(page) {
     const page = await openEditor(browser, base);
     await makeQuizRoom(page);
     assert.equal(await page.locator(".entry").count(), 2);
-    assert.match(await page.textContent("#meter"), /2 of 2 checked/);
+    assert.match(await page.textContent("#meter"), /2 \/ 2 checked/);
     await page.screenshot({ path: path.join(SHOTS, "editor-quiz.png"), fullPage: true });
     await page.close();
   });
@@ -161,7 +163,8 @@ async function makeQuizRoom(page) {
     const page = await openEditor(browser, base);
     await makeQuizRoom(page);
     await page.click("#nav .item:has-text('Finish & grading')");
-    await page.selectOption("text=Grading >> xpath=.. >> select", "deductions");
+    await page.click("#tab-grading");
+    await page.click(".field[data-key=mode] label:has(input[value=deductions])");
     await page.click("#btn-export");
     const file = await download(page, "#export-html");
     const game = await browser.newPage();
@@ -185,9 +188,9 @@ async function makeQuizRoom(page) {
     const file = await download(page, "#export-html");
     await page.keyboard.press("Escape");
     await page.click("#btn-new"); await page.click("#new-sample");
-    assert.match(await page.textContent("#meter"), /of 40/);
+    assert.match(await page.textContent("#meter"), /\/ 40/);
     await page.setInputFiles("#file", file);
-    await page.waitForFunction(() => /2 of 2/.test(document.querySelector("#meter").textContent));
+    await page.waitForFunction(() => /2 \/ 2/.test(document.querySelector("#meter").textContent));
     assert.match(await page.textContent("#nav"), /New question room/);
     await page.close();
   });
@@ -247,6 +250,7 @@ async function makeQuizRoom(page) {
   await test("hints: off by default, max two, warn on give-aways, unlock only after wrong tries", async () => {
     const page = await openEditor(browser, base);
     await page.click("#nav .item:has-text('1.')");
+    await page.click("#tab-hints");
     assert.equal(await page.isChecked("#hints-toggle"), false);
     await page.click("label.switch:has(#hints-toggle)");
     assert.equal(await page.locator("text=Hint 1: a gentle nudge").count(), 1);
@@ -287,6 +291,7 @@ async function makeQuizRoom(page) {
     await page.click("text=Edit all questions as text");
     await page.fill("textarea[aria-label='Questions as text']", "Q: 2+2?\nA: 4");
     await page.click("text=Use this text");
+    await page.click("#tab-hints");
     await page.click("label.switch:has(#hints-toggle)");
     await page.click("#btn-preview");
     assert.match(await page.textContent(".overlay"), /hints are turned on, but no hint has been written/);
@@ -306,12 +311,12 @@ async function makeQuizRoom(page) {
   await test("questions changed in text mode come back un-checked", async () => {
     const page = await openEditor(browser, base);
     await makeQuizRoom(page);
-    assert.match(await page.textContent("#meter"), /2 of 2 checked/);
+    assert.match(await page.textContent("#meter"), /2 \/ 2 checked/);
     await page.click("text=Edit all questions as text");
     const ta = page.locator("textarea[aria-label='Questions as text']");
     await ta.fill((await ta.inputValue()).replace("A: John Dewey | Dewey", "A: Horace Mann"));
     await page.click("text=Use this text");
-    assert.match(await page.textContent("#meter"), /1 of 2 checked/, "the edited question is un-checked, the untouched one stays checked");
+    assert.match(await page.textContent("#meter"), /1 \/ 2 checked/, "the edited question is un-checked, the untouched one stays checked");
     await page.close();
   });
 
@@ -321,7 +326,7 @@ async function makeQuizRoom(page) {
     await page.click("button[aria-label='Delete choice 1'] >> nth=0");
     assert.match(await page.textContent("#answer-key"), /Perennialism/);
     assert.doesNotMatch(await page.textContent("#answer-key"), /→\s*Existentialism/);
-    assert.match(await page.textContent("#meter"), /1 of 2 checked/);
+    assert.match(await page.textContent("#meter"), /1 \/ 2 checked/);
     await page.click("button[aria-label='Delete choice 1'] >> nth=0");   // delete the correct one itself
     await page.click("#btn-preview");
     assert.match(await page.textContent(".overlay"), /mark which choice is correct/);
@@ -342,8 +347,8 @@ async function makeQuizRoom(page) {
     const page = await openEditor(browser, base);
     await page.click("#nav .item:has-text('4.')");
     await page.click("text=+ Add category");
-    await page.locator("text=Category 3 >> xpath=.. >> input").fill("Mixed");
-    await page.locator(".entry").first().locator("select").selectOption("2");      // the new 3rd category
+    await page.locator("text=Category 3 >> xpath=.. >> input[type=text]").fill("Mixed");
+    await page.locator(".entry").first().locator(".rotary label:has(input[value='2'])").click();      // the new 3rd category
     await page.locator(".entry").first().locator("label.chk").click();
     await page.click("button:has-text('Remove') >> nth=2");                       // remove "Mixed"
     await page.click("#btn-preview");
@@ -362,9 +367,11 @@ async function makeQuizRoom(page) {
   await test("empty or incomplete answers don't count as wrong tries", async () => {
     const page = await openEditor(browser, base);
     await page.click("#nav .item:has-text('1.')");
+    await page.click("#tab-hints");
     await page.click("label.switch:has(#hints-toggle)");
     await page.click("#nav .item:has-text('Finish & grading')");
-    await page.selectOption("text=Grading >> xpath=.. >> select", "deductions");
+    await page.click("#tab-grading");
+    await page.click(".field[data-key=mode] label:has(input[value=deductions])");
     await page.click("#btn-export");
     const file = await download(page, "#export-html");
     const game = await browser.newPage();
@@ -387,6 +394,147 @@ async function makeQuizRoom(page) {
     await f.locator("#try").click();
     assert.match(await f.locator("#msg").textContent(), /Choose a category for every item first/);
     assert.equal(await f.locator("#stage.shake").count(), 0, "no wrong-try shake for an incomplete answer");
+    await page.close();
+  });
+
+  await test("the look of a matching room can be changed, and the preview follows", async () => {
+    const page = await openEditor(browser, base);
+    await page.click("#nav .item:has-text('1.')");
+    await page.click("#tab-lock");
+    assert.equal(await page.inputValue("#look-row input:checked"), "books", "the sample library uses books");
+    assert.match(await page.textContent("#look-help"), /book spine/);
+    await page.click("#preview-room");
+    let f = page.frameLocator(".preview iframe");
+    await f.locator("#stage h2:has-text('Room 1')").waitFor();
+    assert.equal(await f.locator(".shelf .vol").count(), 5);
+    await page.click("#preview-exit");
+    await page.click("#look-row label:has(input[value=portraits])");
+    assert.match(await page.textContent("#look-help"), /framed portrait/);
+    assert.equal(await page.evaluate(() => cfg.rooms[0].look), "portraits");
+    assert.equal(await page.evaluate(() => ER.reviewStatus(cfg).verified), 0, "changing the look never marks anything as checked");
+    await page.click("#preview-room");
+    f = page.frameLocator(".preview iframe");
+    await f.locator(".gallery .portrait").first().waitFor();
+    assert.equal(await f.locator(".gallery .portrait").count(), 5);
+    assert.equal(await f.locator(".shelf").count(), 0);
+    assert.deepEqual((await f.locator(".plate b").allTextContents()).sort(), ["A", "E", "L", "N", "R"]);
+    await page.screenshot({ path: path.join(SHOTS, "editor-preview-look.png") });
+    await page.click("#preview-exit");
+    await page.click("#look-row label:has(input[value=cards])");
+    await page.click("#preview-room");
+    f = page.frameLocator(".preview iframe");
+    await f.locator(".mcard").first().waitFor();
+    assert.equal(await f.locator(".mcard").count(), 5);
+    await page.click("#preview-exit");
+    // A new matching room starts with plain cards, and the choice survives export and reopening.
+    await page.click("#look-row label:has(input[value=books])");
+    await page.click("#btn-export");
+    const file = await download(page, "#export-html");
+    assert.equal(ER.configFromHtml(fs.readFileSync(file, "utf8")).rooms[0].look, "books");
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
+  await test("phone: the cabinet is a drawer that opens from the brass handle and closes when a room is chosen", async () => {
+    const page = await openEditor(browser, base);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator("#nav").waitFor({ state: "hidden" });              // the cabinet is put away on a phone
+    const top = await page.locator("main h2").evaluate(el => el.getBoundingClientRect().top);
+    assert.ok(top < 160, `the page starts straight away, not under a list of rooms (heading at ${top}px)`);
+    assert.equal(await page.getAttribute("#cabinet-handle", "aria-expanded"), "false");
+    await page.click("#cabinet-handle");
+    await page.locator("#nav").waitFor({ state: "visible" });
+    assert.equal(await page.getAttribute("#cabinet-handle", "aria-expanded"), "true");
+    await page.screenshot({ path: path.join(SHOTS, "editor-phone-cabinet.png") });
+    await page.click("#nav .item:has-text('3.')");
+    await page.locator("#nav").waitFor({ state: "hidden" });
+    assert.equal(await page.getAttribute("#cabinet-handle", "aria-expanded"), "false");
+    assert.match(await page.textContent("main h2"), /The History Hall/);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, "no sideways scrolling");
+    await page.screenshot({ path: path.join(SHOTS, "editor-phone-room.png") });
+    await page.click("#cabinet-handle");                                  // Esc also puts it away
+    await page.locator("#nav").waitFor({ state: "visible" });
+    await page.keyboard.press("Escape");
+    await page.locator("#nav").waitFor({ state: "hidden" });
+    await page.setViewportSize({ width: 1280, height: 900 });             // on a desktop the cabinet is always there
+    await page.locator("#nav").waitFor({ state: "visible" });
+    assert.equal(await page.isVisible("#cabinet-handle"), false);
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
+  await test("help sits behind ⓘ marks that open from the keyboard", async () => {
+    const page = await openEditor(browser, base);
+    assert.equal(await page.locator("main p.help, main small").count(), 0, "no helper paragraphs on the page");
+    const mark = page.locator("main button.i[aria-label='Help: Completion code prefix']");
+    assert.equal(await page.locator(".pop").count(), 0);
+    await page.focus("text=Course >> xpath=.. >> input");
+    await page.keyboard.press("Tab");                                     // Tab reaches the next ⓘ, which shows its slip
+    assert.equal(await mark.evaluate(el => el === document.activeElement), true);
+    await page.locator(".pop").waitFor();
+    assert.match(await page.textContent(".pop"), /Starts each student's completion code/);
+    assert.equal(await mark.getAttribute("aria-expanded"), "true");
+    assert.equal(await page.getAttribute(".pop", "id"), await mark.getAttribute("aria-describedby"));
+    await page.keyboard.press("Escape");
+    assert.equal(await page.locator(".pop").count(), 0, "Esc puts it away");
+    assert.equal(await mark.getAttribute("aria-expanded"), "false");
+    await page.keyboard.press("Enter");                                   // Enter opens it again and pins it
+    assert.equal(await page.locator(".pop").count(), 1);
+    await page.keyboard.press("Tab");
+    assert.equal(await page.locator(".pop").count(), 0, "moving on closes it");
+    await mark.hover();                                                   // and it works with a mouse
+    assert.equal(await page.locator(".pop").count(), 1);
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
+  await test("the not-checked warning is one line on a pinned note that unfolds", async () => {
+    const page = await openEditor(browser, base);
+    assert.match(await page.textContent("#draft-line"), /40 of 40 items not checked yet/);
+    assert.equal(await page.isVisible("#draft-note-more"), false, "the long explanation starts folded");
+    assert.equal(await page.getAttribute("#draft-note", "aria-expanded"), "false");
+    assert.ok((await page.locator(".note").boundingBox()).height < 90, "the folded note is small");
+    await page.focus("#draft-note"); await page.keyboard.press("Enter");
+    assert.equal(await page.isVisible("#draft-note-more"), true);
+    assert.equal(await page.getAttribute("#draft-note", "aria-expanded"), "true");
+    assert.match(await page.textContent("#draft-note-more"), /written with AI help/);
+    await page.click("#draft-note");
+    assert.equal(await page.isVisible("#draft-note-more"), false);
+    await page.click("#nav .item:has-text('1.')");                        // the count follows the seals
+    await page.locator(".entry .verify label.chk").first().click();
+    await page.waitForFunction(() => /39 of 40/.test(document.querySelector("#draft-line").textContent));
+    await makeQuizRoom(page);                                             // everything checked: no note at all
+    await page.locator(".note").waitFor({ state: "detached" });
+    await page.close();
+  });
+
+  await test("the answer key is a sealed envelope; a new room is added from the cabinet", async () => {
+    const page = await openEditor(browser, base);
+    await page.click("#nav .item:has-text('2.')");
+    assert.equal(await page.isVisible("#answer-key .keycard"), false, "the envelope starts sealed");
+    await page.focus("#answer-key summary"); await page.keyboard.press("Enter");
+    assert.equal(await page.isVisible("#answer-key .keycard"), true);
+    assert.match(await page.textContent("#answer-key .keycard"), /Lock combination: 9154/);
+    await page.screenshot({ path: path.join(SHOTS, "editor-answer-key.png") });
+    await page.click("#add-room");
+    assert.equal(await page.locator("#add-menu button").count(), 5);
+    await page.click("#add-menu button[data-type=ordering]");
+    assert.equal(await page.locator("#nav .item:has-text('6.')").count(), 1);
+    assert.match(await page.textContent("main h2"), /New timeline room/);
+    assert.equal(await page.evaluate(() => cfg.rooms[5].type), "ordering");
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
+  await test("the editor asks for nothing from the internet and its fonts are built in", async () => {
+    const page = await browser.newPage();
+    const outside = [];
+    page.on("request", r => { const u = r.url(); if (!u.startsWith(base) && !/^(data|blob|about):/.test(u)) outside.push(u); });
+    await page.goto(base + "/editor.html");
+    await page.click("#btn-review"); await page.keyboard.press("Escape");
+    await page.click("#btn-preview"); await page.frameLocator(".preview iframe").locator("#begin").waitFor();
+    assert.deepEqual(outside, []);
+    assert.equal(await page.evaluate(async () => { await document.fonts.ready; return ["IM Fell English", "IM Fell English SC", "Special Elite"].every(f => document.fonts.check(`16px "${f}"`, "Abc")); }), true);
     await page.close();
   });
 
