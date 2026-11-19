@@ -47,7 +47,8 @@ async function download(page, clickSelector) {
   // Exporting a draft asks first on an in-app slip ("Export anyway"); a teacher would press it, so the helper does too.
   const [dl] = await Promise.all([page.waitForEvent("download"), (async () => {
     await page.click(clickSelector); await page.waitForTimeout(50);
-    if (await page.locator(".modal #ask-ok").count()) await page.click("#ask-ok");
+    // up to two slips: the exit password (changed sample or none yet), then the unchecked-items one
+    for (let i = 0; i < 2; i++) { if (!(await page.locator(".modal #ask-ok").count())) break; await page.click("#ask-ok"); await page.waitForTimeout(50); }
   })()]);
   const file = path.join(TMP, dl.suggestedFilename());
   await dl.saveAs(file);

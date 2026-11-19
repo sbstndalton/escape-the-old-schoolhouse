@@ -1404,7 +1404,7 @@ function pageFinish(){
   const deductions = cfg.scoring.mode === "deductions";
   return { key: "finish", icon: "rosette", kicker: "The way out", title: "Finish & grading", tabs: [
     { id: "cert", label: "Certificate", body: [
-      field("Exit password", cfg.finish, "exitPassword", { help: "The same for every student. Use it as the answer to a one-question LMS quiz. Leave blank for none." }),
+      field("Exit password", cfg.finish, "exitPassword", { help: "The same for every student: they type it into a one-question quiz in Moodle or Canvas. If it is empty, or still the sample's on changed content, you are asked for one when you export." }),
       field("Certificate line", cfg.finish, "certificateLine", { help: "Printed after the student's name." }),
       field("Instructions under the certificate", cfg.finish, "instructions", { type: "textarea", rows: 2 }) ] },
     { id: "grading", label: "Grading", help: "This is the grade sent to Moodle or Canvas by the SCORM version. The plain HTML version can't send grades; use the exit password with an LMS quiz instead.",
@@ -1856,9 +1856,9 @@ document.getElementById("btn-export").onclick = () => {
     h("h2", {}, "Export for students"),
     h("div", { class: "slips" },
       h("div", { class: "slip" }, h("div", { class: "to" }, "To: Moodle or Canvas gradebook"), h("h3", {}, "SCORM package", tip("Moodle: Add an activity → SCORM package. Canvas: SCORM tool. Upload the zip without unzipping it.", "SCORM package")),
-        h("button", { id: "export-scorm", class: "stamp", onclick: async () => { if (await checkReady("export")) { download(`${slug()}-SCORM.zip`, ER.scorm(gameHtml(), cfg.meta.title), "application/zip"); toast("SCORM package downloaded."); } } }, icon("save"), "Download SCORM .zip")),
+        h("button", { id: "export-scorm", class: "stamp", onclick: async () => { if (await readyToDownload()) { download(`${slug()}-SCORM.zip`, ER.scorm(gameHtml(), cfg.meta.title), "application/zip"); toast("SCORM package downloaded."); } } }, icon("save"), "Download SCORM .zip")),
       h("div", { class: "slip" }, h("div", { class: "to" }, "To: anywhere, as one file"), h("h3", {}, "Web page", tip("Double-click it, upload it as a Moodle or Canvas file, or put it on a website. Pair it with the exit password and an LMS quiz for credit. You can also reopen this file in the editor later.", "Web page")),
-        h("button", { id: "export-html", class: "stamp", onclick: async () => { if (await checkReady("export")) { download(`${slug()}.html`, gameHtml(), "text/html"); backedUp(); toast("Game file downloaded. It is also your backup: open it here to keep working."); } } }, icon("save"), "Download game .html"))),
+        h("button", { id: "export-html", class: "stamp", onclick: async () => { if (await readyToDownload()) { download(`${slug()}.html`, gameHtml(), "text/html"); backedUp(); toast("Game file downloaded. It is also your backup: open it here to keep working."); } } }, icon("save"), "Download game .html"))),
     h("p", { class: "typed", id: "export-a11y" }, notes ? `The accessibility check has ${notes} ${notes === 1 ? "note" : "notes"} on what you wrote. ` : "The accessibility check has nothing to flag. ",
       notes ? h("button", { class: "inkline", onclick: () => { document.querySelector(".overlay")?.close(); choose("a11y"); } }, "Read the notes") : null));
   overlay("Export", box);
@@ -2257,9 +2257,6 @@ WSTEPS.hub = {
   }
 };
 
-/* Steps not built yet open Advanced mode. */
-for (const [id, t, w] of [["deliver", "How will your students get to the escape room?", "Use Export in Advanced mode for now."], ["walk", "Put it in your course", "Use Export in Advanced mode for now."]])
-  WSTEPS[id] = { ...later(t, w), back: () => hashFor(STEP_ORDER[Math.max(0, stepNo(id) - 2)]), next: () => hashFor(STEP_ORDER[stepNo(id)] || "hub") };
 
 /* ---------- 4 Your rooms, and adding one ---------- */
 const PARTS = { quiz: ["questions", "story"], matching: ["cards", "clues", "story"] };
@@ -2579,6 +2576,206 @@ WSTEPS.try = {
     wHelp(h("p", {}, "The student view fills the screen. Press Esc, or “Exit preview” at the top, to come back to this page."),
       h("p", {}, "If something needs fixing first, a list of problems appears here, each with a link to the page where you fix it."))],
   next: () => hashFor("deliver")
+};
+
+/* ---------- the exit password: never empty, and never the sample's on someone else's escape room ---------- */
+const SAMPLE_PW = String(SAMPLE.finish?.exitPassword || "");
+const withoutPw = c => stripCheck({ ...c, finish: { ...(c.finish || {}), exitPassword: "" } }).replace(/,?"decoy":(true|false)/g, "");
+const sameAsSample = c => withoutPw(c) === withoutPw(SAMPLE);
+function needsPassword(){
+  const pw = String(cfg.finish?.exitPassword || "").trim();
+  if (!pw) return true;
+  return pw === SAMPLE_PW && meta.pwOk !== pw && !sameAsSample(cfg);
+}
+function suggestPassword(){
+  const words = String(cfg.meta?.title || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().match(/[A-Z0-9]+/g) || [];
+  const num = words.find(w => /^\d+$/.test(w)) || "";
+  const word = words.find(w => /^[A-Z]{3,}$/.test(w) && !["THE", "AND", "FOR", "ESCAPE", "ROOM"].includes(w)) || "CLASS";
+  let s = word.slice(0, 8) + (num ? num.slice(0, 4) : "ESCAPE");
+  if ((/O/.test(s) && /0/.test(s)) || (/[IL]/.test(s) && /1/.test(s)) || s === SAMPLE_PW) s = word.slice(0, 8) + "ESCAPE";
+  return s;
+}
+/* A slip that asks for the password before a student file is made. Resolves the password, or null to go back. */
+function askPassword(){
+  return new Promise(resolve => {
+    const old = String(cfg.finish?.exitPassword || "").trim();
+    let m = null;
+    const input = h("input", { type: "text", id: "ask-password", value: suggestPassword(), autocomplete: "off", spellcheck: "false", "aria-describedby": "ask-password-hint",
+      onkeydown: e => { if (e.key === "Enter") { e.preventDefault(); ok(); } } });
+    const err = h("p", { class: "ferr", id: "ask-password-err", hidden: true }, h("span", { class: "sr" }, "Error: "), "Enter an exit password");
+    const done = v => { box.remove(); modalClose(m); resolve(v); };
+    const ok = () => {
+      const v = input.value.trim();
+      if (!v) { err.hidden = false; input.setAttribute("aria-invalid", "true"); input.setAttribute("aria-describedby", "ask-password-err ask-password-hint"); input.focus(); return; }
+      done(v);
+    };
+    const box = h("div", { class: "modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "ask-password-title", "aria-describedby": "ask-password-why", onclick: e => { if (e.target === box) done(null); } },
+      h("div", { class: "slipbox" }, h("h2", { id: "ask-password-title" }, "What should the exit password be?"),
+        h("p", { id: "ask-password-why" }, old ? `This escape room started as a copy of the sample, so it still has the sample's password, ${old}. Students who played the sample could use it again.` : "This escape room has no exit password yet."),
+        h("div", { class: "wf" }, h("label", { class: "wlabel", for: "ask-password" }, "Exit password"),
+          h("p", { class: "whint", id: "ask-password-hint" }, "Students see it on their certificate and type it into your course quiz. Letters and numbers that are easy to copy work best. We suggest one; you can change it."),
+          err, input),
+        h("div", { class: "actions" }, h("button", { type: "button", class: "stamp", id: "ask-cancel", onclick: () => done(null) }, "Go back"),
+          h("button", { type: "button", class: "stamp", id: "ask-ok", onclick: ok }, "Use this password"))));
+    m = modalOpen(box, () => done(null));
+    document.body.append(box);
+    input.focus(); input.select();
+  });
+}
+/* Before any file for students is made: nothing that would stop a room working, an exit password of its own,
+   and a word about unchecked items. Used by Advanced mode's Export and by the guided steps. */
+async function readyToDownload(){
+  const errs = ER.validate(cfg);
+  if (errs.length) {
+    if (document.documentElement.dataset.mode === "wizard") { WIZ.errors = problemsLinked(); renderWizard("errors"); } else showErrors(errs);
+    return false;
+  }
+  if (needsPassword()) {
+    const pw = await askPassword(); if (pw == null) return false;
+    cfg.finish = cfg.finish || {}; cfg.finish.exitPassword = pw; meta.pwOk = pw; changed(); saveNow();
+    say(`The exit password is now ${pw}.`);
+  }
+  const st = ER.reviewStatus(cfg);
+  if (st.unverified) return ask("Download a draft?",
+    [`${st.unverified} of ${st.total} items haven't been checked yet.`, "Students will see a “Draft” notice saying answers may contain errors."], { ok: "Download anyway", cancel: "Go back" });
+  return true;
+}
+
+/* ---------- 8 How will students get it? ---------- */
+const LMS = { moodle: "Moodle", canvas: "Canvas" };
+WSTEPS.deliver = {
+  title: () => "How will your students get to the escape room?",
+  back: () => hashFor("try"),
+  body: () => {
+    const d = meta.delivery = meta.delivery || {};
+    const set = (k, v) => { d[k] = v; saveMeta(); renderWizard(); };
+    const how = where => wRadios({ name: "how", legend: `Should ${LMS[where]} record the grade by itself?`, value: d.how, set: v => set("how", v),
+      options: [{ value: "quiz", title: "No: I'll add a one-question quiz with the exit password", desc: "Works everywhere, with no help from your administrator. Recommended if you are not sure." },
+        { value: "scorm", title: "Yes: use a grade file (SCORM), if my school allows it", desc: `${LMS[where]} records the grade when a student finishes. Your school must have SCORM switched on.` }] });
+    return [wRadios({ name: "where", legend: "How will your students get to the escape room?", asH1: true, value: d.where, set: v => set("where", v),
+        hint: "Next you get step-by-step instructions for the one you choose.",
+        options: [{ value: "moodle", title: "Moodle", reveal: () => how("moodle") }, { value: "canvas", title: "Canvas", reveal: () => how("canvas") },
+          { value: "other", title: "Another course system", desc: "Such as Blackboard, D2L Brightspace or Google Classroom." },
+          { value: "file", title: "I'll email or post a file", desc: "Students download one file and open it in their browser." }] }),
+      wHelp(h("p", {}, "Which should I pick?"),
+        h("table", { class: "wcompare" }, h("thead", {}, h("tr", {}, h("th", { scope: "col" }, ""), h("th", { scope: "col" }, "Grade file (SCORM)"), h("th", { scope: "col" }, "File and exit-password quiz"))),
+          h("tbody", {}, [["Needs your administrator to switch something on", "Sometimes (often in Canvas)", "Never"], ["The grade appears by itself", "Yes", "Yes, the quiz marks it"],
+            ["Students could share the password", "No", "Yes, so use it for low-stakes work"], ["Updating it later", "Replace the package", "Replace the file"],
+            ["Recommended for a first time", "", "Yes"]].map(([a, b, c]) => h("tr", {}, h("th", { scope: "row" }, a), h("td", {}, b), h("td", {}, c)))))) ];
+  },
+  check: () => {
+    const d = meta.delivery || {};
+    if (!d.where) return [{ key: "where", target: "where-moodle", text: "Choose where your students will play" }];
+    if (LMS[d.where] && !d.how) return [{ key: "how", target: "how-quiz", text: `Choose how the grade gets to ${LMS[d.where]}` }];
+    return [];
+  },
+  next: () => hashFor("walk")
+};
+
+/* ---------- 9 Walkthroughs: the download, then the menus to use ---------- */
+const B = t => h("b", {}, t);
+const MENUS = () => h("span", { class: "menus" }, " Menus can differ by version.");
+async function copyText(text, btn, what){
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch(e){
+    const ta = h("textarea", { style: "position:fixed;left:0;top:0;opacity:0", "aria-hidden": "true", tabindex: "-1" }); ta.value = text; document.body.append(ta); ta.select();
+    try { ok = document.execCommand("copy"); } catch(e2){} ta.remove(); btn.focus();
+  }
+  const note = btn.parentElement.querySelector(".done"); if (note) note.textContent = ok ? "Copied." : "Couldn't copy here: select the text and copy it yourself.";
+  say(ok ? `${what} copied.` : "Couldn't copy. Select the text and copy it yourself.");
+}
+const copyRow = (id, label, text, what, cls = "") => h("div", { class: "copy" }, h("span", { class: "val " + cls, id }, text),
+  wbtn({ class: "stamp", id: id + "-copy", onclick: e => copyText(text, e.currentTarget, what) }, "Copy", h("span", { class: "sr" }, " " + label)), h("span", { class: "done" }));
+function walkRoute(){ const d = meta.delivery || {}; return LMS[d.where] ? `${d.where}-${d.how}` : d.where; }
+const WALK_TITLE = { "moodle-scorm": "Put it in Moodle (grade file)", "moodle-quiz": "Put it in Moodle (file and exit-password quiz)", "canvas-scorm": "Put it in Canvas (grade file)",
+  "canvas-quiz": "Put it in Canvas (file and exit-password quiz)", other: "Put it in your course system", file: "Share it as a file" };
+const QUIZ_Q = "Type the exit password from the certificate at the end of the escape room.";
+function downloadStep(route){
+  const zip = /scorm$/.test(route), lms = LMS[(meta.delivery || {}).where];
+  const label = zip ? `Download the ${lms} grade file (.zip)` : "Download the game file (.html)";
+  return h("li", {}, wbtn({ class: "plate", id: "wiz-download", onclick: async () => {
+      if (!(await readyToDownload())) return;
+      if (zip) { download(`${slug()}-SCORM.zip`, ER.scorm(gameHtml(), cfg.meta.title), "application/zip"); toast(`The ${lms} grade file is in your Downloads folder. Don't unzip it.`); }
+      else { download(`${slug()}.html`, gameHtml(), "text/html"); backedUp(); toast("The game file is in your Downloads folder. It is also your backup: it opens again in this maker."); }
+      meta.downloaded = Date.now(); saveMeta(); renderWizard(); document.getElementById("wiz-download")?.focus();
+    } }, icon("save"), label),
+    zip ? h("p", {}, "Don't unzip it: ", B(lms), " needs the .zip file exactly as it is.") : h("p", {}, "This one file is the whole escape room. It is also your backup copy: it opens again in this maker."),
+    meta.downloaded ? h("p", { class: "wnote", id: "wiz-downloaded" }, `Downloaded ${when(meta.downloaded)}.`) : null);
+}
+function passwordPart(withQuiz){
+  const pw = String(cfg.finish?.exitPassword || "").trim(), ready = pw && !needsPassword();
+  return [h("h2", {}, "Your exit password"),
+    ready ? [h("p", {}, "Students see it on their certificate at the end."), copyRow("wiz-password", "the exit password", pw, "The exit password")]
+      : h("p", { id: "wiz-password-later" }, "You choose it when you download the file in step 1."),
+    withQuiz ? [h("h2", {}, "Ready to copy into your quiz"),
+      h("p", {}, "Question text:"), copyRow("wiz-quiz-q", "the question text", QUIZ_Q, "The question text", "text"),
+      ready ? [h("p", {}, "Correct answer:"), copyRow("wiz-quiz-a", "the correct answer", pw, "The answer")] : null,
+      h("p", {}, "Set the quiz to ignore capital letters, so ", h("i", {}, (ready ? pw : suggestPassword()).toLowerCase()), " and ", h("i", {}, (ready ? pw : suggestPassword()).toUpperCase()), " both count. If you change the password after students have played, keep the old one as a second correct answer.")] : null];
+}
+const trouble = (q, ...a) => h("details", { class: "wtrouble" }, h("summary", {}, q), h("div", {}, ...a));
+const WALKS = {
+  "moodle-scorm": () => [h("ol", { class: "walk" }, downloadStep("moodle-scorm"),
+      h("li", {}, "In your Moodle course, turn on ", B("Edit mode"), " (top right)."),
+      h("li", {}, "In the section you want, click ", B("Add an activity or resource"), ". In Moodle 5, click the ", B("+"), " and then ", B("Activity or resource"), ".", MENUS()),
+      h("li", {}, "Choose ", B("SCORM package"), ", then ", B("Add"), ". Not in the list? Your Moodle administrator has switched it off: ", h("a", { href: hashFor("deliver") }, "choose the quiz instead"), "."),
+      h("li", {}, "Type a ", B("Name"), `, for example “${cfg.meta?.title || "Escape room"}”.`),
+      h("li", {}, "Under ", B("Package"), ", drag the .zip file you downloaded into ", B("Package file"), ". Don't unzip it first."),
+      h("li", {}, "Under ", B("Grade"), ", leave ", B("Grading method"), " as ", B("Highest grade"), " and ", B("Maximum grade"), " as 100."),
+      h("li", {}, "Click ", B("Save and display"), ". To try it as a student, open your user menu and choose ", B("Switch role to…"), ", then ", B("Student"), ".")),
+    h("h2", {}, "If something goes wrong"),
+    trouble("It says the package is not valid", h("p", {}, "Upload the .zip file exactly as you downloaded it. A folder, or a .zip you made yourself from a folder, won't work.")),
+    trouble("My Mac unzipped it into a folder", h("p", {}, "Safari opens “safe” files after downloading. In Safari, open ", B("Settings"), ", then ", B("General"), ", and untick ", B("Open “safe” files after downloading"), ". Then download the file again."), MENUS()),
+    trouble("Students see an empty page", h("p", {}, "Open the activity's ", B("Settings"), ". Under ", B("Appearance"), ", set ", B("Display package"), " to ", B("Current window"), ", and save.")),
+    trouble("I need to fix a mistake after students have started", h("p", {}, "Fix it here and download the grade file again. In Moodle, open the activity's ", B("Settings"), ", drag the new .zip into ", B("Package file"), ", and save. Students' grades are kept."))],
+  "moodle-quiz": () => [h("ol", { class: "walk" }, downloadStep("moodle-quiz"),
+      h("li", {}, "In your Moodle course, turn on ", B("Edit mode"), " (top right)."),
+      h("li", {}, "Click ", B("Add an activity or resource"), " (in Moodle 5, the ", B("+"), " and then ", B("Activity or resource"), "), choose ", B("File"), ", and drag in the game file. Under ", B("Appearance"), ", set ", B("Display"), " to ", B("Open"), ". Click ", B("Save and return to course"), ".", MENUS()),
+      h("li", {}, "Add another activity: ", B("Quiz"), `. Name it “${cfg.meta?.title || "Escape room"}: exit password” and click `, B("Save and display"), "."),
+      h("li", {}, "Click ", B("Add"), ", then ", B("a new question"), ", then ", B("Short answer"), ". Paste the question text below. Set ", B("Case sensitivity"), " to ", B("No, case is unimportant"), ". Paste the exit password as ", B("Answer 1"), " with ", B("Grade"), " 100%. Save."),
+      h("li", {}, "To try it as a student, open your user menu and choose ", B("Switch role to…"), ", then ", B("Student"), ".")),
+    passwordPart(true),
+    h("h2", {}, "If something goes wrong"),
+    trouble("The file downloads instead of playing", h("p", {}, "Some Moodle sites always download files. That's fine: tell students to open the downloaded file. It opens in their browser.")),
+    trouble("I need to fix a mistake after students have started", h("p", {}, "Fix it here and download the game file again. In Moodle, open the file's ", B("Settings"), ", delete the old file, drag in the new one, and save."))],
+  "canvas-scorm": () => [h("ol", { class: "walk" }, downloadStep("canvas-scorm"),
+      h("li", {}, "Look for ", B("SCORM"), " in your course menu. If it isn't there, go to ", B("Settings"), ", then ", B("Navigation"), ", drag ", B("SCORM"), " into the top list (or use its menu and choose ", B("Enable"), "), and click ", B("Save"), ". If SCORM isn't in the list at all, your school hasn't switched it on: ask your Canvas administrator, or ", h("a", { href: hashFor("deliver") }, "choose the quiz instead"), ".", MENUS()),
+      h("li", {}, "Click ", B("SCORM"), ", then ", B("Upload"), ", choose the .zip file, and click ", B("Open"), ". Don't unzip it first.", MENUS()),
+      h("li", {}, "Under ", B("Choose Import Type"), ", choose ", B("Import as a graded assignment"), " and click ", B("Go"), ". This choice can't be changed later.", MENUS()),
+      h("li", {}, "It appears under ", B("Assignments"), ", worth 100 points. Publish it. To try it as a student, use ", B("Student View"), " in the course settings."),
+      h("li", {}, "To remove it later, delete it from the ", B("SCORM"), " page, not from Assignments.")),
+    h("h2", {}, "If something goes wrong"),
+    trouble("I don't see SCORM anywhere", h("p", {}, "SCORM is an extra tool that your Canvas administrator has to switch on. Ask them, or use the file and exit-password quiz, which always works.")),
+    trouble("My Mac unzipped it into a folder", h("p", {}, "Safari opens “safe” files after downloading. In Safari, open ", B("Settings"), ", then ", B("General"), ", and untick ", B("Open “safe” files after downloading"), ". Then download the file again."), MENUS()),
+    trouble("A student finished but has no grade", h("p", {}, "Canvas sometimes loses the grade if the student closes the tab straight away or their browser blocks cookies. Ask them to stay on the certificate for a few seconds, then grade them by hand."))],
+  "canvas-quiz": () => [h("ol", { class: "walk" }, downloadStep("canvas-quiz"),
+      h("li", {}, "In your Canvas course, go to ", B("Files"), " and click ", B("Upload"), " to add the game file."),
+      h("li", {}, "Go to ", B("Pages"), " and click ", B("+ Page"), `. Call it “${cfg.meta?.title || "Escape room"}”. In the editor, add a link to the file (`, B("Link"), ", then ", B("Course Links"), ", then ", B("Files"), "). Click ", B("Save & Publish"), ".", MENUS()),
+      h("li", {}, "Go to ", B("Quizzes"), " and click ", B("+ Quiz"), ". Add a ", B("Fill in the Blank"), " question. Paste the question text below, and the exit password as the answer. To ignore capital letters, choose ", B("Close enough"), " and ", B("Spelling only (ignore case)"), ", or add the password in small letters as a second answer.", MENUS()),
+      h("li", {}, "To try it as a student, use ", B("Student View"), " in the course settings.")),
+    passwordPart(true),
+    h("h2", {}, "If something goes wrong"),
+    trouble("The file downloads instead of playing", h("p", {}, "That's fine: tell students to open the downloaded file. It opens in their browser.")),
+    trouble("I need to fix a mistake after students have started", h("p", {}, "Fix it here and download the game file again. In ", B("Files"), ", upload the new file with the same name and choose to replace the old one."), MENUS())],
+  other: () => [h("ol", { class: "walk" }, downloadStep("other"),
+      h("li", {}, "Upload the game file to your course as a file. Tell students to download it and open it: it opens in their browser."),
+      h("li", {}, "For the grade, make a one-question quiz in your course system, with the exit password as the answer. The text is below, ready to copy."),
+      h("li", {}, "Try it yourself the way a student would.")),
+    passwordPart(true)],
+  file: () => [h("ol", { class: "walk" }, downloadStep("file"),
+      h("li", {}, "Email or post the game file. Students download it and double-click it: it opens in their browser, and needs no internet connection."),
+      h("li", {}, "Phones and tablets sometimes show the file as code instead of playing it. Ask students to use a computer."),
+      h("li", {}, "Ask students to send you the exit password from their certificate, or a screenshot of it.")),
+    passwordPart(false)]
+};
+WSTEPS.walk = {
+  title: () => WALK_TITLE[walkRoute()] || "Put it in your course",
+  back: () => hashFor("deliver"),
+  body: () => {
+    const route = walkRoute();
+    if (!WALKS[route]) return [H1("Put it in your course"), h("p", {}, "First choose how your students will get to the escape room."), h("p", {}, h("a", { href: hashFor("deliver") }, "Choose how students get it"))];
+    return [H1(WALK_TITLE[route]), h("p", { class: "whint" }, "Do these in order. Step 1 is here; the rest happen in your course."), ...WALKS[route]()];
+  },
+  next: () => hashFor("done")
 };
 
 applyDisplay();
