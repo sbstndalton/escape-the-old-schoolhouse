@@ -10,7 +10,7 @@ Students solve 5 puzzle rooms about educational philosophies and philosophers, t
 - ✏️ Teachers can change every question and answer in a simple editor, and build new escape rooms for other chapters
 - ♿ Built to [WCAG 2.2 AA](ACCESSIBILITY.md): keyboard and screen-reader support, your own text size, High contrast, Readable text, no time limit
 
-> **Teachers: start at the website, <https://sbstndalton.github.io/escape-the-old-schoolhouse/>.** Press **I'm a teacher → Make an escape room** and follow the steps. When it's ready, you get a **class link** to paste into Moodle, Canvas, Google Classroom or an email. Students click it and play; the exit password on their certificate goes into a one-question quiz for the grade. Nothing on the rest of this page is needed for that.
+> **Teachers: start at the website, <https://sbstndalton.github.io/escape-the-old-schoolhouse/>.** Press **I'm a teacher → Make an escape room** and follow the steps. When it's ready, you get a **class link** to paste into Moodle, Canvas, Google Classroom or an email. Students click it and play; the exit password on their certificate goes into a one-question quiz for the grade. The **[printable quick-start guide](https://sbstndalton.github.io/escape-the-old-schoolhouse/guide.html)** puts all of that on one page to keep beside your screen. Nothing on the rest of this page is needed for that.
 
 > ⚠️ **The sample content has not been fact-checked yet.** It was written with AI help and may contain mistakes. Until the instructor checks every item in the editor, students see a "Draft" notice at the top of the game. See [Checking the content](#-checking-the-content).
 
@@ -21,7 +21,7 @@ Students solve 5 puzzle rooms about educational philosophies and philosophers, t
 The website's front page has two doors:
 
 - **I'm a student:** paste a class link (or just click the one your teacher shared), or play the sample escape room.
-- **I'm a teacher:** make an escape room (the guided steps), open one you saved before, and a short "How it works".
+- **I'm a teacher:** make an escape room (the guided steps), open one you saved before, the **Printable quick-start guide**, and a short "How it works".
 
 A **class link** is the whole escape room packed into one web address (`…/play.html#play=1.…`). Nothing is uploaded or stored anywhere: the part after `#` never reaches a web server. That also means:
 
@@ -40,6 +40,7 @@ A **class link** is the whole escape room packed into one web address (`…/play
 | [`editor.html`](editor.html) | **For teachers:** change questions and answers, check content, and export new games. **Don't give this to students**, because it shows the answers. |
 | [`EscapeRoom_SCORM.zip`](EscapeRoom_SCORM.zip) | Upload this to Moodle or Canvas for automatic grading. **Don't unzip it.** |
 | [`accessibility.html`](accessibility.html) | The accessibility statement as a page (made from `ACCESSIBILITY.md`). |
+| [`guide.html`](guide.html) | **For teachers:** the one-page quick-start guide. Press **Print this guide**: it fits one page on Letter or A4. |
 
 To download a file, click its name above, then click the **download button** (⬇) at the top right of the file view.
 To download everything at once, go to the main repository page and click the green **Code** button, then **Download ZIP**.
@@ -49,6 +50,8 @@ To download everything at once, go to the main repository page and click the gre
 ## ✏️ Editing questions and answers (for teachers)
 
 Open the website and press **I'm a teacher → Make an escape room**, or download **`editor.html`** and double-click it. Everything happens in the browser, with no account and nothing sent anywhere.
+
+**Print the [quick-start guide](https://sbstndalton.github.io/escape-the-old-schoolhouse/guide.html)** (also on the front page as **Printable quick-start guide**, and in the editor's help): the seven steps from opening the maker to the exit-password quiz and your backup, plus what to do if something goes wrong, on one page.
 
 ### Start here: the guided steps
 
@@ -63,7 +66,7 @@ The first time you open the editor, it takes you through **10 short steps**, one
 7. **Try it as a student**: play it the way students will.
 8. **How students get it**: **Share a class link** (recommended: works anywhere), Moodle, Canvas, another course system, or a file.
 9. **Put it in your course**: make the class link (with **Copy link**, **Open it as a student**, and a QR code when it is short enough) or download the right file, then numbered steps with the menu names for your system, your exit password with a **Copy** button, and the quiz question ready to paste.
-10. **Done**: a summary with **Change** links, and a reminder to keep your backup.
+10. **Done**: a summary with **Change** links, a reminder to keep your backup, and **Print a card for this escape room**: one page with its name, rooms, exit password, quiz question, the date of your last backup and how to change it later.
 
 Every step has **Back**, **Continue**, **Help with this step**, **Save and finish later**, and **Show all settings (Advanced mode)**. When you come back to the editor in the same browser, it opens on **Your escape room**: a list of what's done and what's left, plus **Your escape rooms** (every escape room in this browser), **Make another escape room** and **Make a copy of this one**.
 
