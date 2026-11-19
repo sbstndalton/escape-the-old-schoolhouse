@@ -195,6 +195,7 @@ async function wizardStates(page, go, phone){
   await go("wizard / 9 the exit password slip, empty: error", async () => { await to("#step=walk&r=pw2", "cfg.finish.exitPassword = ''"); await page.click("#wiz-download"); await page.locator("#ask-password").waitFor(); await page.fill("#ask-password", ""); await page.click("#ask-ok"); },
     async () => { await escapeAll(page); await page.evaluate(() => { cfg.finish.exitPassword = "DEWEY1916"; changed(); }); });
   await go("wizard / 10 done", () => to("#step=done"), stay);
+  await go("wizard / 10 done, the teacher card", async () => { await to("#step=done&card=1"); await page.click("#wiz-card"); await page.frameLocator(".overlay iframe").locator("h1").waitFor(); }, async () => { await escapeAll(page); });
   await go("wizard / hub, two escape rooms", async () => {
     await to("#step=hub", "saveNow(); const id = newId(); lsSet(keyOf(id), JSON.stringify(SAMPLE)); lib.list.push({ id, title: 'Chapter 4', created: Date.now(), updated: Date.now() - 86400000 }); writeLib()"); }, stay);
   await go("wizard / hub, remove slip", async () => { await to("#step=hub&d=1"); await page.click("#wiz-lib [id^=lib-remove-]"); await page.locator(".modal").waitFor(); }, async () => { await escapeAll(page); });
@@ -205,7 +206,7 @@ async function axe(page, name) {
   if (!(await page.evaluate(() => !!window.axe))) await page.addScriptTag({ path: AXE });
   const run = tags => window.axe.run(document, { runOnly: tags, iframes: false, resultTypes: ["violations", "incomplete"] });
   const results = [[name, await page.evaluate(run, TAGS), false]];
-  // Every frame is a document of its own, so each is scanned as one: the answer sheet in its folder, and the student
+  // Every frame is a document of its own, so each is scanned as one: the answer sheet and the teacher card in their folders, and the student
   // view in the preview (with whatever the teacher has switched on, such as the answer strip).
   for (const sel of [".overlay iframe", ".preview iframe"]) {
     const el = await page.$(sel); if (!el) continue;

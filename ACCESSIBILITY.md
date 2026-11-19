@@ -244,7 +244,7 @@ If something in the game is hard or impossible to use, please open an issue on t
 
 ## Front page and class links
 
-The website opens on a **front page** with two doors, **I'm a student** and **I'm a teacher**. Students reach the game through a **class link**: the whole escape room packed into the web address. This part also covers the page a student sees when a link is broken, and this statement as a web page.
+The website opens on a **front page** with two doors, **I'm a student** and **I'm a teacher**. Students reach the game through a **class link**: the whole escape room packed into the web address. This part also covers the page a student sees when a link is broken, this statement as a web page, and the teachers' printable **quick-start guide** (`guide.html`).
 
 **Target:** the same as the game: WCAG 2.2 AA, AAA where practical.
 
@@ -256,11 +256,13 @@ The website opens on a **front page** with two doors, **I'm a student** and **I'
 - **High contrast and Readable text** switches at the foot (`role="switch"`, with a visible on/off word), shared with the game and the maker. High contrast also follows `prefers-contrast: more`; forced colours are supported.
 - **A link that didn't open** shows a plain note in the game's own scene, with a heading that takes focus (so it is read out) and **Go to the front page**. The key ring and the Draft note are hidden, because there are no rooms.
 - **The statement page** (`accessibility.html`) is this file as plain dark-on-light reading, one column, with the same display choices. Wide tables scroll sideways inside their own labelled box (a focusable region) when the window is narrow; the page itself never does.
+- **The quick-start guide** (`guide.html`) is one sheet of paper on the front page's wall: one `h1`, seven numbered steps (each with an `h3`), a bordered box and a list of troubles, in Atkinson Hyperlegible at 18px with a line height of 1.55. Its **Print this guide** button prints it; printed, it is black on white with no textures, no buttons and no site links, in fixed sizes (about 11pt body text) and two columns, and it fits exactly one page on US Letter and on A4. The printed size doesn't follow Readable text or the browser's text size (use the print dialog's scale for larger print; it then runs to a second page). Its QR code of the site's address is labelled and always sits beside the address written out. In the maker, the links to it open a new tab and say so.
+- **The teacher card** (the guided steps' Done page, "Print a card for this escape room") is a plain light page in a labelled folder, like the answer sheet, with its own Print button; it fits one page on Letter and A4.
 - **Teachers' QR code** is an extra: it always comes with the link as text and a Copy link button, and says plainly when the link is too long for one.
 
 ### How it was tested
 
-`tests/a11y-game.js` walks the front page, the front page with its accessibility question open, the front page with a link error, a link that didn't open, and the statement (`frontTour()`), with the same checks as the game: axe-core in the eight looks (normal, High contrast and Readable text at 1440×900 and 390×844, forced colours, `prefers-contrast: more`): **0 violations**; every focusable control focused, ringed and not covered; targets at least 24 CSS px (links inside a sentence are exempt, as 2.5.8 allows); text at 200%, 320px wide, 720×450 and the text-spacing override: nothing cut off and no sideways scrolling; real edges in forced colours and High contrast; names, roles and states. `tests/links.js` uses the two doors with the keyboard alone (no pointer events), including the error messages.
+`tests/a11y-game.js` walks the front page, the front page with its accessibility question open, the front page with a link error, a link that didn't open, the statement and the quick-start guide (`frontTour()`), with the same checks as the game: axe-core in the eight looks (normal, High contrast and Readable text at 1440×900 and 390×844, forced colours, `prefers-contrast: more`): **0 violations**; every focusable control focused, ringed and not covered; targets at least 24 CSS px (links inside a sentence are exempt, as 2.5.8 allows); text at 200%, 320px wide, 720×450 and the text-spacing override: nothing cut off and no sideways scrolling; real edges in forced colours and High contrast; names, roles and states. `tests/links.js` uses the two doors with the keyboard alone (no pointer events), including the error messages.
 
 **Measured contrast** (median of the letter cores, as for the game):
 
@@ -277,6 +279,11 @@ The website opens on a **front page** with two doors, **I'm a student** and **I'
 | Link error message | 8.2 | 8.2 | 10 |
 | Link that didn't open: heading / note / plate | 7.1 / 12.7 / 6.7 | 7.0 / 12.7 / 6.7 | 16 / 20.2 / 16 |
 | Statement text and tables | 15.5 | 15.5 | 21 |
+| Quick-start guide: heading, steps, troubles, address | 14 | 14 | 21 |
+| Quick-start guide: quiz question, saved box | 15.5 to 15.7 | 15.5 to 15.7 | 21 |
+| Quick-start guide: small print, print note, QR caption, menus caution | 9.5 | 9.5 | 21 |
+| Quick-start guide: Print button, placard (brass) | 9.2 / 8.6 | 9.1 / 8.6 | 21 |
+| Quick-start guide: top bar links | 12 | 12 | 21 |
 
 ### Known limitations
 

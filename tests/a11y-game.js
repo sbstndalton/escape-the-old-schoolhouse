@@ -292,7 +292,7 @@ const TEXTS = {
   "notebook open": [["Notebook heading", ".page h2", "big"], ["Notebook stats", ".page .stat", "read"], ["Notebook rows", ".page li button .lbl", "read"], ["Switch state (on/off)", ".page li .st", "label"], ["How to play", ".page ul li", "read"]]
 };
 /* The other pages a student meets: the front page (also with a link error), a class link that didn't open, and the
-   accessibility statement. frontTour() visits each, like tour() does for the game. */
+   accessibility statement and the teachers' quick-start guide. frontTour() visits each, like tour() does for the game. */
 async function frontTour(page, visit) {
   await page.goto(base + "/"); await page.locator("#student-h").waitFor(); await visit("front page");
   await page.click("#a11y-options"); await page.locator("#a11y-ask").waitFor(); await visit("front page, accessibility options open"); await page.keyboard.press("Escape");
@@ -300,15 +300,19 @@ async function frontTour(page, visit) {
   await page.locator("#link-error:not([hidden])").waitFor(); await visit("front page, link error");
   await page.goto(base + "/play.html#play=1.abcdefghijkl"); await page.locator("#link-problem").waitFor(); await visit("class link didn't open");
   await page.goto(base + "/accessibility.html"); await page.locator("#statement h1").waitFor(); await visit("accessibility statement");
+  await page.goto(base + "/guide.html"); await page.locator("#print-guide").waitFor(); await visit("quick-start guide");
 }
 Object.assign(TEXTS, {
   "front page": [["Site name on the placard", ".placard", "label"], ["Front page heading", "h1", "big"], ["Intro line", ".intro", "read"], ["Door plate", ".door h2", "big"],
     ["Paper text on a door", ".sheet .lead", "read"], ["Field label", "label.big", "read"], ["Field hint", ".fhint", "read"], ["Brass button", ".btn", "label"], ["Text link on paper", "#open-saved", "read"],
     ["Small print on paper", ".sheet .small", "read"], ["How it works", ".how span", "read"], ["How it works, step names", ".how b", "read"], ["Privacy line", "#privacy", "read"],
-    ["Footer link", "#a11y-link", "read"], ["Display switch", ".switch .lbl", "label"]],
+    ["Footer link", "#a11y-link", "read"], ["Guide link", "#guide-link", "read"], ["Display switch", ".switch .lbl", "label"]],
   "front page, accessibility options open": [["Prompt heading", "#a11y-ask h2", "big"], ["Prompt switch name", ".a11yq-lbl", "read"], ["What a switch does", ".a11yq-d", "read"], ["Screen-reader line", ".a11yq-sr", "read"], ["Continue", "#a11y-ask-ok", "read"]],
   "front page, link error": [["Error message", "#link-error", "read"], ["Typed link", "#class-link", "read"]],
   "class link didn't open": [["Its heading", "h2.bplate", "big"], ["Its note", "#link-problem p:not(:last-child)", "read"], ["Front page plate", "#home", "label"]],
+  "quick-start guide": [["Guide placard", ".placard", "label"], ["Guide heading", "h1", "big"], ["Guide intro", ".sub", "read"], ["Site address", ".where", "read"], ["QR caption", ".qr figcaption", "read"],
+    ["Print button", ".btn", "label"], ["Print note", ".acts .note", "read"], ["Step names", "ol.steps h3", "read"], ["Step text", "ol.steps p", "read"], ["Quiz question", ".quote", "read"],
+    ["Menus caution", ".menus", "read"], ["Saved box", ".box p", "read"], ["Troubles", "#trouble dd", "read"], ["Fine print", ".fine", "read"], ["Guide top bar link", ".top a", "read"]],
   "accessibility statement": [["Statement text", "#statement p", "read"], ["Statement heading", "#statement h2", "big"], ["Table text", "#statement td", "read"], ["Top bar link", ".top a", "read"]]
 });
 const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to the AAA figure

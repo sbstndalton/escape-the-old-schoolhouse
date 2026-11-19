@@ -165,6 +165,9 @@
   #display-toggles .opt{display:flex;align-items:center;gap:.4rem}
   nav .switch{font-size:.95rem;color:var(--parch);min-height:1.75rem}
   #cabinet-close{display:none}
+  #adv-guide{white-space:normal;margin-top:.6rem;padding-left:.3rem;font-size:.9rem}
+  .wguide a{display:inline-flex;align-items:center;gap:.4rem}
+  .wguide a svg{width:1.2em;height:1.2em;flex:none}
   nav .shelf{display:none}
   #cab-scrim{display:none}
 
@@ -1703,6 +1706,7 @@ function renderNav(){
       h("div", { class: "opt" }, toggle("readable-toggle", "Readable text", readableOn(), on => { prefSet(PREF.readable, on ? "on" : "off"); applyDisplay(); say(`Readable text ${on ? "on" : "off"}.`); }),
         tip("A plain, larger typeface with more room between letters and lines, in place of the old-book lettering.", "Readable text")),
       h("button", { type: "button", class: "cut", id: "a11y-options", "aria-haspopup": "dialog", onclick: e => askA11y(e.currentTarget) }, "Accessibility options")),
+    guideLink("adv-guide", "cut"),
     cabSave].filter(Boolean));
 }
 let meterText = "", navSig = "", cabSave = null;
@@ -2013,6 +2017,56 @@ function answerSheetHtml(){
     <p><em>Check every item against your textbook or sources.${sampleUnchecked(cfg) ? " The sample content was written with AI help and can contain mistakes." : ""} Mark items as checked in the editor.</em></p>
     ${rooms}${check}</main></body></html>`;
 }
+/* The teacher card: one printed page about one escape room (its name, rooms, exit password, last backup, and how to
+   change it later), so the password can still be found a month on. Offered on the guided steps' Done page. */
+function teacherCardHtml(){
+  const E = ER.esc, day = t => new Date(t).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  const pw = String(cfg.finish?.exitPassword || "").trim(), st = ER.reviewStatus(cfg), d = meta.delivery || {}, L = meta.link;
+  const hc = contrastOn(), big = readableOn();
+  const READ = big ? `"Atkinson Hyperlegible",Verdana,"Segoe UI","Helvetica Neue","DejaVu Sans",Arial,sans-serif` : `Georgia,"Iowan Old Style","Palatino Linotype","Book Antiqua","DejaVu Serif","Times New Roman",serif`;
+  const row = (k, v) => `<tr><th scope="row">${k}</th><td>${v}</td></tr>`;
+  const backup = meta.backupAt ? `${day(meta.backupAt)}${unbacked() ? " (you have changed it since: download a new backup)" : ""}` : "No backup downloaded yet";
+  const link = L && L.url ? `<br>Class link made on ${day(L.at)}${L.rev !== meta.rev ? " (you have changed the escape room since: make a new link)" : ""}` : "";
+  const site = E(ER.SITE);
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Teacher card: ${E(cfg.meta?.title || "Untitled")}</title><style>
+    html{color-scheme:light}
+    body{font-family:${READ};max-width:44rem;margin:1.5rem auto 2.5rem;padding:0 1.5rem;color:${hc ? "#000" : "#1b140d"};background:#fff;line-height:${big ? 1.65 : 1.5};font-size:${big ? "1.12rem" : "1.02rem"}${big ? ";letter-spacing:.02em;word-spacing:.06em" : ""}}
+    h1{font-size:1.7rem;line-height:1.2;margin:0 0 .3rem}
+    .sub{margin:0 0 1rem;padding-bottom:.6rem;border-bottom:3px double currentColor}
+    h2{font-size:1.2rem;margin:1.3rem 0 .4rem;padding-bottom:.15rem;border-bottom:1px solid currentColor}
+    table{border-collapse:collapse;width:100%} th,td{text-align:left;vertical-align:top;padding:.4rem .5rem;border-bottom:1px solid #6b5a44}
+    th{width:11rem;font-weight:700}
+    code{font-family:ui-monospace,Menlo,Consolas,"Courier New",monospace;font-size:1.25em;font-weight:700;letter-spacing:.08em}
+    ol{margin:.2rem 0;padding-left:1.5rem} li{margin:.15rem 0}
+    .warn{font-weight:700}
+    @page{margin:14mm}
+    @media print{body{margin:0;max-width:none;padding:0;font-size:11pt}}</style></head><body><main>
+    <h1>Teacher card: ${E(cfg.meta?.title || "Untitled")}</h1>
+    <p class="sub">${cfg.meta?.course ? E(cfg.meta.course) + " · " : ""}Printed on ${day(Date.now())}. <span class="warn">Keep it away from students: it has the exit password.</span></p>
+    <table><tbody>
+    ${row("Exit password", pw ? `<code>${E(pw)}</code>` : "Not chosen yet")}
+    ${row("Quiz question", E(QUIZ_Q) + "<br>The answer is the exit password. Set the quiz to ignore capital letters.")}
+    ${row("Rooms", `<ol>${cfg.rooms.map(r => `<li>${E(r.title || "Untitled")} (${E(ROOM_KIND[r.type] || r.type)})</li>`).join("")}</ol>`)}
+    ${row("How students get it", E(deliveryWords() || "Not chosen yet") + link)}
+    ${row("Facts checked", `${st.verified} of ${st.total}`)}
+    ${row("Last backup", backup)}
+    </tbody></table>
+    <h2>Where your work is</h2>
+    <p>Saved only in the browser you made it in. Your backup file${d.where === "link" ? " or your class link" : ""} brings it back on any computer.</p>
+    <h2>How to change it later</h2>
+    <ol>
+      <li>Go to ${site} and choose “Open one I saved before”. (In the browser you made it in, it is also under “Your escape rooms”.)</li>
+      <li>Choose your backup file${d.where === "link" ? " or paste your class link" : ""}, and make the change.</li>
+      <li>${d.where === "link" ? "Make a new class link and share it instead of the old one: the old link keeps opening the old version." : "Download it again and replace the old file in your course."}</li>
+      <li>If you change the exit password, keep the old one as a second correct answer in your quiz.</li>
+    </ol>
+    <p>All the steps: the quick-start guide at ${site}guide.html</p>
+    </main></body></html>`;
+}
+function openTeacherCard(){
+  const frame = h("iframe", { title: "Teacher card" }); frame.srcdoc = teacherCardHtml();
+  overlay("Teacher card: for you, not for students", frame, [h("button", { class: "inkline", id: "card-print", onclick: () => frame.contentWindow.print() }, icon("print"), "Print")], true);
+}
 document.getElementById("btn-review").onclick = () => openAnswerSheet();
 function openAnswerSheet(){
   const frame = h("iframe", { title: "Answer sheet" }); frame.srcdoc = answerSheetHtml();
@@ -2072,7 +2126,12 @@ function routeTo(r, focus){
 /* ---------- small builders for the steps ---------- */
 const wErr = key => WIZ.errors.find(e => e.key === key);
 const wbtn = (props, ...kids) => h("button", { type: "button", ...props }, ...kids);
-const wHelp = (...kids) => h("details", { class: "whelp", id: "wiz-help" }, h("summary", {}, "Help with this step"), h("div", {}, ...kids));
+/* The printable quick-start guide: beside the maker on the website, or the website's own copy when the maker was opened
+   as a file. It opens in a new tab, so leaving the maker never asks about unsaved work. */
+const guideHref = () => (/^https?:$/.test(location.protocol) ? "" : ER.SITE) + "guide.html";
+const guideLink = (id, cls) => h("a", { id, class: cls || null, href: guideHref(), target: "_blank", rel: "noopener" }, icon("print"), "Printable quick-start guide", h("span", { class: "sr" }, " (opens in a new tab)"));
+const wHelp = (...kids) => h("details", { class: "whelp", id: "wiz-help" }, h("summary", {}, "Help with this step"), h("div", {}, ...kids,
+  h("p", { class: "wguide" }, "All the steps on one page: ", guideLink("wiz-help-guide"), ".")));
 const H1 = text => h("h1", { id: "wiz-h1", tabindex: "-1" }, text);
 /* A field: a label you can read (or the page's question as its label), an optional hint, the error if any, then the box. */
 function wField({ id, label, value, set, hint, area, rows, asH1, placeholder, item, key }){
@@ -2188,7 +2247,8 @@ WSTEPS.welcome = {
     h("p", {}, "You don't need an account, and nothing you write is sent anywhere."),
     wHelp(h("p", {}, "You can start from a finished sample about the foundations of education and change it, or start with an empty escape room."),
       h("p", {}, "You can stop at any step with “Save and finish later”. When you come back to this page in the same browser, you'll see your escape room and what is left to do.")),
-    h("p", {}, h("a", { id: "wiz-have-one", href: hashFor("start", { open: "1" }) }, "I've made one before: open a saved escape room"))],
+    h("p", {}, h("a", { id: "wiz-have-one", href: hashFor("start", { open: "1" }) }, "I've made one before: open a saved escape room")),
+    h("p", { class: "wguide" }, guideLink("wiz-guide"))],
   go: () => "Start",
   next: () => hashFor("start")
 };
@@ -2302,6 +2362,9 @@ WSTEPS.done = {
         row("Facts checked", `${st.verified} of ${st.total} checked`, "facts", "which facts are checked"),
         row("How students get it", deliveryWords() || "Not chosen yet", "deliver", "how students get it"),
         row("Exit password", pw || "Not chosen yet", "walk", "the exit password")),
+      h("h2", {}, "Keep a card"),
+      h("p", { id: "wiz-card-note" }, "One printed page with the name, the rooms, the exit password, the date of your last backup and how to change it later. Keep it with your course notes."),
+      wbtn({ class: "stamp", id: "wiz-card", "aria-describedby": "wiz-card-note", onclick: openTeacherCard }, icon("print"), "Print a card for this escape room"),
       h("h2", {}, "Keep a backup"),
       fresh ? h("p", { id: "wiz-done-backup-note" }, "The file you downloaded is also your backup copy: it opens in this maker. Keep it somewhere safe, such as your course folder.")
         : h("p", { id: "wiz-done-backup-note" }, "Download a backup copy and keep it somewhere safe, such as your course folder. It is one file: it plays as the game in any browser, and it opens again in this maker."),
@@ -2336,6 +2399,7 @@ WSTEPS.hub = {
         task("task-deliver", "Get it to students", hashFor("deliver"), deliveryWords() || "Not started", !deliveryWords()),
         h("li", { id: "task-backup" }, wbtn({ id: "wiz-hub-backup", onclick: () => { backup(); renderWizard(); } }, "Download a backup"),
           h("span", { class: "st" + (unbacked() ? " todo" : "") }, meta.backupAt ? (unbacked() ? `Changed since your backup ${when(meta.backupAt)}` : `Backed up ${when(meta.backupAt)}`) : "Not backed up yet"))),
+      h("p", { class: "wguide" }, "Every step on one page, to keep beside your screen: ", guideLink("wiz-guide"), "."),
       libraryPart()];
   }
 };
