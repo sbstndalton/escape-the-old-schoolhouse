@@ -368,7 +368,7 @@
 
   /* ---------- student preview: a slim brass rail over the real game ---------- */
   .preview{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;background:var(--night)}
-  .pbar{display:flex;flex-wrap:wrap;gap:.3rem .9rem;align-items:center;padding:.22rem .8rem;min-height:2.6rem;color:#120a03;position:relative;z-index:1;--ring:#120d09;
+  .pbar{flex:none;display:flex;flex-wrap:wrap;gap:.3rem .9rem;align-items:center;padding:.22rem .8rem;min-height:2.6rem;color:#120a03;position:relative;z-index:1;--ring:#120d09;
     background:var(--brassfill);box-shadow:inset 0 1px 0 rgba(255,240,196,.85),inset 0 -2px 0 rgba(70,48,12,.7),0 1px 0 #0d0704,0 6px 12px rgba(0,0,0,.6)}
   .pbar .badge{font-family:var(--caps);letter-spacing:.16em;font-size:.95rem;text-shadow:0 1px 0 rgba(255,236,180,.55)}
   .pbar .rooms{display:flex;gap:.3rem;flex-wrap:wrap;flex:1;align-items:center}
@@ -473,10 +473,17 @@
     .paper{padding:1.1rem .9rem 1.4rem} .tabs{padding:0 .4rem}
     .row>.field:not(.narrow){flex:1 1 100%} .row>.field.narrow{flex:1 1 6.5rem} .rotary{width:auto}
     .entry{grid-template-columns:3.6rem minmax(0,1fr)} .entry .body{padding-left:.7rem} .entry .gut strong{font-size:.8rem;letter-spacing:0}
-    .loose{gap:.9rem} .note,.answerkey{flex-basis:100%;max-width:none} .answerkey summary{height:3.6rem} .answerkey[open]{margin-top:2.1rem} .answerkey summary .wax{width:1.7rem;height:1.7rem;margin:-.85rem 0 0 -.85rem}
+    .loose{gap:.9rem} .note,.answerkey{flex-basis:100%;max-width:none} .answerkey[open]{margin-top:2.1rem} .answerkey summary .wax{width:1.7rem;height:1.7rem;margin:-.85rem 0 0 -.85rem}
+    /* narrow or large-text: the two labels sit in the flow under the seal and wrap instead of running into each other */
+    .answerkey summary{display:flex;flex-wrap:wrap;align-content:flex-end;align-items:flex-end;gap:.15rem .6rem;height:auto;min-height:3.6rem;padding:2.5rem .7rem .45rem}
+    .answerkey summary .lbl,.answerkey summary .act{position:relative;left:auto;right:auto;bottom:auto}
+    .answerkey summary .act{margin-left:auto} .answerkey summary .wax{top:1.35rem}
+    .loose .plate{white-space:normal;max-width:100%} .verify>*{min-width:0;max-width:100%} .verify label.chk .w{min-width:0;overflow-wrap:anywhere}
     .overlay{padding:4.4rem .6rem 1.5rem} .folder .sheet{padding:1rem .9rem 1.2rem} .slips{grid-template-columns:1fr} .slip+.slip{border-left:0;padding-left:0;border-top:1px dashed var(--rule)}
     .folder.wide{height:calc(100vh - 5.9rem)} .pbar .rooms{order:3;flex-basis:100%}
   }
+  /* tablet widths: the Preview and Export plates have room for their words again */
+  @media (min-width:40em) and (max-width:51.25em){ header .run .plate .w{position:static;width:auto;height:auto;overflow:visible;clip-path:none} }
   /* very small or heavily zoomed windows: nothing is pinned, the whole page scrolls */
   @media (max-width:51.25em) and (max-height:30em){
     html,body{height:auto} body{display:block;overflow:visible;min-height:100%}
@@ -1531,6 +1538,9 @@ async function openPreview(startRoom = 0){
   const onMsg = e => {
     if (e.source !== frame.contentWindow) return;
     if (e.data?.er === "escape") return exit();
+    if (e.data?.er === "key" && !e.data.on) {      // "Hide answers" in the game's answer strip: the switch follows, and keeps the keyboard
+      showKey = false; const sw = keyToggle.querySelector("input"); sw.checked = false; sw.focus(); where.textContent = "Answers hidden."; return;
+    }
     if (e.data?.er === "room") {
       const moved = current !== e.data.room; current = e.data.room; mark();
       // a disabled button can't keep the keyboard, so it moves to the other arrow before one is switched off

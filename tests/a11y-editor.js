@@ -113,6 +113,9 @@ async function eachState(page, visit, only) {
   await go("overlay / export", () => page.click("#btn-export"));
   await go("overlay / answer sheet", async () => { await tool("#btn-review"); await page.frameLocator(".overlay iframe").locator("h1").waitFor(); });
   await go("overlay / preview rail", async () => { await page.click("#btn-preview"); await page.frameLocator(".preview iframe").locator("#begin").waitFor(); });
+  // the student view itself, in a matching room with the teacher's answer strip on (its frame is scanned as well)
+  await go("overlay / preview, room 1 with answers shown", async () => { await page.click("#btn-preview"); const f = page.frameLocator(".preview iframe"); await f.locator("#begin").waitFor();
+    await page.click(".pbar button[data-room='1']"); await f.locator("#stage h2:has-text('Room 1')").waitFor(); await page.click("label.switch:has(#preview-answers)"); await f.locator("#teacher-key").waitFor(); });
   if (await page.evaluate(() => typeof ask === "function")) {
     await drawer(page, "1."); await page.click("#tab-items");
     await go("dialog / delete a card", () => page.click("[aria-label='Delete Card 1']"));
@@ -129,17 +132,26 @@ async function eachState(page, visit, only) {
 async function axe(page, name) {
   if (!(await page.evaluate(() => !!window.axe))) await page.addScriptTag({ path: AXE });
   const run = tags => window.axe.run(document, { runOnly: tags, iframes: false, resultTypes: ["violations", "incomplete"] });
-  const results = [[name, await page.evaluate(run, TAGS)]];
-  // The answer sheet is a document of its own inside the folder, so it is scanned as one. (The preview's frame is the game, which has its own tests.)
-  const sheet = await page.$(".overlay iframe");
-  if (sheet) { const frame = await sheet.contentFrame(); await frame.addScriptTag({ path: AXE }); results.push([name + " (the sheet itself)", await frame.evaluate(run, TAGS)]); }
+  const results = [[name, await page.evaluate(run, TAGS), false]];
+  // Every frame is a document of its own, so each is scanned as one: the answer sheet in its folder, and the student
+  // view in the preview (with whatever the teacher has switched on, such as the answer strip).
+  for (const sel of [".overlay iframe", ".preview iframe"]) {
+    const el = await page.$(sel); if (!el) continue;
+    const frame = await el.contentFrame(); if (!(await frame.evaluate(() => !!window.axe))) await frame.addScriptTag({ path: AXE });
+    results.push([name + (sel.startsWith(".overlay") ? " (the sheet itself)" : " (the student view inside the preview)"), await frame.evaluate(run, TAGS), true]);
+  }
   const short = n => (n.target || []).flat().join(" ").slice(0, 90);
+  // What is left out of "needs review", and why (ACCESSIBILITY.md says the same):
+  // - color-contrast: axe can't work out text over a gradient or texture; those nodes are counted here, and their
+  //   contrast is measured from the pixels by pixelContrast() below instead (the student view by tests/a11y-game.js);
+  // - frame-tested: only says axe didn't enter a frame from the page around it; every frame is scanned on its own above;
+  // - heading-order inside a frame: axe can't see the headings of the page around the frame.
+  const skipped = { "color-contrast": 0 };
+  const keep = (v, inFrame) => { if (v.id === "color-contrast") { skipped["color-contrast"] += v.nodes.length; return false; } return v.id !== "frame-tested" && !(inFrame && v.id === "heading-order"); };
   return {
     violations: results.flatMap(([where, res]) => res.violations.flatMap(v => v.nodes.map(n => `${where}: ${v.id} (${v.impact}) ${short(n)}`))),
-    // "incomplete" means axe could not decide. For colour contrast that is text over a gradient or texture; those are measured from pixels below.
-    // "frame-tested" only says a frame was not entered (the sheet is scanned just above; the preview's frame is the game).
-    // "heading-order" inside the sheet only says axe can't see the headings of the page around the frame.
-    incomplete: results.flatMap(([where, res], i) => res.incomplete.filter(v => v.id !== "color-contrast" && v.id !== "frame-tested" && !(i === 1 && v.id === "heading-order")).flatMap(v => v.nodes.map(n => `${where}: ${v.id} needs review: ${short(n)}`)))
+    incomplete: results.flatMap(([where, res, inFrame]) => res.incomplete.filter(v => keep(v, inFrame)).flatMap(v => v.nodes.map(n => `${where}: ${v.id} needs review: ${short(n)}`))),
+    contrastByPixels: skipped["color-contrast"]
   };
 }
 
@@ -362,18 +374,18 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
         await apply(page);
         if (!AUDIT && (vname === "High contrast" || vname === "prefers-contrast: more")) assert.equal(await page.evaluate(() => document.documentElement.dataset.contrast), "more");
         if (!AUDIT && vname === "Readable text") assert.equal(await page.evaluate(() => document.documentElement.dataset.readable), "on");
-        const v = [], inc = [], px = [], tg = [], ed = []; let states = 0, texts = 0, min = 99, below7 = 0; const T = { axe: 0, px: 0, start: Date.now() };
+        const v = [], inc = [], px = [], tg = [], ed = []; let states = 0, texts = 0, min = 99, below7 = 0, byPixels = 0; const T = { axe: 0, px: 0, start: Date.now() };
         await eachState(page, async name => {
           states++;
           const tag = `[${vname}, ${size}] ${name}`;
           if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${vname}-${size}-${name}`.replace(/[^a-z0-9×]+/gi, "-") + ".png") });
-          const t0 = Date.now(); const res = await axe(page, tag); v.push(...res.violations); inc.push(...res.incomplete); T.axe += Date.now() - t0;
+          const t0 = Date.now(); const res = await axe(page, tag); v.push(...res.violations); inc.push(...res.incomplete); byPixels += res.contrastByPixels; T.axe += Date.now() - t0;
           const t1 = Date.now(); if (vname !== "forced colours") { const c = await pixelContrast(page, tag); T.px += Date.now() - t1; px.push(...c.fails); if (AUDIT) report("contrast under 7 to 1 (AAA, not required)", c.aaa); texts += c.count; min = Math.min(min, c.min); below7 += c.below7; }
           tg.push(...await targets(page, tag, size === "390×844" ? 44 : 24));
           if (vname !== "default" && vname !== "Readable text") ed.push(...await edges(page, tag));
         }, only);
         if (process.env.A11Y_TIME) log(`time: axe ${T.axe} ms, pixels ${T.px} ms, total ${Date.now() - T.start} ms`);
-        log(`${states} states; axe violations ${v.length}; needs review ${inc.length}; text runs measured ${texts}, lowest contrast ${min.toFixed(2)}:1, under 7:1 ${below7}, failing ${px.length}; small targets ${tg.length}; edges ${ed.length}`);
+        log(`${states} states; axe violations ${v.length}; needs review ${inc.length} (plus ${byPixels} colour-contrast nodes axe left to the pixel measurement); text runs measured ${texts}, lowest contrast ${min.toFixed(2)}:1, under 7:1 ${below7}, failing ${px.length}; small targets ${tg.length}; edges ${ed.length}`);
         assert.deepEqual(page.errors, []);
         report("axe violations", v); report("axe needs review", inc); report("contrast (pixels)", px); report("target size", tg); report("visible edges", ed);
         await page.context().close();
@@ -718,7 +730,8 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     assert.equal(await page.getByRole("dialog", { name: "Student preview" }).count(), 1);
     assert.equal(await page.getAttribute(".preview", "aria-modal"), "true");
     assert.equal(await inert(page, "main"), true);
-    assert.equal(await page.evaluate(() => !!document.activeElement.closest(".preview")), true, "focus is in the preview (the rail, or the game once it has loaded)");
+    await page.waitForTimeout(300);
+    assert.equal((await active(page)).id, "preview-exit", "focus is on the rail's Exit button, not pulled into the game when it loads or changes room");
     assert.equal(await page.getAttribute(".preview iframe", "title"), "Student view of the escape room");
     assert.equal(await page.$$eval(".pbar button, .pbar input", els => els.every(e => (e.getAttribute("aria-label") || e.closest("label")?.textContent || e.textContent).trim().length > 2)), true);
     assert.equal(await page.getByRole("group", { name: "Jump to a room" }).count(), 1);
@@ -728,13 +741,83 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     await page.waitForFunction(() => /showing room 3 of 5: The History Hall/.test(document.querySelector(".pbar [role=status]").textContent));
     const sw = page.getByRole("switch", { name: "Show answers" });
     await sw.focus(); await page.keyboard.press("Space");
-    await page.frameLocator(".preview iframe").locator("#teacher-key").waitFor();
+    const key = page.frameLocator(".preview iframe").locator("#teacher-key");
+    await key.waitFor();
+    // the answers are a labelled complementary landmark in the page flow, with a heading and a Hide button
+    assert.equal(await key.evaluate(el => el.tagName + " " + document.getElementById(el.getAttribute("aria-labelledby")).tagName), "ASIDE H2");
+    assert.equal(await key.evaluate(el => getComputedStyle(el).position), "relative", "the answer strip is in the flow, not an overlay");
+    await key.locator("#tk-hide").click();
+    await key.waitFor({ state: "detached" });
+    assert.equal(await sw.isChecked(), false, "Hide answers turns the rail's switch off too");
+    assert.equal((await active(page)).id, "preview-answers", "and the keyboard lands on that switch");
     await page.focus("#preview-exit"); await page.keyboard.press("Escape");
     assert.equal(await page.locator(".preview").count(), 0);
     assert.equal((await active(page)).id, "preview-room", "focus returns to the plate that opened the preview");
     assert.equal(await inert(page, "main"), false);
     assert.deepEqual(page.errors, []);
     await page.context().close();
+  });
+
+  for (const [size, viewport] of [["1440×900", DESKTOP], ["390×844", PHONE]]) test(`the preview's answer strip never covers a focused control in the student view: ${size}`, async log => {
+    const page = await open(browser, base, viewport, { reducedMotion: "reduce" });
+    await page.click("#btn-preview");
+    const frame = page.frameLocator(".preview iframe"); await frame.locator("#begin").waitFor();
+    await page.click("label.switch:has(#preview-answers)");
+    const game = (await (await page.$(".preview iframe")).contentFrame());
+    const bad = []; let checked = 0;
+    for (let room = 1; room <= 5; room++) {
+      await page.click(`.pbar button[data-room='${room}']`); await frame.locator("#stage h2", { hasText: `Room ${room}` }).waitFor(); await frame.locator("#teacher-key").waitFor();
+      const r = await game.evaluate(() => {
+        const key = document.getElementById("teacher-key"), out = []; let n = 0;
+        const els = [...document.querySelectorAll("#view a[href], #view button, #view input, #view [tabindex='0']")].filter(el => !el.disabled && el.getClientRects().length && !key.contains(el));
+        for (const el of els) {
+          el.focus(); if (document.activeElement !== el) continue; n++;
+          const q = el.getBoundingClientRect(), i = Math.min(3, q.width / 4, q.height / 4);
+          // the centre and four points just inside the corners
+          for (const [x, y] of [[q.left + q.width / 2, q.top + q.height / 2], [q.left + i, q.top + i], [q.right - i, q.top + i], [q.left + i, q.bottom - i], [q.right - i, q.bottom - i]]) {
+            if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) { out.push("off screen when focused: " + (el.id || el.className) + " " + (el.getAttribute("aria-label") || el.textContent).trim().slice(0, 30)); break; }
+            const hit = document.elementFromPoint(x, y);
+            if (hit && key.contains(hit)) { out.push("covered by the answer strip: " + (el.id || el.className) + " " + (el.getAttribute("aria-label") || el.textContent).trim().slice(0, 30)); break; }
+          }
+        }
+        return { n, out };
+      });
+      checked += r.n; bad.push(...r.out.map(x => `[room ${room}] ${x}`));
+    }
+    log(`${checked} focused controls checked with the answers shown`);
+    assert.ok(checked > 60, "only " + checked + " controls were checked");
+    report("covered by the answer strip", bad);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  test("the preview rail keeps all its controls inside it and off the student view: 320×256, and with 32px text", async () => {
+    const big = engine === playwright.chromium ? await engine.launch({ args: ["--blink-settings=defaultFontSize=32,defaultFixedFontSize=26"] }) : null;
+    const bad = [];
+    for (const [label, b, viewport] of [["320×256", browser, { width: 320, height: 256 }], ["32px text, 1280×900", big, { width: 1280, height: 900 }], ["32px text, 390×844", big, PHONE]]) {
+      if (!b) continue;
+      const page = await open(b, base, viewport, { reducedMotion: "reduce" });
+      await page.click("#btn-preview"); await page.frameLocator(".preview iframe").locator("#begin").waitFor();
+      const r = await page.evaluate(() => {
+        const bar = document.querySelector(".pbar").getBoundingClientRect(), fr = document.querySelector(".preview iframe").getBoundingClientRect(), out = [];
+        for (const el of document.querySelectorAll(".pbar button, .pbar label, .pbar input")) {
+          const q = el.getBoundingClientRect(); if (!q.width) continue;
+          if (q.left < bar.left - .5 || q.right > bar.right + .5 || q.top < bar.top - .5 || q.bottom > bar.bottom + .5) out.push("outside the rail: " + (el.id || el.getAttribute("aria-label") || el.textContent.trim()));
+          if (q.bottom > fr.top + .5 && q.top < fr.bottom && q.right > fr.left && q.left < fr.right) out.push("over the student view: " + (el.id || el.getAttribute("aria-label") || el.textContent.trim()));
+        }
+        if (bar.bottom > fr.top + .5) out.push(`the rail (bottom ${Math.round(bar.bottom)}) runs onto the student view (top ${Math.round(fr.top)})`);
+        if (document.documentElement.scrollWidth > innerWidth + 1) out.push("the page scrolls sideways");
+        return out;
+      });
+      bad.push(...r.map(x => `[${label}] ${x}`));
+      // everything in the rail can still be reached and used: the last control, Exit, is in view once focused
+      await page.focus("#preview-exit");
+      const exitBox = await page.evaluate(() => { const q = document.getElementById("preview-exit").getBoundingClientRect(); return q.top >= 0 && q.bottom <= innerHeight; });
+      if (!exitBox) bad.push(`[${label}] Exit preview is out of view when focused`);
+      await page.context().close();
+    }
+    if (big) await big.close();
+    report("preview rail", bad);
   });
 
   test("High contrast and Readable text: keyboard switches, remembered, follow the system, reach the answer sheet", async () => {

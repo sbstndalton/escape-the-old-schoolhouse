@@ -496,12 +496,17 @@ h2.said{margin:0;font:400 1.25rem/1.2 var(--f-d);letter-spacing:.12em;color:#f0d
 .page li em{margin-left:auto;font:400 .78rem/1 var(--f-d);letter-spacing:.14em;text-decoration:none;color:#5b4a35}
 
 /* ---------- Teacher key (editor preview only) ---------- */
-#teacher-key{position:absolute;z-index:33;left:1rem;bottom:.9rem;width:min(23rem,calc(100% - 2rem));max-height:42%;overflow:auto;padding:.7rem .9rem .6rem;font-size:.76rem;line-height:1.35;color:var(--ink);
-  background:var(--stain),var(--pgrain),#e9dcc0;box-shadow:.3rem .8rem 1.2rem rgba(0,0,0,.7)}
-#teacher-key h3{margin:0 0 .35rem;font:400 .8rem/1.2 var(--f-d);letter-spacing:.12em;color:#7a2018}
-#teacher-key ul,#teacher-key ol{margin:0;padding-left:1.1rem}
+/* A strip in the page flow, between the HUD and the room: it never covers the room. */
+#teacher-key{position:relative;z-index:31;flex:none;margin:.5rem 1.1rem .2rem;max-width:52rem;padding:.6rem .9rem .7rem;color:var(--ink);
+  background:var(--stain),var(--pgrain),#e9dcc0;box-shadow:.2rem .4rem .8rem rgba(0,0,0,.7)}
+#teacher-key .tk-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.3rem 1rem;margin-bottom:.35rem}
+#teacher-key h2{margin:0;font:400 1rem/1.3 var(--f-d);letter-spacing:.1em;color:#6e1a12}
+#teacher-key h2 small{font:400 .9rem/1.3 var(--f-r);letter-spacing:0;color:#2a1d14}
+#tk-hide{display:inline-flex;align-items:center;gap:.4rem;min-height:2.75rem;padding:.3rem .8rem;font:700 .95rem/1.2 var(--f-r);color:#1d1205;
+  background:var(--plate);box-shadow:inset 0 0 0 1px #4a360f,0 .15rem .3rem rgba(0,0,0,.5)}
+#tk-hide svg{width:.9rem;height:.9rem}
+#teacher-key ul,#teacher-key ol{margin:0;padding-left:1.3rem}
 #teacher-key p{margin:.5rem 0 .2rem}
-#draft.away{display:none}
 
 /* ---------- Room change: the lantern dims and two door leaves part ---------- */
 #doorfx{position:absolute;inset:0;z-index:50;pointer-events:none;display:none}
@@ -773,8 +778,7 @@ h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
 .page .howh{margin:1.1rem 0 .4rem;font:400 1.05rem/1.2 var(--f-d);letter-spacing:.14em;color:#6e1a12}
 .page ul.tips{list-style:disc;margin:0;padding-left:1.2rem;font-size:1rem;line-height:1.5;color:var(--ink)}
 .page ul.tips li{border:0;margin-bottom:.35rem}
-#teacher-key{font:400 .95rem/1.5 var(--f-r)}
-#teacher-key h3{font-size:.95rem;color:#6e1a12}
+#teacher-key{font:400 1rem/1.5 var(--f-r)}
 
 /* ---------- Papers you can pick up ----------
    The words on a paper are ordinary text. Its heading is a short button that opens it large, and the button is
@@ -830,7 +834,6 @@ h2.said{font-size:1.35rem;line-height:1.25;color:#f6dfa0}
 [data-shape=tall] .seal{position:relative;right:auto;bottom:auto;margin:.6rem 0 0 auto;width:4.6rem;height:4.6rem;font-size:.85rem}
 [data-shape=tall] .side{flex:none;flex-direction:row;flex-wrap:wrap;min-width:0}
 [data-shape=tall] .sheet{padding:1.4rem 1.2rem 1.2rem}
-[data-shape=tall] #teacher-key{max-height:30%}
 
 /* ---------- Hide the clock (a switch in the notebook) ---------- */
 [data-clock=off] #timer,[data-clock=off] #p-clock,[data-clock=off] #watch .hand{display:none}
@@ -856,8 +859,8 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
 [data-contrast=more] .exit .slab{background:#17100a;box-shadow:inset 0 0 0 2px #8f6d2b}
 [data-contrast=more] .exit .void{background:#000}
 [data-contrast=more] :is(.paper,.story,.hint,.note,.cert,.ledger,.page,.sheet,#draft,#teacher-key,.typer input,.dwin,.x){background:#fffaf0;color:#000;border:2px solid #000}
-[data-contrast=more] :is(.story .go,.icard .no,.rules .rb,.hint .hb,.result .h,.sheet h2,.page h2,.page .howh,.ev .pick,#order .grip,.cert .kicker,.cert .small,.klabel small,.ledger label,.sheet .foot,.sheet .sub,.sheet .ref,.page li em,#teacher-key h3){color:#000}
-[data-contrast=more] :is(h2.bplate,.placard,.desc,.pushplate,.lbody,.esc,.counter,.pname,.stamp .base,.vol .letter,.mcard .badge,#more,.skip,.stud,.qnav .n.done){background:#f6dfa0;color:#000;border:2px solid #000}
+[data-contrast=more] :is(.story .go,.icard .no,.rules .rb,.hint .hb,.result .h,.sheet h2,.page h2,.page .howh,.ev .pick,#order .grip,.cert .kicker,.cert .small,.klabel small,.ledger label,.sheet .foot,.sheet .sub,.sheet .ref,.page li em,#teacher-key h2,#teacher-key h2 small){color:#000}
+[data-contrast=more] :is(h2.bplate,.placard,.desc,.pushplate,#tk-hide,.lbody,.esc,.counter,.pname,.stamp .base,.vol .letter,.mcard .badge,#more,.skip,.stud,.qnav .n.done){background:#f6dfa0;color:#000;border:2px solid #000}
 [data-contrast=more] :is(.how,.msg:not(:empty),#hint-note:not(:empty)){background:#000;color:#fff;box-shadow:inset 0 0 0 2px #fff}
 [data-contrast=more] :is(.cap,h2.said,.qcard legend,.qcard .qno,#timer,.wl,.msg.bad,.msg.good,.sitter i){color:#fff}
 [data-contrast=more] :is(#timer,.wl){background:#000}
@@ -1888,16 +1891,21 @@ function confetti(x, y){
 }
 
 /* ===================== Teacher preview (editor only) ===================== */
+/* The answers for the teacher: a strip in the page flow between the HUD and the room, so it never covers
+   anything. It is a labelled complementary landmark with its own heading, and "Hide answers" turns it off
+   (the editor's "Show answers" switch follows). */
 function teacherKey(){
-  document.getElementById("teacher-key")?.remove();
+  const had = document.getElementById("teacher-key"), back = had && had.contains(document.activeElement); had?.remove();
   const r = ROOMS[S.room-1];
-  $("#draft").classList.toggle("away", PREVIEW && S.showKey && !!r);
   if (!PREVIEW || !S.showKey || !r) return;
   const hints = roomHints(r);
-  const box = document.createElement("div"); box.id = "teacher-key";
-  box.innerHTML = `<h3>Answer (only you can see this in preview)</h3><ul>${ER.answerKey(r).map(l=>`<li>${fmt(l)}</li>`).join("")}</ul>`
+  const box = document.createElement("aside"); box.id = "teacher-key"; box.setAttribute("aria-labelledby", "tk-h");
+  box.innerHTML = `<div class="tk-top"><h2 id="tk-h">Answers for room ${S.room} <small>(only you see this, in the preview)</small></h2><button type="button" id="tk-hide">${ICON.x}<span>Hide answers</span></button></div>`
+    + `<ul>${ER.answerKey(r).map(l=>`<li>${fmt(l)}</li>`).join("")}</ul>`
     + (hints.length ? `<p>Hints (students unlock them after wrong tries):</p><ol>${hints.map(h=>`<li>${fmt(h)}</li>`).join("")}</ol>` : "");
-  scene.insertBefore(box, light);
+  $("#hud").after(box);
+  box.querySelector("#tk-hide").onclick = () => { S.showKey = false; teacherKey(); parent.postMessage({ er: "key", on: false }, "*"); };
+  if (back) box.querySelector("#tk-hide").focus();
 }
 if (PREVIEW) window.addEventListener("message", e => {
   const d = e.data || {};
