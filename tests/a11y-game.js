@@ -308,6 +308,8 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     const focusOn = () => page.evaluate(() => { const a = document.activeElement; return a ? a.tagName + (a.id ? "#" + a.id : "") + "." + a.className : ""; });
     // title: the skip link is the first stop; sign the ledger, read the rules, push the door
     await key("Tab"); assert.match(await focusOn(), /skip/, "the first Tab stop is the skip link");
+    // the Tab order is the reading order: HUD, the story, the ledger, the rules, and Begin last (though it is drawn on the door at the left)
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#view a[href], #view button, #view input")].map(e => e.id || e.className)), ["skip", "draft", "sound-toggle", "watch", "go", "pname", "rb", "begin"]);
     await tabTo("#pname"); await page.keyboard.type("Keyboard Player");
     await tabTo(".rules .rb"); await key("Enter"); assert.equal(await page.isVisible("#examine"), true); await key("Tab"); await key("Tab"); assert.equal(await page.evaluate(() => !!document.activeElement.closest("#examine")), true, "Tab stays in the sheet");
     await key("Escape"); assert.match(await focusOn(), /\.rb/, "focus returns to the paper");
