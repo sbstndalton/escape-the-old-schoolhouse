@@ -860,6 +860,32 @@ const GAME_TEMPLATE = "__GAME_TEMPLATE__";
 const SAMPLE = "__DEFAULT_CONFIG__";
 const STORE = "escape-room-editor-v1";
 const clone = o => JSON.parse(JSON.stringify(o));
+/* Several escape rooms live in this browser, so making a second one never overwrites the first.
+   LIB lists them ({ current, list: [{ id, title, created, updated }] }); each one's content is under STORE:id and its
+   bookkeeping under STORE:id-meta. The single slot used before (STORE, STORE-meta) is moved into the list once. */
+const LIB = "escape-room-library-v1";
+const lsGet = k => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch(e){ return false; } };
+const lsDel = k => { try { localStorage.removeItem(k); } catch(e){} };
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const keyOf = (id, m) => `${STORE}:${id}${m ? "-meta" : ""}`;
+function readLib(){
+  let l = null; try { l = JSON.parse(lsGet(LIB)); } catch(e){}
+  if (!l || !Array.isArray(l.list)) l = { current: null, list: [] };
+  const old = lsGet(STORE);
+  if (old && !l.list.length) {
+    const id = newId(); let title = ""; try { title = JSON.parse(old).meta.title; } catch(e){}
+    lsSet(keyOf(id), old); const m = lsGet(STORE + "-meta"); if (m) lsSet(keyOf(id, true), m);
+    l.list.push({ id, title, created: Date.now(), updated: Date.now() }); l.current = id;
+    if (lsSet(LIB, JSON.stringify(l))) { lsDel(STORE); lsDel(STORE + "-meta"); }
+  }
+  return l;
+}
+let lib = readLib();
+let curId = lib.list.some(e => e.id === lib.current) ? lib.current : null;
+const writeLib = () => lsSet(LIB, JSON.stringify(lib));
+function load(id = curId){ if (!id) return null; try { return JSON.parse(lsGet(keyOf(id))) || null; } catch(e){ return null; } }
+function readMeta(id = curId){ let m = null; try { m = JSON.parse(lsGet(keyOf(id, true))); } catch(e){} return m || { rev: 0, backupRev: 0, backupAt: 0, savedAt: 0 }; }
 
 /* ===================== State ===================== */
 let cfg = load() || clone(SAMPLE);
@@ -937,17 +963,25 @@ document.addEventListener("keydown", e => {
    Work is saved in this browser as the teacher types. Alongside it we keep a little bookkeeping (meta): how many
    changes there have been, and how many there were when the last backup file was downloaded, so the page can say
    plainly where the work is and warn before the tab is closed with changes that exist nowhere else. */
-function load(){ try { const s = localStorage.getItem(STORE); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
-const META = STORE + "-meta";
-let meta = (() => { try { return JSON.parse(localStorage.getItem(META)) || null; } catch(e){ return null; } })() || { rev: 0, backupRev: 0, backupAt: 0, savedAt: 0 };
+let meta = readMeta();
 let stored = !!load();                // is anything of this escape room saved in this browser yet?
 let saveTimer = null;
 function saveNow(){
   clearTimeout(saveTimer); saveTimer = null;
-  try { localStorage.setItem(STORE, JSON.stringify(cfg)); meta.savedAt = Date.now(); meta.failed = false; stored = true; }
-  catch(e){ meta.failed = true; }
-  try { localStorage.setItem(META, JSON.stringify(meta)); } catch(e){}
+  if (!curId) { curId = newId(); lib.list.push({ id: curId, title: "", created: Date.now(), updated: 0 }); }
+  lib.current = curId;
+  if (lsSet(keyOf(curId), JSON.stringify(cfg))) { meta.savedAt = Date.now(); meta.failed = false; stored = true; } else meta.failed = true;
+  const e = lib.list.find(x => x.id === curId); e.title = cfg.meta?.title || ""; e.updated = Date.now();
+  writeLib(); saveMeta();
   refreshSave();
+}
+function saveMeta(){ if (curId) lsSet(keyOf(curId, true), JSON.stringify(meta)); }
+/* Open another escape room from this browser's list. */
+function switchTo(id){
+  if (saveTimer) saveNow();
+  const next = load(id); if (!next) return false;
+  curId = id; lib.current = id; writeLib(); cfg = next; meta = readMeta(id); stored = true;
+  sel = "settings"; tabOf.clear(); refreshSave(); render(); return true;
 }
 function changed(){ meta.rev++; clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 300); refreshStatus(); refreshAnswerKey(); }
 // Changes that are only in this browser: nothing has been backed up since they were made.
@@ -1873,15 +1907,16 @@ document.getElementById("file").onchange = async e => {
     const text = await f.text();
     const next = /\.html?$/i.test(f.name) ? ER.configFromHtml(text) : JSON.parse(text);
     if (!next || !Array.isArray(next.rooms)) throw new Error("This file doesn't contain an escape room.");
-    if (!(await ask(`Open “${next.meta?.title || f.name}”?`, ["This replaces what's in the editor now.", "Save your project first if you need to keep it."], { ok: "Open it", cancel: "Keep what I have" }))) return;
-    cfg = next; sel = "settings"; tabOf.clear(); changed(); backedUp(); render(); toast("Opened " + f.name); document.getElementById("page-title").focus();
+    if (!(await ask(`Open “${next.meta?.title || f.name}”?`, ["It is added to the escape rooms in this browser. The one you have open now stays there too."], { ok: "Open it", cancel: "Keep what I have" }))) return;
+    await startEscapeRoom(next, true); toast("Opened " + f.name);
+    if (document.documentElement.dataset.mode === "wizard") wizGo(hashFor("hub")); else { render(); document.getElementById("page-title").focus(); }
   } catch (err) { tell("That file couldn't be opened", [err.message, "Choose a project file (.json) saved from this editor, or a game file (.html) exported from it."]); }
 };
 document.getElementById("btn-new").onclick = () => {
-  const start = (next, said) => { cfg = next; sel = "settings"; tabOf.clear(); changed(); document.querySelector(".overlay")?.close(); render(); toast(said); document.getElementById("page-title").focus(); };
+  const start = async (next, said) => { await startEscapeRoom(next, false); document.querySelector(".overlay")?.close(); render(); toast(said); document.getElementById("page-title").focus(); };
   const box = h("div", { class: "sheet" },
     h("h2", {}, "Start a new escape room"),
-    h("div", { class: "inknote", id: "new-warning" }, "This replaces what's in the editor now. Save project first if you want to keep it."),
+    h("p", { class: "typed", id: "new-warning" }, "The escape room you have open now stays in this browser. To go back to it, choose Guided steps, then “Your escape rooms”."),
     h("div", { class: "actions" },
       h("button", { class: "stamp", id: "new-blank", "aria-describedby": "new-warning", onclick: () => start(blankConfig(), "Started a blank escape room.") }, "Blank (one question room)"),
       h("button", { class: "stamp", id: "new-sample", "aria-describedby": "new-warning", onclick: () => start(clone(SAMPLE), "Loaded the sample escape room.") }, "Copy of the sample (Old Schoolhouse)")));
@@ -1997,7 +2032,6 @@ function routeTo(r, focus){
   renderWizard(focus ? "heading" : null);
   if (focus) scrollTo(0, 0);
 }
-function saveMeta(){ try { localStorage.setItem(META, JSON.stringify(meta)); } catch(e){} }
 
 /* ---------- small builders for the steps ---------- */
 const wErr = key => WIZ.errors.find(e => e.key === key);
@@ -2148,7 +2182,7 @@ WSTEPS.start = {
     const title = cfg.meta?.title || "Untitled";
     return [
       wRadios({ name: "start", legend: "How do you want to start?", asH1: true, value: WIZ.start,
-        hint: [stored ? h("span", { id: "wiz-start-note" }, `You already have “${title}” in this browser. Starting another one takes its place, so download a backup of it first. `)
+        hint: [stored ? h("span", { id: "wiz-start-note" }, `You already have “${title}” in this browser. Starting another one keeps that one too: you'll find both under “Your escape rooms”. `)
           : h("span", { id: "wiz-start-note" }, "Nothing saved in this browser yet. If you worked on this before, open your saved file. "), "You can change everything later."],
         set: v => { WIZ.start = v; renderWizard(); },
         options: [
@@ -2177,12 +2211,16 @@ WSTEPS.start = {
 };
 /* Put a new escape room on the bench (from the sample, empty, or a file). */
 async function startEscapeRoom(next, fromFile){
-  if (stored && unbacked() && !(await ask("Start a new escape room?", [`“${cfg.meta?.title || "Untitled"}” has changes that are not in a backup yet, and a new escape room takes its place in this browser.`, "Download a backup first if you want to keep it."], { ok: "Start the new one", cancel: "Go back", danger: true }))) return false;
+  if (saveTimer) saveNow();
+  const text = JSON.stringify(next), same = fromFile && lib.list.find(e => lsGet(keyOf(e.id)) === text);
+  if (same) { switchTo(same.id); toast(`“${next.meta?.title || "Untitled"}” was already in this browser, so it is open now.`); return true; }
+  // a new entry in the list, unless the open one was only just started and never changed (then it is simply replaced)
+  if (!(stored && meta.startRev === meta.rev)) curId = null;
   cfg = next; sel = "settings"; tabOf.clear(); meta = { rev: 0, backupRev: 0, backupAt: 0, savedAt: 0, reached: 3 };
   changed(); if (fromFile) backedUp(); else saveNow();
+  meta.startRev = meta.rev; saveMeta();
   return true;
 }
-
 /* ---------- 3 Name it ---------- */
 WSTEPS.name = {
   title: () => "What is this escape room called?",
@@ -2253,9 +2291,36 @@ WSTEPS.hub = {
         task("task-try", "Try it as a student", hashFor("try"), ""),
         task("task-deliver", "Get it to students", hashFor("deliver"), deliveryWords() || "Not started", !deliveryWords()),
         h("li", { id: "task-backup" }, wbtn({ id: "wiz-hub-backup", onclick: () => { backup(); renderWizard(); } }, "Download a backup"),
-          h("span", { class: "st" + (unbacked() ? " todo" : "") }, meta.backupAt ? (unbacked() ? `Changed since your backup ${when(meta.backupAt)}` : `Backed up ${when(meta.backupAt)}`) : "Not backed up yet")))];
+          h("span", { class: "st" + (unbacked() ? " todo" : "") }, meta.backupAt ? (unbacked() ? `Changed since your backup ${when(meta.backupAt)}` : `Backed up ${when(meta.backupAt)}`) : "Not backed up yet"))),
+      libraryPart()];
   }
 };
+/* Every escape room in this browser, newest first, with Make another and Make a copy. */
+function libraryPart(){
+  const list = [...lib.list].sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  return [h("h2", { id: "wiz-lib-title" }, "Your escape rooms"),
+    h("p", {}, list.length === 1 ? "This is the only escape room in this browser." : `There are ${list.length} escape rooms in this browser. Each one is saved separately.`),
+    h("ul", { class: "wlist", id: "wiz-lib", "aria-labelledby": "wiz-lib-title" }, list.map(e => {
+      const cur = e.id === curId, name = e.title || "Untitled";
+      return h("li", { "data-id": e.id }, h("div", { class: "row1" }, h("b", {}, name), cur ? h("span", { class: "kind" }, "(open now)") : null),
+        h("div", { class: "kind" }, e.updated ? `Last changed ${when(e.updated)}` : ""),
+        cur ? null : h("div", { class: "tools" },
+          wbtn({ class: "inkline", id: "lib-open-" + e.id, onclick: () => { if (switchTo(e.id)) { renderWizard("heading"); say(`“${name}” is open.`); toast(`Opened “${name}”.`); } } }, icon("folder"), "Open", h("span", { class: "sr" }, ` “${name}”`)),
+          wbtn({ class: "inkline red", id: "lib-remove-" + e.id, onclick: async () => {
+            if (!(await ask(`Remove “${name}” from this browser?`, ["If you have a backup file of it, you can open it again later. If not, it is gone for good."], { ok: "Remove it", danger: true }))) return;
+            lib.list = lib.list.filter(x => x.id !== e.id); lsDel(keyOf(e.id)); lsDel(keyOf(e.id, true)); writeLib(); renderWizard(); document.getElementById("wiz-lib-title").scrollIntoView({ block: "nearest" });
+            document.getElementById("wiz-another").focus(); say(`“${name}” removed from this browser.`);
+          } }, icon("x"), "Remove", h("span", { class: "sr" }, ` “${name}”`))));
+    })),
+    h("div", { class: "wacts", style: "margin-top:1rem" },
+      wbtn({ class: "stamp", id: "wiz-another", onclick: () => { WIZ.start = null; wizGo(hashFor("start")); } }, icon("plus"), "Make another escape room"),
+      wbtn({ class: "stamp", id: "wiz-copy", onclick: () => {
+        const copy = clone(cfg); copy.meta = { ...(copy.meta || {}), title: `${cfg.meta?.title || "Untitled"} (copy)` };
+        if (saveTimer) saveNow();
+        curId = null; cfg = copy; meta = { rev: 0, backupRev: 0, backupAt: 0, savedAt: 0, reached: meta.reached, delivery: meta.delivery ? { ...meta.delivery } : undefined };
+        changed(); saveNow(); renderWizard("heading"); toast(`Made a copy: “${copy.meta.title}”. It is open now, and the original is still in your list.`);
+      } }, icon("page"), "Make a copy of this one"))];
+}
 
 
 /* ---------- 4 Your rooms, and adding one ---------- */
