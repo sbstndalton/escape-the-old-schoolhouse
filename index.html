@@ -43,7 +43,7 @@
 }
 *{box-sizing:border-box}
 html{background:var(--night)}
-body{margin:0;min-height:100vh;font:400 1.125rem/1.5 var(--f-r);color:var(--parch);-webkit-font-smoothing:antialiased;
+body{margin:0;min-height:100vh;font:400 1.125rem/1.5 var(--f-r);overflow-wrap:break-word;color:var(--parch);-webkit-font-smoothing:antialiased;
   background:radial-gradient(ellipse 60rem 44rem at 18% 8%,rgba(255,206,140,.17),rgba(255,180,110,.05) 45%,transparent 72%),
     radial-gradient(ellipse 50rem 40rem at 95% 100%,rgba(127,160,184,.07),transparent 70%),
     linear-gradient(180deg,#1d150e 0%,#140e09 60%,#0f0a07 100%)}
@@ -75,7 +75,7 @@ h1{margin:.5rem 0 0;font:700 clamp(1.75rem,1.2rem + 2vw,2.6rem)/1.2 var(--f-r);c
 .sheet h3{margin:1.6rem 0 .6rem;font:700 1.2rem/1.3 var(--f-r);padding-top:1.2rem;border-top:2px solid rgba(42,29,20,.35)}
 .small{font-size:1rem;color:var(--ink2)}
 label.big{display:block;font-weight:700;font-size:1.15rem;margin:0 0 .2rem}
-.hint{margin:0 0 .5rem!important;font-size:1rem;color:var(--ink2)}
+.fhint{margin:0 0 .5rem!important;font-size:1rem;color:var(--ink2)}
 input[type=text]{display:block;width:100%;min-height:2.9rem;margin:0 0 .9rem;padding:.55rem .7rem;font:400 1.05rem/1.4 var(--f-r);color:var(--ink);background:#fffaf0;
   border:2px solid #2a1d14;border-radius:3px}
 input[type=text][aria-invalid=true]{border-color:var(--red);border-width:3px}
@@ -88,22 +88,23 @@ input[type=text][aria-invalid=true]{border-color:var(--red);border-width:3px}
 .btn.wide{width:100%}
 .or{margin:1.6rem 0 .5rem!important;padding-top:1.2rem;border-top:2px solid rgba(42,29,20,.35);font-weight:700}
 .alt{display:inline-flex;align-items:center;min-height:2.75rem;margin-top:.9rem;font-weight:700;text-underline-offset:.2em}
-/* how it works: three small pictures, each beside its words */
+/* how it works: three small pictures, each beside its words (the words go under the picture when it is narrow) */
 .how{list-style:none;margin:0;padding:0;display:grid;gap:1.1rem;counter-reset:s}
-.how li{counter-increment:s;display:grid;grid-template-columns:4.6rem minmax(0,1fr);gap:.1rem 1rem;align-items:start}
-.how svg{grid-row:1 / span 2;width:100%;height:auto;fill:none;stroke:#2a1d14;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.how li{counter-increment:s;display:flex;flex-wrap:wrap;gap:.3rem 1rem;align-items:flex-start}
+.how svg{flex:none;width:4.6rem;height:auto;fill:none;stroke:#2a1d14;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.how li>div{flex:1 1 9rem;min-width:0}
 .how b{display:block;font-size:1.1rem;line-height:1.3}
 .how b::before{content:counter(s) ". "}
 .how span{font-size:1rem;color:var(--ink2)}
 
 /* ---------- the foot ---------- */
-footer{margin-top:2.6rem;padding-top:1.4rem;border-top:1px solid rgba(232,217,181,.3);display:grid;gap:1rem}
+footer{margin-top:2.6rem;padding-top:1.4rem;border-top:1px solid rgba(232,217,181,.3);display:grid;grid-template-columns:minmax(0,1fr);gap:1rem}
 footer p{margin:0;max-width:46em}
 footer a{font-weight:700;text-underline-offset:.2em}
 .links{display:flex;flex-wrap:wrap;gap:.6rem 2rem;align-items:center}
 .links a{display:inline-flex;align-items:center;min-height:2.75rem}
 #display-toggles{display:flex;flex-wrap:wrap;gap:.8rem}
-.switch{display:inline-flex;align-items:center;gap:.6rem;min-height:2.75rem;padding:.35rem .9rem;font:400 1rem/1.2 var(--f-r);color:var(--parch);background:#1c140d;border:2px solid #a08850;border-radius:3px;cursor:pointer}
+.switch{display:inline-flex;flex-wrap:wrap;max-width:100%;text-align:left;align-items:center;gap:.6rem;min-height:2.75rem;padding:.35rem .9rem;font:400 1rem/1.2 var(--f-r);color:var(--parch);background:#1c140d;border:2px solid #a08850;border-radius:3px;cursor:pointer}
 .switch .st{font-weight:700;min-width:1.8em}
 .switch .track{position:relative;width:2.4rem;height:1.3rem;border:2px solid currentColor;border-radius:1rem;flex:none}
 .switch .track::after{content:"";position:absolute;top:.12rem;left:.15rem;width:.8rem;height:.8rem;border-radius:50%;background:currentColor}
@@ -125,7 +126,7 @@ html[data-contrast=more] h1,html[data-contrast=more] .intro,html[data-contrast=m
 html[data-contrast=more] .door{background:#000;border:3px solid #fff;box-shadow:none}
 html[data-contrast=more] .door .knob{display:none}
 html[data-contrast=more] .sheet{background:#fff;color:#000;border:3px solid #fff;box-shadow:none}
-html[data-contrast=more] .small,html[data-contrast=more] .hint,html[data-contrast=more] .how span{color:#000}
+html[data-contrast=more] .small,html[data-contrast=more] .fhint,html[data-contrast=more] .how span{color:#000}
 html[data-contrast=more] .placard,html[data-contrast=more] .door h2,html[data-contrast=more] .btn{background:#fff;color:#000;border:3px solid #000;box-shadow:none;text-shadow:none}
 html[data-contrast=more] .door h2,html[data-contrast=more] .placard{border-color:#fff}
 html[data-contrast=more] .btn{border-color:#000}
@@ -143,7 +144,9 @@ html[data-contrast=more] footer :focus-visible,html[data-contrast=more] .door h2
 @media (forced-colors: active){
   .door,.sheet,.placard,.door h2,.btn,.switch,input[type=text]{border:2px solid CanvasText;forced-color-adjust:auto}
   .btn{border-color:ButtonText}
+  .switch{background:ButtonFace;color:ButtonText}
   .switch[aria-checked=true]{border-color:Highlight;border-width:4px}
+  body,footer,h1,.intro{background:Canvas;color:CanvasText}
   .switch .track::after{background:CanvasText}
   .err{border-color:CanvasText}
   .lamp,.door .knob{display:none}
@@ -177,7 +180,7 @@ html[data-contrast=more] footer :focus-visible,html[data-contrast=more] .door h2
         <p class="lead">Your teacher shares a <strong>class link</strong> in Moodle, Canvas, Google Classroom or an email. Click it, and your escape room opens.</p>
         <form id="link-form" novalidate>
           <label class="big" for="class-link">Or paste your class link here</label>
-          <p class="hint" id="link-hint">It is a long web address. Copy all of it, then paste it in this box.</p>
+          <p class="fhint" id="link-hint">It is a long web address. Copy all of it, then paste it in this box.</p>
           <p class="err" id="link-error" hidden></p>
           <input id="class-link" name="link" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="link-hint">
           <button class="btn wide" id="open-link" type="submit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 21V4h9v17M3 21h18M14 4l4 1.5V21M11.5 12.5v1"/></svg>Open my escape room</button>
@@ -196,9 +199,9 @@ html[data-contrast=more] footer :focus-visible,html[data-contrast=more] .door h2
         <a class="alt" id="open-saved" href="editor.html#step=start&amp;open=1">Open one I saved before</a>
         <h3 id="how-h">How it works</h3>
         <ol class="how" aria-labelledby="how-h">
-          <li><svg viewBox="0 0 88 70" aria-hidden="true" focusable="false"><path d="M14 8h40l10 10v46H14zM54 8v10h10M22 28h30M22 36h34M22 44h26"/><path d="M48 62l4-14 22-22 6 6-22 22zM70 30l6 6"/></svg><b>You make it</b><span>Type your questions, step by step. It is saved in your browser as you go.</span></li>
-          <li><svg viewBox="0 0 88 70" aria-hidden="true" focusable="false"><path d="M36 42a10 10 0 0 1 0-14l8-8a10 10 0 0 1 14 14l-4 4M52 28a10 10 0 0 1 0 14l-8 8a10 10 0 0 1-14-14l4-4"/><path d="M8 60h72"/></svg><b>You share a class link</b><span>Paste it into Moodle, Canvas, Google Classroom or an email.</span></li>
-          <li><svg viewBox="0 0 88 70" aria-hidden="true" focusable="false"><path d="M10 10h60v52H10zM10 22h60M10 34h60M10 46h60M30 10v52"/><path d="M46 27l5 5 11-12" stroke-width="2.4"/></svg><b>Students type the exit password into your quiz</b><span>The password is on their certificate. Your course records the grade.</span></li>
+          <li><svg viewBox="0 0 88 70" aria-hidden="true" focusable="false"><path d="M14 8h40l10 10v46H14zM54 8v10h10M22 28h30M22 36h34M22 44h26"/><path d="M48 62l4-14 22-22 6 6-22 22zM70 30l6 6"/></svg><div><b>You make it</b><span>Type your questions, step by step. It is saved in your browser as you go.</span></div></li>
+          <li><svg viewBox="0 0 88 70" aria-hidden="true" focusable="false"><path d="M36 42a10 10 0 0 1 0-14l8-8a10 10 0 0 1 14 14l-4 4M52 28a10 10 0 0 1 0 14l-8 8a10 10 0 0 1-14-14l4-4"/><path d="M8 60h72"/></svg><div><b>You share a class link</b><span>Paste it into Moodle, Canvas, Google Classroom or an email.</span></div></li>
+          <li><svg viewBox="0 0 88 70" aria-hidden="true" focusable="false"><path d="M10 10h60v52H10zM10 22h60M10 34h60M10 46h60M30 10v52"/><path d="M46 27l5 5 11-12" stroke-width="2.4"/></svg><div><b>Students type the exit password into your quiz</b><span>The password is on their certificate. Your course records the grade.</span></div></li>
         </ol>
       </div>
     </section>

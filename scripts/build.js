@@ -59,17 +59,19 @@ function markdown(md){
       return `<a href="${E(h.replace(/^ACCESSIBILITY\.md/, "accessibility.html").replace(/^README\.md.*/, "index.html"))}">${text}</a>`;
     });
   const lines = md.replace(/\r/g, "").split("\n"), out = [];
+  let tables = 0, section = "Accessibility";
   for (let i = 0; i < lines.length;) {
     const l = lines[i];
     if (!l.trim()) { i++; continue; }
     let m;
-    if ((m = l.match(/^(#{1,4})\s+(.*)$/))) { const n = m[1].length, t = inline(m[2]); out.push(`<h${n} id="${unique(slug(m[2].replace(/[*`]/g, "")))}">${t}</h${n}>`); i++; continue; }
+    if ((m = l.match(/^(#{1,4})\s+(.*)$/))) { const n = m[1].length, t = inline(m[2]); section = m[2].replace(/[*`]/g, ""); out.push(`<h${n} id="${unique(slug(m[2].replace(/[*`]/g, "")))}">${t}</h${n}>`); i++; continue; }
     if (/^---+\s*$/.test(l)) { out.push("<hr>"); i++; continue; }
     if (/^\|/.test(l)) {
       const rows = []; while (i < lines.length && /^\|/.test(lines[i])) rows.push(lines[i++]);
       const cells = r => r.replace(/^\||\|\s*$/g, "").split("|").map(c => c.trim());
       const head = cells(rows[0]), body = rows.slice(2).map(cells);
-      out.push(`<div class="tbl" role="region" aria-label="${E(head.filter(Boolean).join(", ").slice(0, 80) || "Table")}" tabindex="0"><table><thead><tr>${head.map(c => `<th scope="col">${inline(c)}</th>`).join("")}</tr></thead><tbody>`
+      // each table scrolls sideways in its own box when the window is narrow; the box is named after the section it is in
+      out.push(`<div class="tbl" role="region" aria-label="Table ${++tables}: ${E(section)}" tabindex="0"><table><thead><tr>${head.map(c => c ? `<th scope="col">${inline(c)}</th>` : "<td></td>").join("")}</tr></thead><tbody>`
         + body.map(r => `<tr>${r.map((c, k) => k === 0 ? `<th scope="row">${inline(c)}</th>` : `<td>${inline(c)}</td>`).join("")}</tr>`).join("") + "</tbody></table></div>");
       continue;
     }

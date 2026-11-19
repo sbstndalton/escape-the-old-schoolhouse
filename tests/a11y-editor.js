@@ -111,6 +111,9 @@ async function eachState(page, visit, only) {
   if (phone) await go("phone / file list open", () => page.click("#btn-more"));
   await go("overlay / new", () => tool("#btn-new"));
   await go("overlay / export", () => page.click("#btn-export"));
+  if (await page.evaluate(() => typeof makeClassLink === "function")) await go("overlay / export, class link copied", async () => { await page.click("#btn-export"); await page.click("#export-link");
+    for (let i = 0; i < 3 && !(await page.isVisible("#export-link-text")); i++) { await page.locator(".modal #ask-ok, #export-link-text").first().waitFor(); if (await page.isVisible(".modal #ask-ok")) await page.click(".modal #ask-ok"); }
+    await page.locator("#export-link-text").waitFor(); });
   await go("overlay / answer sheet", async () => { await tool("#btn-review"); await page.frameLocator(".overlay iframe").locator("h1").waitFor(); });
   await go("overlay / preview rail", async () => { await page.click("#btn-preview"); await page.frameLocator(".preview iframe").locator("#begin").waitFor(); });
   // the student view itself, in a matching room with the teacher's answer strip on (its frame is scanned as well)
@@ -171,6 +174,18 @@ async function wizardStates(page, go, phone){
   for (const [route, d] of [["moodle-scorm", "{ where: 'moodle', how: 'scorm' }"], ["moodle-quiz", "{ where: 'moodle', how: 'quiz' }"], ["canvas-scorm", "{ where: 'canvas', how: 'scorm' }"],
     ["canvas-quiz", "{ where: 'canvas', how: 'quiz' }"], ["other", "{ where: 'other' }"], ["file", "{ where: 'file' }"]])
     await go(`wizard / 9 walkthrough: ${route}`, async () => { await to(`#step=walk&r=${route}`, `meta.delivery = ${d}`); if (route === "canvas-quiz") await page.click("details.wtrouble summary"); }, stay);
+  await go("wizard / 8 how students get it, class link chosen", () => to("#step=deliver&l=1", "meta.delivery = { where: 'link' }"), stay);
+  await go("wizard / 9 walkthrough: class link, before it is made", () => to("#step=walk&r=link0", "meta.delivery = { where: 'link' }; delete meta.link"), stay);
+  await go("wizard / 9 walkthrough: class link made (too long for a QR code)", async () => { await to("#step=walk&r=link1", "meta.delivery = { where: 'link' }; delete meta.link");
+    await page.click("#wiz-make-link"); for (let i = 0; i < 3 && !(await page.isVisible("#wiz-link")); i++) { await page.locator(".modal #ask-ok, #wiz-link").first().waitFor(); if (await page.isVisible(".modal #ask-ok")) await page.click(".modal #ask-ok"); }
+    await page.locator("#wiz-link").waitFor(); await settle(page); }, stay);
+  await go("wizard / 9 walkthrough: class link with a QR code, and out of date", async () => {
+    await to("#step=walk&r=link2", "meta.delivery = { where: 'link' }; meta.link = { url: location.href.split('#')[0].replace(/editor\\.html.*/, 'play.html') + '#play=1.' + 'A'.repeat(300), rev: meta.rev, at: Date.now() }");
+    await page.locator("#wiz-qr svg").waitFor();
+    await page.evaluate(() => { meta.link.rev = -1; renderWizard(); }); }, stay);
+  await go("wizard / 2 start, a cut-off class link: error", async () => { await to("#step=start&lk=1"); await page.click("label[for=start-file]");
+    await page.fill("#wiz-link-paste", "https://example.org/play.html#play=1.abcdefghijkl"); await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor(); },
+    async () => { await page.evaluate(() => { WIZ.start = null; WIZ.linkText = ""; }); });
   await go("wizard / 9 the exit password slip", async () => { await to("#step=walk&r=pw", "meta.delivery = { where: 'file' }; cfg.finish.exitPassword = ''"); await page.click("#wiz-download"); await page.locator("#ask-password").waitFor(); },
     async () => { await escapeAll(page); await page.evaluate(() => { cfg.finish.exitPassword = "DEWEY1916"; changed(); }); });
   await go("wizard / 9 the exit password slip, empty: error", async () => { await to("#step=walk&r=pw2", "cfg.finish.exitPassword = ''"); await page.click("#wiz-download"); await page.locator("#ask-password").waitFor(); await page.fill("#ask-password", ""); await page.click("#ask-ok"); },
