@@ -22,6 +22,7 @@ Open the **notebook** (the pocket watch at the top right, or the **Esc** key). E
 | **Readable text** | Every word in a plain face (Atkinson Hyperlegible) with no small caps and no typewriter lettering, 12.5% larger, with more line and word spacing, and nothing tilted. |
 | **Motion** | Turns every animation off: sliding dials, doors, stamps, lamp flicker, drifting dust. It is off by itself when the device asks for reduced motion. |
 | **Sound** | Turns the sound effects off (also the bell at the top right). Every sound comes with a message on screen. |
+| **Read aloud buttons** | Shows or hides the **Listen** buttons (see [Read aloud](#read-aloud)). On to start with. **Reading speed** (normal, faster, slower) sits under it. |
 | **Hide the clock** | Hides the timer and stops the watch hands. There is **no time limit** in the game; the clock only shows how long you have played. |
 
 Also built in:
@@ -32,13 +33,24 @@ Also built in:
 - **Keyboard only.** Everything works with Tab, Enter, Space, the arrow keys and Esc. Nothing needs a drag.
 - **Windows High Contrast** and other forced-colour modes are supported.
 
+### Read aloud
+
+For players who would rather listen than read, for example dyslexic readers. **It is not a screen reader**, and it is built so that it never gets in the way of one.
+
+- **Where.** A small **Listen** button sits at the foot of the house rules, each story note, each clue card, each quiz question (it reads the choices too), each hint, each mirror question, the result on the certificate, the line under every lock that says how to work it, and at the top of every paper held up to the lamp, including **Describe this room**.
+- **What it does.** Pressing it reads that text aloud with a voice built into the device. The button then says **Stop**, is inked in and shows a square; pressing it again stops. Only one thing reads at a time. Reading also stops when the room changes, when a paper is held up or put back, when the notebook opens, and on **Esc**. The sentence being read is marked on the page: dark ink on a pale yellow band, underlined (15.2:1; in forced colours the system highlight). Nothing moves.
+- **Private and offline.** It uses the browser's own speech, and **only voices that run on the device** (`localService`). Some browsers also offer online voices (Chrome's "Google …" voices) that send the words to a server; those are never used. If the device has no local voice for the game's language, or the browser has no speech at all, no Listen buttons are shown and the notebook says so: "Read aloud isn't available in this browser."
+- **With a screen reader.** Nothing is read until a button is pressed, it adds no live region and no announcements of its own (only "the voice didn't work" if speech fails), and it does not move focus. A screen reader user who presses Listen hears both voices; that is their choice. The button's name is its visible word plus what it reads, "Listen to Clue 1", and while reading "Stop reading Clue 1", so voice control can find it by the word on it (2.5.3). It is not a pressed/unpressed toggle, because a toggle must keep one name.
+- **Why it starts on.** The students who need it are the least likely to go looking for a setting, so the buttons are visible from the first screen. They are quiet (small ink labels, one per paper), play nothing by themselves, and cost a screen-reader or keyboard user one extra Tab stop per paper; the **Read aloud buttons** switch in the notebook removes them, and the choice is remembered on that device.
+- **Contrast.** The word on the button is measured from screenshots like every other text (see the table below): 5.5:1 or more on paper (a short label in small capitals, so it is held to 4.5:1, not 7:1), 10.3:1 for "Stop" on the inked button, 13.5:1 on the wall under the lock, and 20:1 or more in High contrast. Each has a visible edge in every look, forced colours included.
+
 ### What was tested, and how
 
-Automated tests run on every change (`npm test`, file `tests/a11y-game.js`). They walk through **20 screens and states**: the title, the house rules held up, each of the five rooms, a clue held up, the room description, the notebook, a wrong try with a hint, a solved room, the plain-cards look, a quiz room, a solved timeline, stamped slips, a later mirror question, the certificate, and the result held up.
+Automated tests run on every change (`npm test`, file `tests/a11y-game.js`). They walk through **23 screens and states**: the title, the house rules held up, each of the five rooms, a clue held up, the room description, the notebook, a wrong try with a hint, a clue and the room description being read aloud, a quiz question being read aloud, a solved room, the plain-cards look, a quiz room, a solved timeline, stamped slips, a later mirror question, the certificate, and the result held up.
 
 | Check | How | Result |
 |---|---|---|
-| **axe-core 4.14.1** (rules tagged wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa, best-practice) | Every state at 1440×900 and 390×844; again with High contrast, with Readable text, with forced colours emulated, and with `prefers-contrast: more` emulated. 160 scans in Chromium and 20 in WebKit. | **0 violations** |
+| **axe-core 4.14.1** (rules tagged wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa, best-practice) | Every state at 1440×900 and 390×844; again with High contrast, with Readable text, with forced colours emulated, and with `prefers-contrast: more` emulated. 184 scans in Chromium and 23 in WebKit. | **0 violations** |
 | **Keyboard only** | A full play-through from the title to the certificate using key presses alone (no pointer events), including reading papers, the room description, the dials by typing and by arrows, moving timeline cards, stamping, the mirror, and the notebook. | Completes |
 | **Focus visible and not obscured** (2.4.7, 2.4.11, 2.4.13) | Every focusable control in every state is focused; it must show a focus ring, be inside the window, and be the top element at its centre. In WebKit the same is done by walking the Tab order with real key presses. The teacher's preview, with its answers shown, is checked separately by the editor's tests (centre and four corners of every focused control). | 0 problems |
 | **Target size** (2.5.8, 2.5.5) | Every pointer target is measured. | All 24 CSS px or more; game controls (dial arrows, studs, stamps, levers, stamp boxes, handles, papers, close buttons, the watch, the bell, notebook rows) 44 px or more |
@@ -52,6 +64,7 @@ Automated tests run on every change (`npm test`, file `tests/a11y-game.js`). The
 | **Contrast** (1.4.3, 1.4.6) | Measured from screenshots (median of the letter cores); see below, including the stricter darkest-pixel figures. | All text 4.5:1 or more and all reading text 7:1 or more by the median; not by the darkest pixel (see [Two ways to measure contrast](#two-ways-to-measure-contrast)) |
 | **Reduced motion** (2.3.3) | With reduced motion, or the Motion switch off, `document.getAnimations()` must be empty through a whole play-through (`tests/playthrough.js`). | Pass |
 | **Screen-reader structure** | The accessibility tree of every state was written out (`ariaSnapshot`) and read top to bottom by hand, checking that every object, its code, the lock and its state make sense in order. Several things were rebuilt because of it (see the last rows of the table below). | Reviewed by hand |
+| **Read aloud** (`tests/read-aloud.js`) | Speech is **mocked** (headless browsers have no local voices) with one online and two local voices. Only the local voice in the game's language is used (also for a German game); voices that arrive late bring the buttons; each button reads its own text, a sentence at a time, without the button's own words or markup; nothing is read without a press; Stop, one at a time, and stopping on a room change, a sheet and the notebook; keyboard use; no speech at all and only-online voices: no buttons and the notebook says so; the switch hides the buttons and is remembered, and so is the speed; hostile class-link text is spoken as text and never becomes HTML. The game's accessibility suite runs with the mock, so every Listen button is in every axe scan, focus, target, reflow, forced-colours and contrast check, with three states while reading. | Pass, with mocked voices |
 | **Browsers** | Chromium (all tests) and WebKit (axe, the Tab walk, 200% text) through Playwright 1.65. | Pass |
 
 #### Before and after
@@ -127,8 +140,12 @@ axe cannot work out contrast where text sits on a gradient or a texture, which i
 | Notebook rows | (changed) | 10.6 | 10.6 | 20.2 |
 | Draft note | 4.5 | 9.7 | 9.7 | 20.2 |
 | Clock | 5.8 | 13.3 | 11.6 | 21 |
+| Listen button on a paper (Read aloud) | (new) | 6.0 | 5.5 | 20.2 |
+| Listen button on a question slip | (new) | 6.8 | 6.5 | 20.2 |
+| Listen button while reading ("Stop") | (new) | 10.3 | 10.3 | 21 |
+| Listen button on the wall (under the lock) | (new) | 13.6 | 13.5 | 21 |
 
-The full table of 74 styles is printed by `node tests/a11y-game.js --report report.json`.
+The full table of 78 styles is printed by `node tests/a11y-game.js --report report.json`.
 
 #### Two ways to measure contrast
 
@@ -189,7 +206,8 @@ The darkest pixel is very strict here: a line box often touches a pin, a ruled l
 7. **Zoom was tested by window size and font size, not by driving the browser's zoom control.** 200% and 400% zoom were reproduced as 720×450 and 320×256 windows and as a doubled default font size. Safari was covered by Playwright's WebKit, not by Safari on a Mac or iPhone. Forced colours were emulated in Chromium, not checked on Windows with each contrast theme.
 8. **Language.** The page is marked as English. A game written in another language should set `meta.lang` in its content; the editor does not have a field for it yet.
 9. **Reading level.** The sample content has not been checked for reading level (3.1.5, AAA).
-10. **The editor's preview with answers shown** puts the answers in a strip above the room, which pushes the room down; the teacher can hide it from the strip or the rail. Students never see it.
+10. **Read aloud has not been heard with real voices in this project's tests.** The automated tests use a stand-in for the speech engine. Real voices, and how each browser handles them (Chrome, Edge, Safari and Firefox on Mac and Windows; Safari on iPhone; Chrome on Android), have to be checked by hand: which voices count as local, whether long passages keep going, and whether the sentence highlight keeps pace. Firefox before version 140 and older Safari do not mark the sentence (reading still works). On some devices there is no local voice at all, so the buttons do not appear.
+11. **The editor's preview with answers shown** puts the answers in a strip above the room, which pushes the room down; the teacher can hide it from the strip or the rail. Students never see it.
 
 ### Second review (November 2026)
 
