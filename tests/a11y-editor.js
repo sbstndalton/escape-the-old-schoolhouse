@@ -418,7 +418,7 @@ async function edges(page, name) {
     const edged = el => has(getComputedStyle(el)) || ["::before", "::after"].some(ps => { const s = getComputedStyle(el, ps); return s.content !== "none" && s.display !== "none" && has(s); });
     for (const el of root.querySelectorAll("button,input:not([type=hidden]):not([type=file]),textarea,summary")) {
       if (!vis(el.closest("label") || el) || el.classList.contains("skip")) continue;
-      const hiddenInput = el.tagName === "INPUT" && el.closest("label") && (getComputedStyle(el).opacity === "0" || el.classList.contains("sr"));
+      const hiddenInput = el.matches("input,[role=checkbox],[role=radio],[role=switch]") && el.closest("label") && (getComputedStyle(el).opacity === "0" || el.classList.contains("sr"));
       const drawn = hiddenInput ? [...el.closest("label").querySelectorAll("span")] : [el, ...el.querySelectorAll(":scope > span")];
       if (!drawn.some(edged)) out.push(`${name}: no visible edge on ${el.tagName.toLowerCase()} "${(el.getAttribute("aria-label") || el.textContent || el.id || "").trim().slice(0, 40)}"`);
     }
@@ -553,12 +553,12 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     await said(page, /Room 6 added: Question lock/);
     // write the question, its accepted answers and its source
     await tabTo(page, "#panel .entry textarea"); await K.type("Who wrote Democracy and Education?");
-    await tabTo(page, "#panel .entry input[type=radio]");
-    assert.equal(await page.evaluate(() => document.activeElement.checked && document.activeElement.value), "short");
+    await tabTo(page, "#panel .entry [role=radio]");
+    assert.equal(await page.evaluate(() => document.activeElement.getAttribute("aria-checked") === "true" && document.activeElement.value), "short");
     await tabTo(page, "#panel .entry [data-key=answers] input"); await K.type("John Dewey | Dewey");
     await tabTo(page, "#panel .entry [data-key=source] input"); await K.type("Course text, ch. 3");
     // press the seal
-    await tabTo(page, "#panel .entry .verify input[type=checkbox]");
+    await tabTo(page, "#panel .entry .verify [role=checkbox]");
     assert.equal(await page.getByRole("checkbox", { name: "I checked this is correct (Question 1)" }).count(), 1);
     await K.press("Space");
     assert.match(await page.textContent("#meter"), /1 \/ 41 checked/);
@@ -822,11 +822,11 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     // radio group
     const group = page.getByRole("radiogroup", { name: "Look of the cards" });
     assert.equal(await group.count(), 1);
-    assert.deepEqual(await group.getByRole("radio").evaluateAll(els => els.map(e => e.closest("label").textContent.trim() + (e.checked ? " ✓" : ""))), ["Plain cards", "Books on a shelf ✓", "Framed portraits"]);
+    assert.deepEqual(await group.getByRole("radio").evaluateAll(els => els.map(e => e.closest("label").textContent.trim() + (e.getAttribute("aria-checked") === "true" ? " ✓" : ""))), ["Plain cards", "Books on a shelf ✓", "Framed portraits"]);
     await group.getByRole("radio", { checked: true }).focus();
     await page.keyboard.press("ArrowRight");
     assert.equal(await page.evaluate(() => cfg.rooms[0].look), "portraits");
-    assert.equal(await page.evaluate(() => document.activeElement.type === "radio" && document.activeElement.value), "portraits", "the keyboard stays on the selector after it turns");
+    assert.equal(await page.evaluate(() => document.activeElement.getAttribute("role") === "radio" && document.activeElement.value), "portraits", "the keyboard stays on the selector after it turns");
     await page.keyboard.press("ArrowLeft"); await page.keyboard.press("ArrowLeft");
     assert.equal(await page.evaluate(() => cfg.rooms[0].look), "cards");
     assert.equal(await page.getAttribute("#look-help", "role"), "status");
@@ -891,7 +891,7 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     assert.equal(await key.evaluate(el => getComputedStyle(el).position), "relative", "the answer strip is in the flow, not an overlay");
     await key.locator("#tk-hide").click();
     await key.waitFor({ state: "detached" });
-    await page.waitForFunction(() => !document.getElementById("preview-answers").checked, null, { timeout: 3000 });     // the game tells the rail by postMessage
+    await page.waitForFunction(() => document.getElementById("preview-answers").getAttribute("aria-checked") !== "true", null, { timeout: 3000 });     // the game tells the rail by postMessage
     assert.equal(await sw.isChecked(), false, "Hide answers turns the rail's switch off too");
     assert.equal((await active(page)).id, "preview-answers", "and the keyboard lands on that switch");
     await page.focus("#preview-exit"); await page.keyboard.press("Escape");
