@@ -2044,7 +2044,7 @@ function teacherCardHtml(){
     <h1>Teacher card: ${E(cfg.meta?.title || "Untitled")}</h1>
     <p class="sub">${cfg.meta?.course ? E(cfg.meta.course) + " · " : ""}Printed on ${day(Date.now())}. <span class="warn">Keep it away from students: it has the exit password.</span></p>
     <table><tbody>
-    ${row("Exit password", pw ? `<code>${E(pw)}</code>` : "Not chosen yet")}
+    ${row("Exit password", pw ? `<code>${E(pw)}</code>${meta.pwOld && meta.pwOld !== pw ? `<br>Changed on ${day(meta.pwAt)}. Before that it was <code>${E(meta.pwOld)}</code>: keep it as a second correct answer in your quiz.` : ""}` : "Not chosen yet")}
     ${row("Quiz question", E(QUIZ_Q) + "<br>The answer is the exit password. Set the quiz to ignore capital letters.")}
     ${row("Rooms", `<ol>${cfg.rooms.map(r => `<li>${E(r.title || "Untitled")} (${E(ROOM_KIND[r.type] || r.type)})</li>`).join("")}</ol>`)}
     ${row("How students get it", E(deliveryWords() || "Not chosen yet") + link)}
@@ -2058,7 +2058,7 @@ function teacherCardHtml(){
       <li>Go to ${site} and choose “Open one I saved before”. (In the browser you made it in, it is also under “Your escape rooms”.)</li>
       <li>Choose your backup file${d.where === "link" ? " or paste your class link" : ""}, and make the change.</li>
       <li>${d.where === "link" ? "Make a new class link and share it instead of the old one: the old link keeps opening the old version." : "Download it again and replace the old file in your course."}</li>
-      <li>If you change the exit password, keep the old one as a second correct answer in your quiz.</li>
+      <li>To change the exit password, open it and choose “Change the exit password”. Then change the answer in your quiz, and keep the old password as a second correct answer.</li>
     </ol>
     <p>All the steps: the quick-start guide at ${site}guide.html</p>
     </main></body></html>`;
@@ -2094,7 +2094,7 @@ function readHash(){
   if (!step) return null;                                   // some other mark in the address (the skip link's #main): not a page
   return { step, r: Math.max(0, (parseInt(q.get("room"), 10) || 1) - 1), part: q.get("part") || "", q };
 }
-const stepNo = step => { const i = STEP_ORDER.indexOf(step === "add" ? "rooms" : step); return i < 0 ? 0 : i + 1; };
+const stepNo = step => { const i = STEP_ORDER.indexOf(step === "add" ? "rooms" : step === "password" ? "walk" : step); return i < 0 ? 0 : i + 1; };
 function setMode(m){
   document.documentElement.dataset.mode = m;
   const skip = document.querySelector(".skip"); skip.textContent = m === "wizard" ? "Skip to the question" : "Skip to the editing area"; skip.setAttribute("href", m === "wizard" ? "#wiz-main" : "#main");
@@ -2117,6 +2117,7 @@ function routeTo(r, focus){
   closeCabinet(false);
   setMode("wizard");
   WIZ.route = r;
+  if (r.step !== "password") WIZ.pw = null;                 // a new exit password typed but not saved is dropped on leaving its page
   const n = stepNo(r.step); if (n > (meta.reached || 0) && stored) { meta.reached = n; saveMeta(); }
   renderWizard(focus ? "heading" : null);
   if (focus) scrollTo(0, 0);
@@ -2134,12 +2135,12 @@ const wHelp = (...kids) => h("details", { class: "whelp", id: "wiz-help" }, h("s
   h("p", { class: "wguide" }, "All the steps on one page: ", guideLink("wiz-help-guide"), ".")));
 const H1 = text => h("h1", { id: "wiz-h1", tabindex: "-1" }, text);
 /* A field: a label you can read (or the page's question as its label), an optional hint, the error if any, then the box. */
-function wField({ id, label, value, set, hint, area, rows, asH1, placeholder, item, key }){
+function wField({ id, label, value, set, hint, area, rows, asH1, placeholder, item, key, live = true }){
   const err = wErr(key || id);
   const desc = [hint ? id + "-hint" : null, err ? id + "-err" : null].filter(Boolean).join(" ") || null;
   const input = h(area ? "textarea" : "input", { id, type: area ? null : "text", rows: area ? (rows || 3) : null, value: value ?? "", autocomplete: "off", spellcheck: area ? "true" : null,
     placeholder, "aria-describedby": desc, "aria-invalid": err ? "true" : null,
-    oninput: e => { set(e.target.value); if (area) grow(e.target); if (item) wUnverify(item); changed(); } });
+    oninput: e => { set(e.target.value); if (area) grow(e.target); if (live) { if (item) wUnverify(item); changed(); } } });
   const lab = h("label", { for: id, class: asH1 ? null : "wlabel" }, label);
   return h("div", { class: "wf" + (err ? " bad" : "") }, asH1 ? h("h1", { id: "wiz-h1", tabindex: "-1" }, lab) : lab,
     hint ? h("p", { class: "whint", id: id + "-hint" }, hint) : null,
@@ -2176,7 +2177,7 @@ function advHash(r){
   const s = r && r.step;
   if (s === "room" || (s === "rooms" && false)) return `#advanced&room=${r.r + 1}`;
   if (s === "name") return "#advanced&page=settings";
-  if (s === "deliver" || s === "walk" || s === "done") return "#advanced&page=finish";
+  if (s === "deliver" || s === "walk" || s === "done" || s === "password") return "#advanced&page=finish";
   return "#advanced";
 }
 function wFooter(r){
@@ -2219,7 +2220,7 @@ function renderWizard(focus){
   renderSteps(n);
   document.title = `${WIZ.errors.length ? "Error: " : ""}${n ? `Step ${n} of ${STEP_ORDER.length}: ` : ""}${title} – Escape room maker`;
   if (focus === "errors") document.getElementById("wiz-errors").focus();
-  else if (focus) document.getElementById("wiz-h1")?.focus({ preventScroll: true });
+  else if (focus) { const f = def.focus && def.focus(r); (f && document.getElementById(f) || document.getElementById("wiz-h1"))?.focus({ preventScroll: true }); }
   else if (keep && document.getElementById(keep)) document.getElementById(keep).focus({ preventScroll: true });
 }
 async function wizContinue(def, r){
@@ -2352,8 +2353,8 @@ WSTEPS.done = {
   back: () => hashFor("walk"),
   body: () => {
     const st = ER.reviewStatus(cfg), pw = String(cfg.finish?.exitPassword || "").trim();
-    const row = (label, value, step, what) => h("div", {}, h("dt", {}, label), h("dd", {}, value),
-      h("dd", {}, h("a", { href: hashFor(step) }, "Change", h("span", { class: "sr" }, " " + what))));
+    const row = (label, value, step, what, href) => h("div", {}, h("dt", {}, label), h("dd", {}, value),
+      h("dd", {}, h("a", { href: href || hashFor(step) }, "Change", h("span", { class: "sr" }, " " + what))));
     const fresh = meta.backupAt && !unbacked();
     return [H1("Your escape room is ready"),
       h("dl", { class: "wsum", id: "wiz-summary" },
@@ -2361,7 +2362,7 @@ WSTEPS.done = {
         row("Rooms", `${cfg.rooms.length} ${cfg.rooms.length === 1 ? "room" : "rooms"}: ${cfg.rooms.map(x => x.title || "Untitled").join(", ")}`, "rooms", "the rooms"),
         row("Facts checked", `${st.verified} of ${st.total} checked`, "facts", "which facts are checked"),
         row("How students get it", deliveryWords() || "Not chosen yet", "deliver", "how students get it"),
-        row("Exit password", pw || "Not chosen yet", "walk", "the exit password")),
+        row("Exit password", pw || "Not chosen yet", "password", "the exit password", hashFor("password", { from: "done" }))),
       h("h2", {}, "Keep a card"),
       h("p", { id: "wiz-card-note" }, "One printed page with the name, the rooms, the exit password, the date of your last backup and how to change it later. Keep it with your course notes."),
       wbtn({ class: "stamp", id: "wiz-card", "aria-describedby": "wiz-card-note", onclick: openTeacherCard }, icon("print"), "Print a card for this escape room"),
@@ -2397,6 +2398,7 @@ WSTEPS.hub = {
         task("task-facts", "Check your facts", hashFor("facts"), st.unverified ? `${st.unverified} not checked` : "All checked", !!st.unverified),
         task("task-try", "Try it as a student", hashFor("try"), ""),
         task("task-deliver", "Get it to students", hashFor("deliver"), deliveryWords() || "Not started", !deliveryWords()),
+        task("task-password", "Change the exit password", hashFor("password", { from: "hub" }), String(cfg.finish?.exitPassword || "").trim() || "Not chosen yet"),
         h("li", { id: "task-backup" }, wbtn({ id: "wiz-hub-backup", onclick: () => { backup(); renderWizard(); } }, "Download a backup"),
           h("span", { class: "st" + (unbacked() ? " todo" : "") }, meta.backupAt ? (unbacked() ? `Changed since your backup ${when(meta.backupAt)}` : `Backed up ${when(meta.backupAt)}`) : "Not backed up yet"))),
       h("p", { class: "wguide" }, "Every step on one page, to keep beside your screen: ", guideLink("wiz-guide"), "."),
@@ -2847,7 +2849,7 @@ function linkNotes(url, pre){
 function linkStep(){
   const L = meta.link;
   if (!linkFresh()) return h("li", {},
-    L && L.url ? h("p", { class: "ferr", id: "wiz-link-stale" }, "You changed the escape room after making your link. The old link still opens the old version. Make a new link, and share that one instead.")
+    L && L.url ? h("p", { class: "ferr", id: "wiz-link-stale" }, "You changed the escape room after making your link. The old link still opens the old version" + (meta.pwRev > L.rev ? ", with the old exit password" : "") + ". Make a new link, and share that one instead.")
       : h("p", {}, "The link holds the whole escape room. Nothing is uploaded anywhere."),
     wbtn({ class: "plate", id: "wiz-make-link", onclick: async () => {
       const url = await makeClassLink(); if (!url) return;
@@ -2895,6 +2897,53 @@ WSTEPS.deliver = {
   next: () => hashFor("walk")
 };
 
+/* ---------- 9 (part) Change the exit password ----------
+   Reached from the Done page's summary ("Change"), the walkthrough and the hub. One field, focused on arrival; nothing is
+   saved until "Save the new password". After a change, a second page says what it means for students who already finished,
+   the quiz, and a class link or file made before (changed() moves meta.rev on, so the walkthrough flags an old link). */
+const pwNow = () => String(cfg.finish?.exitPassword || "").trim();
+const pwFrom = r => ({ done: "done", walk: "walk", hub: "hub" })[r.q.get("from")] || "done";
+function pwSaved(r){
+  const pw = pwNow(), old = meta.pwOld && meta.pwOld !== pw ? meta.pwOld : "", d = meta.delivery || {}, L = meta.link;
+  const code = t => h("b", {}, t);
+  const remake = (text, id) => h("a", { id, href: hashFor(d.where ? "walk" : "deliver") }, text);
+  return [H1("Your new exit password is saved"),
+    h("p", {}, "From now on, students see it on their certificate at the end:"), copyRow("wiz-pw-new", "the new exit password", pw, "The exit password"),
+    h("h2", {}, "What to do now"),
+    h("ol", { class: "walk", id: "wiz-pw-todo" },
+      old ? h("li", { id: "wiz-pw-finished" }, "Students who already finished saw the old password, ", code(old), ", on their certificate. That doesn't change for them.") : null,
+      h("li", { id: "wiz-pw-quiz" }, "In your course quiz, change the correct answer to ", code(pw), "."),
+      old ? h("li", { id: "wiz-pw-keep" }, "Keep ", code(old), " as a second correct answer in the quiz, so students who already finished still get their mark.") : null,
+      L && L.url ? h("li", { id: "wiz-pw-link" }, "Your class link still has the old password: a link keeps the escape room as it was when you made it. ", remake("Make a new class link", "wiz-pw-relink"), " and share it instead of the old one.")
+        : meta.downloaded ? h("li", { id: "wiz-pw-link" }, "The file you downloaded before still has the old password. ", remake("Download it again", "wiz-pw-relink"), " and replace the old file in your course.")
+        : h("li", { id: "wiz-pw-link" }, "If you already shared a class link or a file, it still has the old password. Make a new one and share it instead."))];
+}
+WSTEPS.password = {
+  title: r => r.part === "saved" ? "Your new exit password is saved" : "What should the exit password be?",
+  focus: r => r.part === "saved" ? null : "wiz-pw",
+  back: r => hashFor(pwFrom(r)),
+  body: r => {
+    if (r.part === "saved") return pwSaved(r);
+    const pw = pwNow();
+    return [wField({ id: "wiz-pw", label: "What should the exit password be?", asH1: true, value: WIZ.pw ?? pw, live: false, set: v => { WIZ.pw = v; },
+      hint: (pw ? `Now it is ${pw}. ` : "") + "Students see it on their certificate at the end, and type it into your course quiz. Letters and numbers that are easy to copy work best." }),
+      pw ? h("p", { id: "wiz-pw-note" }, "Students have already played? You can still change it. After you save, the next page says what to do about your quiz and your class link.") : null];
+  },
+  check: r => r.part === "saved" || String(WIZ.pw ?? pwNow()).trim() ? [] : [{ key: "wiz-pw", target: "wiz-pw", text: "Enter an exit password" }],
+  save: r => {
+    WIZ.pwChanged = false;
+    if (r.part === "saved" || WIZ.pw == null) return;
+    const v = WIZ.pw.trim(), old = pwNow(); WIZ.pw = null;
+    if (v === old) return;
+    cfg.finish = cfg.finish || {}; cfg.finish.exitPassword = v; meta.pwOk = v; changed();
+    if (old) { meta.pwOld = old; meta.pwAt = Date.now(); }
+    meta.pwRev = meta.rev; saveNow();
+    WIZ.pwChanged = true;
+  },
+  go: r => r.part === "saved" ? "Continue" : "Save the new password",
+  next: r => WIZ.pwChanged ? hashFor("password", { part: "saved", from: pwFrom(r) }) : hashFor(pwFrom(r))
+};
+
 /* ---------- 9 Walkthroughs: the download, then the menus to use ---------- */
 const B = t => h("b", {}, t);
 const MENUS = () => h("span", { class: "menus" }, " Menus can differ by version.");
@@ -2930,6 +2979,7 @@ function passwordPart(withQuiz, how = "when you download the file in step 1"){
   return [h("h2", {}, "Your exit password"),
     ready ? [h("p", {}, "Students see it on their certificate at the end."), copyRow("wiz-password", "the exit password", pw, "The exit password")]
       : h("p", { id: "wiz-password-later" }, `You choose it ${how}.`),
+    h("p", {}, h("a", { id: "wiz-password-change", href: hashFor("password", { from: "walk" }) }, ready ? "Change the exit password" : "Choose it now")),
     withQuiz ? [h("h2", {}, "Ready to copy into your quiz"),
       h("p", {}, "Question text:"), copyRow("wiz-quiz-q", "the question text", QUIZ_Q, "The question text", "text"),
       ready ? [h("p", {}, "Correct answer:"), copyRow("wiz-quiz-a", "the correct answer", pw, "The answer")] : null,

@@ -157,5 +157,18 @@ const linkOf = async obj => "#play=1." + Buffer.from(require("zlib").deflateRawS
       const r = jsQR(px, w, w); assert.ok(r, "decodes (version " + c.version + ")"); assert.equal(r.data, text);
     }
   });
+  await at("the test class link in SCREEN-READER-TESTS.md opens the escape room the script describes", async () => {
+    const doc = require("fs").readFileSync(require("path").join(__dirname, "..", "SCREEN-READER-TESTS.md"), "utf8");
+    const links = [...new Set(doc.match(/https:\/\/\S+?#play=[\w.-]+/g) || [])];
+    assert.equal(links.length, 1, "one test link");
+    assert.ok(links[0].startsWith(SITE + "#play=1."));
+    const c = await ER.fromLink(links[0]);
+    assert.equal(c.meta.title, "Screen reader test"); assert.equal(c.finish.exitPassword, "LISTEN42");
+    const room = c.rooms[0];
+    assert.equal(room.type, "quiz"); assert.equal(room.hintsEnabled, true); assert.equal(room.hints[0], "Read each question again slowly.");
+    assert.equal(room.questions[0].prompt, "What is 2 + 2? Type the number."); assert.ok(ER.accepted(room.questions[0].answers).includes("4"));
+    assert.equal(room.questions[1].prompt, "Which of these is a color?"); assert.equal(room.questions[1].choices[room.questions[1].correct], "Blue");
+    assert.ok(room.questions.every(q => q.verified === false), "nothing in it is marked as checked");
+  });
   console.log(`\n${n} passed, 0 failed.`);
 })().catch(e => { console.error("  ✘ " + e.stack); process.exit(1); });

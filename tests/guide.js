@@ -149,6 +149,8 @@ const squash = t => t.replace(/\s+/g, " ").trim();
     await page.goto(base + "/editor.html#step=name"); await heading(page, "What is this escape room called?"); await page.fill("#wiz-title", "Guide test, changed");
     await page.goto(base + "/editor.html#step=walk"); await heading(page, "Share a class link"); await page.locator("#wiz-link-stale").waitFor(); await take();
     await page.goto(base + "/editor.html#step=hub"); await heading(page, "Your escape room"); await take();
+    await page.click("#task-password a"); await heading(page, "What should the exit password be?"); await take();
+    await page.goto(base + "/editor.html#step=hub"); await heading(page, "Your escape room");
     await page.click("#wiz-advanced"); await page.locator("#page-title").waitFor(); await take();
     await page.click("#nav .pull:has-text('Finish & grading')"); await page.locator("#page-title", { hasText: "Finish & grading" }).waitFor(); await take();
     const missing = ui.filter(t => !seen.has(t));

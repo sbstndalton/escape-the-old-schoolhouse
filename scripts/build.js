@@ -63,7 +63,7 @@ function markdown(md){
     .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, text, href) => {
       const h = href.replace(/&amp;/g, "&");
       if (!/^(https?:\/\/|#|[A-Za-z0-9_.-]+\.(html|md)(#[\w-]*)?$)/.test(h)) return text;
-      return `<a href="${E(h.replace(/^ACCESSIBILITY\.md/, "accessibility.html").replace(/^README\.md.*/, "index.html"))}">${text}</a>`;
+      return `<a href="${E(h.replace(/^ACCESSIBILITY\.md/, "accessibility.html").replace(/^README\.md.*/, "index.html").replace(/^([A-Z][A-Z-]*\.md)/, "https://github.com/sbstndalton/escape-the-old-schoolhouse/blob/main/$1"))}">${text}</a>`;
     });
   const lines = md.replace(/\r/g, "").split("\n"), out = [];
   let tables = 0, section = "Accessibility";
