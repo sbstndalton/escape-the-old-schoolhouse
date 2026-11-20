@@ -385,9 +385,9 @@ The **Accessibility check** drawer reads what the teacher wrote and lists common
 - **The Accessibility check matches patterns in English.** It will miss problems phrased in ways it doesn't know, and it will sometimes flag wording that is fine ("at the top of his class"). It can't judge reading level, the quality of a hint, or whether a story makes sense without the picture; the "By hand" tab lists what to check yourself.
 - **Typing a quiz as text** is one plain text box. It is fully labelled, and mistakes are announced and listed, but a screen-reader user may find the form view easier.
 - **Rooms can only be moved up** in the cabinet (move the next room up to move one down).
-- **The typed strip that confirms an action** ("Project saved") disappears after six seconds (it stays while the pointer is on it). It is also announced, and nothing depends on it, but because it is timed **the editor does not claim AAA 2.2.3 (No timing)**. The student game does.
+- **The typed strip that confirms an action** ("Project saved") disappears after six seconds (it stays while the pointer is on it, or while the keyboard is in it: F6 moves the keyboard to it and back). It is also announced, and nothing depends on it, but because it is timed **the editor does not claim AAA 2.2.3 (No timing)**. The student game does.
 - **On short screens the preview scrolls.** At 320×256, or with very large text, the rail takes most of the window and the student view continues below it.
-- **Firefox** was not available where the tests ran. The editor uses nothing Firefox lacks (`inert` needs Firefox 112 or later), but it has not been run there.
+- **Firefox** was not available where the tests ran. The editor uses nothing a current Firefox lacks (`inert` needs Firefox 112 or later, and the dialogs, help slips and messages use the popover top layer, Firefox 125 or later), but it has not been run there.
 
 ### Reporting a problem
 

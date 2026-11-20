@@ -319,8 +319,11 @@ async function makeQuizRoom(page) {
     assert.equal(await game.isDisabled("#hint-btn"), true, "hint 2 still locked");
     assert.match(await game.textContent("#hint-note"), /after 2 more wrong tries/);
     for (let i = 0; i < 2; i++) { await game.fill("#answer", "yyyyy"); await game.click("#try"); }
-    await game.waitForFunction(() => !document.querySelector("#hint-btn").disabled);   // the second hint unlocks a moment after the third wrong try
+    await game.waitForFunction(() => document.querySelector("#hint-btn").getAttribute("aria-disabled") !== "true");   // the second hint unlocks a moment after the third wrong try
+    // the wrong-try message scrolls smoothly into view; a click while the page is still moving can miss
+    await game.waitForFunction(() => new Promise(ok => { const v = document.querySelector("#view"), a = v.scrollTop; setTimeout(() => ok(v.scrollTop === a), 150); }));
     await game.click("#hint-btn");
+    await game.waitForFunction(() => document.querySelectorAll("#hints .hint").length === 2, null, { timeout: 3000 });   // drawn a moment after the press
     assert.equal(await game.locator("#hints .hint").count(), 2);
     assert.match(await game.textContent("#hints"), /surest about/);
     assert.equal(await game.isDisabled("#hint-btn"), true);

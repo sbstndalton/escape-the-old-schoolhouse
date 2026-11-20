@@ -379,7 +379,7 @@ async function startWith(page, how) {
     await page.fill("#q1-prompt", "Who wrote Democracy and Education?"); await page.fill("#q1-a0", "Dewey");
     await page.goto(base + "/editor.html#step=deliver"); await heading(page, "How will your students");
     // the link is the first choice, and recommended
-    assert.equal(await page.getAttribute(".wradios input[type=radio] >> nth=0", "id"), "where-link");
+    assert.equal(await page.getAttribute(".wradios [role=radio] >> nth=0", "id"), "where-link");
     assert.match(await page.textContent("label[for=where-link]"), /Share a class link \(recommended\).*Works anywhere: paste it into Moodle, Canvas, Google Classroom or an email/s);
     await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor();
     assert.equal(await page.evaluate(() => { document.querySelector("#wiz-errors a").click(); return document.activeElement.id; }), "where-link", "the error leads to the first choice");
