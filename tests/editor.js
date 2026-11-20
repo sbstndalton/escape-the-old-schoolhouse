@@ -321,6 +321,7 @@ async function makeQuizRoom(page) {
     for (let i = 0; i < 2; i++) { await game.fill("#answer", "yyyyy"); await game.click("#try"); }
     await game.waitForFunction(() => !document.querySelector("#hint-btn").disabled);   // the second hint unlocks a moment after the third wrong try
     await game.click("#hint-btn");
+    await game.waitForFunction(() => document.querySelectorAll("#hints .hint").length === 2, null, { timeout: 3000 });   // drawn a moment after the press
     assert.equal(await game.locator("#hints .hint").count(), 2);
     assert.match(await game.textContent("#hints"), /surest about/);
     assert.equal(await game.isDisabled("#hint-btn"), true);
