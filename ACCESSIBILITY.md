@@ -3,7 +3,7 @@
 *Escape the Old Schoolhouse* is meant to be playable by every student and editable by every teacher.
 
 - **Target:** [WCAG 2.2](https://www.w3.org/TR/WCAG22/) Level AA for the student game and the teacher editor, with Level AAA wherever it was practical (see [What goes beyond AA](#what-goes-beyond-aa)).
-- **Status:** the student game meets the target in everything we could test with tools and by hand. It has **not yet been tested by people who use assistive technology every day**, or with a real screen reader. That is the biggest gap, and it is listed first under [Known limitations](#known-limitations).
+- **Status:** the student game meets the target in everything we could test with tools and by hand. It has **not yet been tested by people who use assistive technology every day**, or with a real screen reader. That is the biggest gap, and it is listed first under [Known limitations](#known-limitations). [SCREEN-READER-TESTS.md](SCREEN-READER-TESTS.md) is a step-by-step script for closing it: anyone, with no testing experience, can check the front page, the game and the maker with VoiceOver, NVDA or TalkBack.
 - **Last reviewed:** November 2026, against the sample game in this repository. An independent audit in November 2026 found problems this page had missed or overstated (listed under [Second review](#second-review-november-2026)); they are fixed, each has a test, and the claims below were corrected.
 
 This page has three parts: the **student game** (below), the **front page and class links**, and the **editor** (at the end). One thing is shared by all three and comes first: the question asked on a first visit.
@@ -210,7 +210,7 @@ The darkest pixel is very strict here: a line box often touches a pin, a ruled l
 
 ### Known limitations
 
-1. **No testing with real assistive technology or disabled players yet.** Screen-reader behaviour was checked through the browser's accessibility tree, not by listening to NVDA, JAWS, VoiceOver or TalkBack. Voice control, switch access and screen magnifiers were not tried. Automated tools find only part of what real use finds.
+1. **No testing with real assistive technology or disabled players yet.** Screen-reader behaviour was checked through the browser's accessibility tree, not by listening to NVDA, JAWS, VoiceOver or TalkBack. Voice control, switch access and screen magnifiers were not tried. Automated tools find only part of what real use finds. To help close this gap, [SCREEN-READER-TESTS.md](SCREEN-READER-TESTS.md) is a plain step-by-step script (how to start VoiceOver, NVDA and TalkBack, then numbered tasks, each with what you should hear). Every phrase it expects was checked against the real pages' names, roles, states and announcements; the listening itself is still to be done.
 2. **Dials with a touch screen reader.** A custom `spinbutton` may not respond to the adjust gestures in VoiceOver on iOS or TalkBack. The text box next to the lock ("Type the whole code instead") does the same job and is the dependable route there. Typing a character on a dial moves to the next dial; the value set is announced first ("Dial 2: E"), but whether a screen reader speaks it before the next dial's name has not been checked by ear.
 3. **Teacher-written content is not checked by the game.** A teacher can write clues that depend on colour or position, very long codes, or hard reading. The editor's accessibility check is meant to catch these. Emoji that a teacher adds to portraits are treated as decoration and are not read out.
 4. **Focus and the success message.** After a solve, focus moves to **Go through the door** while the success message is sent to the polite live region. Screen readers normally read the button and then the message, but some may drop the message; it is also on screen right above the button. This needs checking with real screen readers.
@@ -374,7 +374,7 @@ The **Accessibility check** drawer reads what the teacher wrote and lists common
 
 ### Known limitations
 
-- **No screen reader has been run against it yet.** Structure, names, roles, states and announcements were checked through the accessibility tree and axe, which is not the same as listening to NVDA, JAWS or VoiceOver. This is the most important thing still to do.
+- **No screen reader has been run against it yet.** Structure, names, roles, states and announcements were checked through the accessibility tree and axe, which is not the same as listening to NVDA, JAWS or VoiceOver. This is the most important thing still to do; Part 3 of [SCREEN-READER-TESTS.md](SCREEN-READER-TESTS.md) is the script for the guided steps.
 - **Forced colours and increased contrast were tested with Chromium's emulation,** not on Windows with a real contrast theme. In forced colours the High contrast switch stays on and can't be turned off.
 - **The guided steps have not been tried by teachers yet**, with or without assistive technology. Whether "Step 3 of 10" and the moved focus are read in a helpful order on each screen reader is untested.
 - **The guided steps cover two kinds of room.** Quiz questions and Match clues to cards are set up step by step; timeline, sorting and reflection rooms, hints, the lock's own code word, the look of the cards and grading are still set in Advanced mode, which is denser.

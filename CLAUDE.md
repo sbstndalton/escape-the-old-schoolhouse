@@ -15,6 +15,7 @@ A browser-based educational escape room for an introductory Foundations of Educa
 - Old addresses: `index.html#play=…` forwards to `play.html#play=…` (a script at the top of the front page). Keep that working.
 - `scripts/serve.js`: zero-dependency static server. `tests/links.js`: class links and the front page. `tests/playthrough.js`: automated play-through. `tests/a11y-game.js`: the game's accessibility tests. `tests/wizard.js`: the guided steps. `tests/a11y-prompt.js`: the first-visit accessibility prompt on all three pages (`tests/skip-ask.js` is the init script every other test uses to start as a returning visitor). `tests/read-aloud.js`: the Listen buttons, with speech mocked by `tests/speech-mock.js` (headless browsers have no local voices). `tests/guide.js`: the quick-start guide and the teacher card.
 - `ACCESSIBILITY.md`: the accessibility statement (target, what was tested, measured contrast, known limitations). Keep it true: update it when a test, a figure or a limitation changes.
+- `SCREEN-READER-TESTS.md`: a step-by-step script for people (teachers, student helpers) to check the front page, the game and the guided steps with real screen readers (VoiceOver, NVDA, TalkBack). Every "What you should hear" in it was checked against the real names, roles, states and live-region text: when you rename a control or change a message it quotes, change it there too. Its test class link is decoded by `tests/shared.js`.
 
 ## Testing the web version
 - `npm install` once (installs Playwright), then `npx playwright install chromium`.
