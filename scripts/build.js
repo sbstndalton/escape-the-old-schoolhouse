@@ -1,7 +1,7 @@
 // Builds the files people actually use from src/, content/ and ACCESSIBILITY.md:
 //   index.html            the front page: "I'm a student" (open a class link, or play the sample) and "I'm a teacher"
 //   play.html             the student game with the sample content; it also plays any class link (play.html#play=…)
-//   editor.html           the teacher's maker (includes the game template so it can export games and make links)
+//   editor.html           the teacher's maker: src/editor/ (React + ui-sdk) bundled by esbuild, with the game template so it can export games and make links
 //   accessibility.html    the accessibility statement (ACCESSIBILITY.md as a page)
 //   guide.html            the teachers' printable one-page quick-start guide
 //   EscapeRoom_SCORM.zip  the sample game packaged for Moodle/Canvas (its own launch file is index.html inside the zip)
@@ -28,10 +28,22 @@ if (errors.length) { console.error("Content has problems:\n- " + errors.join("\n
 // The website's game links back to the front page when a class link is broken; exported and SCORM games don't.
 const play = ER.buildGame(gameTemplate, content, { home: "index.html" });
 const packaged = ER.buildGame(gameTemplate, content);
-const editor = read("src/editor.html")
-  .replace("/*__SHARED__*/", () => shared)
-  .replace('"__GAME_TEMPLATE__"', () => jsLiteral(gameTemplate))
-  .replace('"__DEFAULT_CONFIG__"', () => jsLiteral(content));
+/* The editor is React + ui-sdk (src/editor/*.jsx, with src/shared.js imported). esbuild bundles it into one classic
+   script (an IIFE, so it also runs from file://), which goes inline into the page with the CSS and the embedded fonts. */
+function editorBundle(){
+  const out = require("esbuild").buildSync({
+    entryPoints: [path.join(root, "src/editor/main.jsx")], bundle: true, write: false, format: "iife", platform: "browser",
+    target: ["es2020"], jsx: "automatic", minify: true, legalComments: "eof", charset: "utf8", logLevel: "warning",
+    define: { "process.env.NODE_ENV": '"production"' }
+  }).outputFiles[0].text;
+  const once = (s, from, to) => { const i = s.indexOf(from); if (i < 0 || s.indexOf(from, i + 1) >= 0) throw new Error(`The editor bundle should hold ${from} once`); return s.slice(0, i) + to + s.slice(i + from.length); };
+  let js = once(once(out, '"__GAME_TEMPLATE__"', jsLiteral(gameTemplate)), '"__DEFAULT_CONFIG__"', jsLiteral(content));
+  return js.replace(/<\/(script)/gi, "<\\/$1").replace(/<!--/g, "<\\!--");
+}
+const EDITOR_NOTE = "/* The editor bundles React and React DOM (MIT License, Copyright (c) Meta Platforms, Inc. and affiliates; their notices are at the end of this script) and ui-sdk (@ui-sdk/react and @ui-sdk/core, Copyright 2026 Vercel, Inc., Apache License 2.0). */\n";
+const editor = read("src/editor/index.html")
+  .replace("/*__EDITOR_CSS__*/", () => read("src/editor/editor.css"))
+  .replace("/*__EDITOR_JS__*/", () => EDITOR_NOTE + editorBundle());
 
 // The front page and the statement use the game's own embedded fonts (the reading face and the label face).
 const fontFaces = families => gameSrc.split("\n").filter(l => l.startsWith("@font-face") && families.some(f => l.includes(`font-family:"${f}"`))).join("\n");

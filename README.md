@@ -237,7 +237,7 @@ Everything is plain HTML, CSS and JavaScript. Each page is one self-contained fi
 | Path | What it is |
 |---|---|
 | `src/game.html` | The student game engine (draws each room from the content; holds no course content). |
-| `src/editor.html` | The maker: the guided steps, and Advanced mode (`editor.html?mode=advanced`). |
+| `src/editor/` | The maker: the guided steps, and Advanced mode (`editor.html?mode=advanced`). Written in React with ui-sdk; the build bundles it into `editor.html` with esbuild. |
 | `src/shared.js` | Logic shared by both and by Node: validation, class links, the QR code maker, the SCORM writer, accessibility helpers. |
 | `src/front.html`, `src/guide.html`, `src/statement.html` | The front page, the quick-start guide, and the frame of the accessibility statement page. |
 | `content/foundations-of-education.json` | The sample escape room's content. |
@@ -268,5 +268,6 @@ Run `node scripts/readme-shots.js --only maker` to retake only some pictures. Lo
 
 - Fonts, embedded in the pages: Atkinson Hyperlegible, IM Fell English and IM Fell English SC (SIL Open Font License 1.1); Special Elite (Apache License 2.0). Their notices are in the pages' style blocks.
 - The QR code encoder in `src/shared.js` is adapted from Project Nayuki's QR Code generator (MIT License; notice inline).
+- The maker (`editor.html`) bundles React and React DOM (MIT License) and ui-sdk (`@ui-sdk/react`, `@ui-sdk/core`; Apache License 2.0); their notices are in the page's script.
 
 </details>
