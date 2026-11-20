@@ -194,6 +194,12 @@ async function wizardStates(page, go, phone){
     async () => { await escapeAll(page); await page.evaluate(() => { cfg.finish.exitPassword = "DEWEY1916"; changed(); }); });
   await go("wizard / 9 the exit password slip, empty: error", async () => { await to("#step=walk&r=pw2", "cfg.finish.exitPassword = ''"); await page.click("#wiz-download"); await page.locator("#ask-password").waitFor(); await page.fill("#ask-password", ""); await page.click("#ask-ok"); },
     async () => { await escapeAll(page); await page.evaluate(() => { cfg.finish.exitPassword = "DEWEY1916"; changed(); }); });
+  await go("wizard / 9 change the exit password", () => to("#step=password&from=done"), stay);
+  await go("wizard / 9 change the exit password, empty: error", async () => { await to("#step=password&from=done&e=1"); await page.fill("#wiz-pw", ""); await err(); },
+    async () => { await page.evaluate(() => { WIZ.pw = null; }); });
+  await go("wizard / 9 change the exit password, saved: what to do now", async () => {
+    await to("#step=password&part=saved&from=done", "meta.pwOld = 'OLDPASS1'; meta.pwAt = Date.now(); meta.link = { url: 'x', rev: meta.rev, at: Date.now() }"); },
+    async () => { await page.evaluate(() => { delete meta.pwOld; delete meta.link; saveMeta(); }); });
   await go("wizard / 10 done", () => to("#step=done"), stay);
   await go("wizard / 10 done, the teacher card", async () => { await to("#step=done&card=1"); await page.click("#wiz-card"); await page.frameLocator(".overlay iframe").locator("h1").waitFor(); }, async () => { await escapeAll(page); });
   await go("wizard / hub, two escape rooms", async () => {
