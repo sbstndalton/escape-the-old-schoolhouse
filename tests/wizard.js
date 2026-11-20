@@ -35,6 +35,7 @@ async function fresh(viewport = { width: 1280, height: 900 }) {
 const heading = (page, text) => page.waitForFunction(t => { const h = document.getElementById("wiz-h1"); return h && h.textContent.includes(t); }, text, { timeout: 5000 });
 const go = async (page, text) => { await page.click("#wiz-continue"); await heading(page, text); };
 const h1 = page => page.textContent("#wiz-h1");
+const squash = s => String(s).replace(/\s+/g, " ").trim();
 const active = page => page.evaluate(() => document.activeElement && document.activeElement.id);
 async function download(page, selector, answer = []) {
   // Slips may ask first (the exit password, then unchecked items); `answer` says what to do with each.
@@ -431,6 +432,72 @@ async function startWith(page, how) {
     assert.equal((await ER.fromLink(await page.inputValue("#wiz-link"))).rooms[0].questions[0].answers, "John Dewey");
     await page.goto(base + "/editor.html#step=done"); await heading(page, "Your escape room is ready");
     assert.match(await page.textContent("#wiz-summary"), /A class link/);
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
+  await test("the exit password changes from the Done page: the field is focused, then the next page says what to do; summary, card, walkthrough and an old link follow", async () => {
+    const page = await fresh();
+    await startWith(page, "empty"); await heading(page, "What is this escape room called?");
+    await page.fill("#wiz-title", "Week 5 check"); await go(page, "Your rooms");
+    await go(page, "Room 1: Write your questions");
+    await page.fill("#q1-prompt", "Who wrote Emile?"); await page.fill("#q1-a0", "Rousseau");
+    await page.evaluate(() => { meta.delivery = { where: "link" }; saveMeta(); });
+    await page.goto(base + "/editor.html#step=walk"); await heading(page, "Share a class link");
+    await page.click("#wiz-make-link"); await page.fill("#ask-password", "WEEKFIVE"); await page.click("#ask-ok");
+    await page.locator(".modal #ask-ok").waitFor(); await page.click("#ask-ok"); await page.locator("#wiz-link").waitFor();
+    const oldLink = await page.inputValue("#wiz-link");
+    const verifiedBefore = await page.evaluate(() => ER.reviewStatus(cfg).verified);
+    // the Done page's Change link leads straight to the field, with the keyboard on it
+    await page.goto(base + "/editor.html#step=done"); await heading(page, "Your escape room is ready");
+    const change = page.locator("#wiz-summary div:has(dt:text-is('Exit password')) a");
+    assert.equal(squash(await change.textContent()), "Change the exit password");
+    await change.focus(); await page.keyboard.press("Enter");
+    await heading(page, "What should the exit password be?");
+    assert.equal(await active(page), "wiz-pw", "focus is on the field");
+    assert.equal(await page.inputValue("#wiz-pw"), "WEEKFIVE");
+    assert.equal(await page.evaluate(() => document.querySelector("#wiz-h1 label").htmlFor), "wiz-pw", "the question is the field's label");
+    assert.match(await page.title(), /^Step 9 of 10: What should the exit password be\? – Escape room maker$/);
+    assert.match(await page.textContent("#wiz-pw-hint"), /Now it is WEEKFIVE\./);
+    // empty: a linked error, nothing saved
+    await page.fill("#wiz-pw", "  "); await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor();
+    assert.match(await page.textContent("#wiz-errors"), /Enter an exit password/);
+    assert.equal(await page.getAttribute("#wiz-pw", "aria-invalid"), "true");
+    assert.equal(await page.evaluate(() => cfg.finish.exitPassword), "WEEKFIVE", "nothing changes until it is saved");
+    await page.fill("#wiz-pw", "WEEKSIX"); await page.keyboard.press("Enter");
+    await heading(page, "Your new exit password is saved");
+    assert.equal(await page.evaluate(() => cfg.finish.exitPassword), "WEEKSIX");
+    assert.equal(await page.textContent("#wiz-pw-new"), "WEEKSIX");
+    assert.match(squash(await page.textContent("#wiz-pw-finished")), /Students who already finished saw the old password, WEEKFIVE, on their certificate/);
+    assert.match(squash(await page.textContent("#wiz-pw-quiz")), /change the correct answer to WEEKSIX/);
+    assert.match(squash(await page.textContent("#wiz-pw-keep")), /Keep WEEKFIVE as a second correct answer/);
+    assert.match(squash(await page.textContent("#wiz-pw-link")), /Your class link still has the old password.*Make a new class link and share it instead of the old one/);
+    assert.equal(await page.evaluate(() => ER.reviewStatus(cfg).verified), verifiedBefore, "nothing is marked as checked");
+    await page.click("#wiz-continue"); await heading(page, "Your escape room is ready");
+    assert.match(await page.textContent("#wiz-summary"), /Exit password\s*WEEKSIX/);
+    // the teacher card has the new one, and the old one to keep in the quiz
+    await page.click("#wiz-card");
+    const card = page.frameLocator(".overlay iframe"); await card.locator("h1").waitFor();
+    const text = squash(await card.locator("body").innerText());
+    assert.match(text, /Exit password WEEKSIX Changed on .*Before that it was WEEKFIVE: keep it as a second correct answer/);
+    assert.match(text, /you have changed the escape room since: make a new link/);
+    assert.match(text, /choose “Change the exit password”/);
+    await page.keyboard.press("Escape"); await page.locator(".overlay").waitFor({ state: "detached" });
+    // the walkthrough: the new password to copy, and the old link flagged
+    await page.goto(base + "/editor.html#step=walk"); await heading(page, "Share a class link");
+    assert.match(squash(await page.textContent("#wiz-link-stale")), /old link still opens the old version, with the old exit password\. Make a new link/);
+    assert.equal(await page.textContent("#wiz-password"), "WEEKSIX");
+    assert.equal(await page.textContent("#wiz-quiz-a"), "WEEKSIX");
+    assert.equal(await page.getAttribute("#wiz-password-change", "href"), "#step=password&from=walk");
+    await page.click("#wiz-make-link"); await page.locator(".modal #ask-ok").waitFor(); await page.click("#ask-ok"); await page.locator("#wiz-link").waitFor();
+    assert.notEqual(await page.inputValue("#wiz-link"), oldLink);
+    assert.equal((await ER.fromLink(await page.inputValue("#wiz-link"))).finish.exitPassword, "WEEKSIX");
+    assert.equal((await ER.fromLink(oldLink)).finish.exitPassword, "WEEKFIVE");
+    // the hub offers it too; saving the same password again just goes back
+    await page.goto(base + "/editor.html#step=hub"); await heading(page, "Your escape room");
+    assert.match(squash(await page.textContent("#task-password")), /Change the exit password\s*WEEKSIX/);
+    await page.click("#task-password a"); await heading(page, "What should the exit password be?");
+    await page.click("#wiz-continue"); await heading(page, "Your escape room");
     assert.deepEqual(page.errors, []);
     await page.context().close();
   });
