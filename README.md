@@ -1,264 +1,272 @@
-# 🏫 Escape the Old Schoolhouse
+# Escape the Old Schoolhouse
 
-A browser-based escape room for an introductory **Foundations of Education** course.
-Students solve 5 puzzle rooms about educational philosophies and philosophers, then reflect on their own philosophy of education.
+**Escape rooms for your class, in the browser.** Students solve short puzzles; you get the grade through a one-question quiz.
 
-- ⏱ Takes about 15–25 minutes
-- 💻 Runs in any web browser: Chrome, Edge, Safari, or Firefox
-- 🔌 Needs no internet, accounts, or installs
-- 🎓 Works in **Moodle** and **Canvas**
-- ✏️ Teachers can change every question and answer in a simple editor, and build new escape rooms for other chapters
-- ♿ Built to [WCAG 2.2 AA](ACCESSIBILITY.md): keyboard and screen-reader support, your own text size, High contrast, Readable text, no time limit
+![A room in the game: the Library at night. Five books on a shelf each show a letter on the spine, clue cards are pinned below, and a brass combination padlock with five dials hangs on the locked door.](docs/images/game-library.webp)
 
-> **Teachers: start at the website, <https://sbstndalton.github.io/escape-the-old-schoolhouse/>.** Press **I'm a teacher → Make an escape room** and follow the steps. When it's ready, you get a **class link** to paste into Moodle, Canvas, Google Classroom or an email. Students click it and play; the exit password on their certificate goes into a one-question quiz for the grade. The **[printable quick-start guide](https://sbstndalton.github.io/escape-the-old-schoolhouse/guide.html)** puts all of that on one page to keep beside your screen. Nothing on the rest of this page is needed for that.
+## Start here
 
-> ⚠️ **The sample content has not been fact-checked yet.** It was written with AI help and may contain mistakes. Until the instructor checks every item in the editor, students see a "Draft" notice at the top of the game. See [Checking the content](#-checking-the-content).
+### 👉 [Open the website: sbstndalton.github.io/escape-the-old-schoolhouse](https://sbstndalton.github.io/escape-the-old-schoolhouse/)
 
----
+- **Nothing to install.** It runs in Chrome, Edge, Firefox or Safari.
+- **No accounts.** No sign-up for you or your students.
+- **Nothing is sent anywhere.** What you write stays on your computer, and the game sends nothing back.
 
-## 🚪 The front page and class links
+The front page has two doors: one for students, one for teachers.
 
-The website's front page has two doors:
-
-- **I'm a student:** paste a class link (or just click the one your teacher shared), or play the sample escape room.
-- **I'm a teacher:** make an escape room (the guided steps), open one you saved before, the **Printable quick-start guide**, and a short "How it works".
-
-A **class link** is the whole escape room packed into one web address (`…/play.html#play=1.…`). Nothing is uploaded or stored anywhere: the part after `#` never reaches a web server. That also means:
-
-- **Changing the escape room means sharing a new link.** The old link keeps opening the old version.
-- **The link is a backup.** In the maker, choose **Open one I saved before** and paste it to get the escape room back.
-- **Long links:** the sample is about 7 KB of link, which Moodle, Canvas and email handle fine. Over about 30 KB (very long texts), the maker warns that some systems may cut it off and suggests the file instead. Short links also get a QR code.
+![The front page. On the left, a door labelled "I'm a student" with a box to paste a class link, an "Open my escape room" button and a "Play the sample escape room" button. On the right, a door labelled "I'm a teacher" with a "Make an escape room" button and links to "Open one I saved before" and the "Printable quick-start guide".](docs/images/front-page.webp)
 
 ---
 
-## ⬇️ Download
+## For teachers: make your own in 3 steps
 
-| File | What it's for |
-|---|---|
-| [`index.html`](index.html) | The front page (the website's start page). |
-| [`play.html`](play.html) | The game with the sample escape room. Double-click it to play. It also plays any class link. |
-| [`editor.html`](editor.html) | **For teachers:** change questions and answers, check content, and export new games. **Don't give this to students**, because it shows the answers. |
-| [`EscapeRoom_SCORM.zip`](EscapeRoom_SCORM.zip) | Upload this to Moodle or Canvas for automatic grading. **Don't unzip it.** |
-| [`accessibility.html`](accessibility.html) | The accessibility statement as a page (made from `ACCESSIBILITY.md`). |
-| [`guide.html`](guide.html) | **For teachers:** the one-page quick-start guide. Press **Print this guide**: it fits one page on Letter or A4. |
+It takes about 30 to 45 minutes. The maker asks one question per page and saves as you go.
 
-To download a file, click its name above, then click the **download button** (⬇) at the top right of the file view.
-To download everything at once, go to the main repository page and click the green **Code** button, then **Download ZIP**.
+### Step 1. Make it
 
----
+On the front page, press **Make an escape room**. The maker walks you through 10 short steps. Choose **Change the sample** (to start from the ready-made escape room) or **Start with an empty escape room**, then press **Continue** on each page.
 
-## ✏️ Editing questions and answers (for teachers)
+![The maker's first page, "Make an escape room for your class". A list of the 10 steps runs down the left side; the page explains that students solve puzzles, play in a browser, and the course records the grade.](docs/images/maker-welcome.webp)
 
-Open the website and press **I'm a teacher → Make an escape room**, or download **`editor.html`** and double-click it. Everything happens in the browser, with no account and nothing sent anywhere.
+You type your own questions, with other spellings you will accept. Capitals, accents and punctuation don't matter.
 
-**Print the [quick-start guide](https://sbstndalton.github.io/escape-the-old-schoolhouse/guide.html)** (also on the front page as **Printable quick-start guide**, and in the editor's help): the seven steps from opening the maker to the exit-password quiz and your backup, plus what to do if something goes wrong, on one page.
+![The step "Write your questions". Question 1 reads "Who wrote Democracy and Education (1916)?", students type the answer, and the accepted answers are "John Dewey" and "Dewey".](docs/images/maker-questions.webp)
 
-### Start here: the guided steps
+Stuck? Every page has **Help with this step**. Need a break? Press **Save and finish later**.
 
-The first time you open the editor, it takes you through **10 short steps**, one question per page:
+The maker works on a tablet or phone too: the list of steps folds away under **All 10 steps**.
 
-1. **Welcome**: what an escape room is and what you'll do.
-2. **How to start**: change the sample, start with an empty escape room, or open one you saved before (a backup file, or a class link you shared).
-3. **Name it**: the title students see, and your course.
-4. **Your rooms**: add, remove and order rooms. Quiz questions and Match clues to cards are set up right in the steps; the other kinds open in Advanced mode.
-5. **Fill in each room**: your questions (with other accepted spellings) or your cards and clues ("Students will open the lock with LEARN"), then what students read.
-6. **Check your facts**: every item in one list. Say where you checked it and tick it. Nothing is ever ticked for you.
-7. **Try it as a student**: play it the way students will.
-8. **How students get it**: **Share a class link** (recommended: works anywhere), Moodle, Canvas, another course system, or a file.
-9. **Put it in your course**: make the class link (with **Copy link**, **Open it as a student**, and a QR code when it is short enough) or download the right file, then numbered steps with the menu names for your system, your exit password with a **Copy** button, and the quiz question ready to paste.
-10. **Done**: a summary with **Change** links, a reminder to keep your backup, and **Print a card for this escape room**: one page with its name, rooms, exit password, quiz question, the date of your last backup and how to change it later.
+![The maker on a phone: the first step, "Make an escape room for your class", in one narrow column, with "All 10 steps" folded above it.](docs/images/phone-maker.webp)
 
-Every step has **Back**, **Continue**, **Help with this step**, **Save and finish later**, and **Show all settings (Advanced mode)**. When you come back to the editor in the same browser, it opens on **Your escape room**: a list of what's done and what's left, plus **Your escape rooms** (every escape room in this browser), **Make another escape room** and **Make a copy of this one**.
+### Step 2. Check your facts and try it
 
-**Where your work is saved.** As you type, the editor saves in *this browser on this computer only*. The line at the top says so ("Saved in this browser at 3:42 pm. Not backed up yet."). Press **Download a backup** to keep a copy of your own: the backup is the game file itself, so it plays in any browser and opens again in the editor (choose **Open one I saved before**). The browser warns you before you close the page with changes that aren't in a backup yet.
+On **Check your facts**, compare each item with your textbook. Type **Where you checked it** and tick **I checked this is correct**. Nothing is ever ticked for you. Until every item is ticked, students see a "Draft" notice.
 
-**The exit password.** Before you download a file for students, the editor makes sure your escape room has its own exit password. If it has none, or it is a changed copy of the sample still using `DEWEY1916`, it asks "What should the exit password be?" and suggests one from your title.
+![The step "Check your facts", showing "1 of 40 checked". The first card, Essentialism, has its clue, a "Where you checked it" line filled in with "Course textbook, ch. 3, p. 45", and a ticked box "I checked this is correct".](docs/images/maker-facts.webp)
 
-### Advanced mode (all settings)
+Then, on **Try it as a student**, press **Start the student view** and play it yourself. **Show answers** lets you skip ahead. Press **Esc** or **Exit preview** to come back.
 
-**Show all settings** opens the full editor described below; **Guided steps** in its file list takes you back. Both work on the same escape room.
+### Step 3. Share the class link and make the exit-password quiz
 
-The editor looks like a curator's workbench at night. The **cabinet** on the left has one drawer for each room, plus Settings, Story & intro, and Finish & grading. On a phone, tap the brass **Rooms** handle at the top to slide the cabinet out. The drawer you pick is laid out on paper in the middle, with index tabs along the top (for example *Cards & clues*, *Lock*, *Room text*, *Hints*). A small **ⓘ** next to a label opens a short explanation (point at it, tap it, or reach it with the Tab key; **Esc** puts it away).
+On **How students get it**, choose **Share a class link (recommended)**.
 
-**The editor is built to be used by everyone.** Everything works from the keyboard alone, with a visible focus ring. Screen readers get real labels, groups and announcements. Before anything is deleted or replaced, the editor asks on its own slip (never a browser pop-up), with **Cancel** selected first. At the foot of the cabinet are two switches, remembered in your browser: **High contrast** (plain black-on-white, heavier outlines; it also follows your system's contrast setting) and **Readable text** (a plain, larger typeface with more spacing). The editor works at 200% text size, at 400% zoom and on a phone, and it is styled for Windows High Contrast (checked with the browser's emulation, not yet on Windows). See [ACCESSIBILITY.md](ACCESSIBILITY.md) for what was tested and what still falls short.
+![The step "How will your students get to the escape room?" with "Share a class link (recommended)" chosen. Other choices are Moodle, Canvas, Another course system, and "I'll email or post a file".](docs/images/maker-deliver.webp)
 
-- **Change anything students see.** Story text, clues, questions, answers, hints, the exit password, and grading are all lines you type on.
-- **Add, remove, or reorder rooms.** **Add a room** in the cabinet lists the five kinds of rooms:
-  - **Question lock**: short-answer or multiple-choice questions. All must be right to open the lock. *This one works like a chapter quiz.*
-  - **Matching code**: match clues to cards and enter the codes on the cards.
-    - Choose a **Look of the cards** for each matching room: *Plain cards* (index cards in a catalogue drawer), *Books on a shelf* (the code is the gilt letter on each spine), or *Framed portraits* (the code is on a brass plate; each painting is signed with the card's initials, and the card's icon appears as a small emblem). The look changes the picture only, never the puzzle or the answer. Books suit short names. A name over 48 characters makes that room fall back to plain cards.
-  - **Put in order**: timelines or steps in a process.
-  - **Sort into groups**: for example traditional vs. progressive.
-  - **Reflection survey**: no wrong answers; shows a result profile on the certificate.
-- **Animation and sound are optional for students.** Dials click, locks spring open, doors part between rooms, and the certificate gets a wax seal. Students can switch animation off with **Motion** in the notebook (click the pocket watch or press **Esc**), and sound off with the bell at the top right. Motion is off automatically on devices set to "reduce motion", and the game works the same either way. The notebook also has **High contrast**, **Readable text** and **Hide the clock**. See [Accessibility](#-accessibility).
-- **Type a whole quiz as text.** In a Question lock room, click **Edit all questions as text** and write:
-  ```text
-  Q: Who wrote Democracy and Education (1916)?
-  A: John Dewey | Dewey
+Press **Make the class link**, then **Copy link**. Paste the link into Moodle, Canvas, Google Classroom or an email. The maker shows exactly where it goes in Moodle and Canvas.
 
-  Q: Which philosophy is built around the "Great Books"?
-  - Essentialism
-  * Perennialism
-  - Existentialism
-  ```
-  `A:` lists accepted answers (separate alternatives with `|`; capitals and punctuation are ignored). For multiple choice, mark the right answer with `*`.
-- **One escape room per chapter.** Use **New…** to start a blank room or copy the sample. The escape room you had open stays in this browser too (find it under **Guided steps**, *Your escape rooms*), so a new one never overwrites the last.
-- **See the answers.** Every room has an **Answer key** envelope beside the page (only in the editor). Click it to open the key; it updates as you type. **Answer sheet** shows every room's answers on one page, ready to print.
-- **Accessibility check.** The **Accessibility check** drawer (at the end of the cabinet) reads what you wrote and lists things that often shut students out: directions that depend on colour, position, shape or sound ("the red book", "on the left"), words like "click" or "drag", time pressure, a lock with more than 8 dials, missing titles or instructions, symbols or emoji used as the only meaning, very long clues and reading-heavy rooms, typed answers with only one accepted spelling, long lists to order or sort, and rooms with no hints. Each note says where it is, why it matters, and what to do; clicking it takes you to the spot. The notes are advice only. They never stop you previewing or exporting, and they are printed at the end of the **Answer sheet**.
-- **Hints (optional).** Hints are **off** until you switch them on for a room. Each room can have **two hints** that you write. Students can't open a hint straight away: hint 1 unlocks after 1 wrong try and hint 2 after 3 wrong tries in that room (you can change these numbers in **Settings**). The editor warns you if a hint gives away the answer.
-- **Preview as student** opens the game exactly as students see it, full screen. The brass rail at the top is just for you: jump to any room, switch **Show answers** on or off, **Restart**, or **Exit preview** (or press **Esc**). Each room also has a **Preview this room** button. Nothing in the preview is saved or graded.
-- **Export for students** has **Copy class link**, and downloads the game as an `.html` file or a **SCORM `.zip`** for Moodle/Canvas, ready to upload.
-- **Download a backup** (at the foot of the cabinet) downloads the game `.html`, which reopens with **Open…**. **Save project** downloads the same content as a `.json` file. The editor also remembers your work in this browser between visits, and the line at the foot of the cabinet says when it last saved and whether it is backed up.
+![The step "Share a class link". Under "Your class link" is a long web address in a box, with a "Copy link" button and an "Open it as a student" link. Below are numbered instructions for Moodle and Canvas.](docs/images/maker-link.webp)
+
+**For the grade**, make a quiz in your course with one question:
+
+> Type the exit password from the certificate at the end of the escape room.
+
+The answer is your exit password (the maker shows it, with a **Copy** button). **Set the quiz to ignore capital letters**, so that, for the sample, `dewey1916` and `DEWEY1916` both count:
+
+- **Moodle:** a **Short answer** question, with **Case sensitivity** set to **No, case is unimportant**.
+- **Canvas:** a **Fill in the Blank** question, with **Close enough** and **Spelling only (ignore case)**, or add the password in small letters as a second answer.
+
+Menus can differ by version. If you change the password after students have played, keep the old one as a second correct answer.
+
+### Print the quick-start guide
+
+The **[printable quick-start guide](https://sbstndalton.github.io/escape-the-old-schoolhouse/guide.html)** puts all of this on one page (Letter or A4) to keep beside your screen. Press **Print this guide**.
+
+![The quick-start guide for teachers: the website address with a QR code, a "Print this guide" button, and the first numbered steps: Open the maker, Follow the steps, Check your facts.](docs/images/guide.webp)
 
 ---
 
-## ✅ Checking the content
+## For students
 
-Every gradable item (each card, question, timeline event, sorting item, and reflection result) has a **Source** line and a wax seal labelled **I checked this is correct**.
+**Click the link your teacher shared.** The escape room opens in your browser. No sign-up.
 
-1. Click **Answer sheet** to see or print every room with all the answers.
-2. Compare each item with your textbook or other sources. Fix anything that's wrong.
-3. Type where you checked it in **Source** (for example, *Ch. 3, p. 45*) and press the seal, **I checked this is correct**.
+No link yet? On the [front page](https://sbstndalton.github.io/escape-the-old-schoolhouse/), press **Play the sample escape room**.
 
-The brass plate at the top shows how many items are checked (for example *31 / 40 checked*), and each drawer label shows that room's count (for example *3/8*, or a tick when the room is done). A pinned note on the page says how many items are still unchecked; click it for the full explanation. If you edit an item after checking it, it un-checks itself so you look at it again. Until every item is checked, the student game shows a **Draft** notice at the top.
+1. Type your name and press **Begin**.
 
----
+   ![The title screen. A wooden door with a brass "Begin" plate, a story note pinned to the wall, an "Accessibility options" button, and a guest ledger where the name "Sam" is typed.](docs/images/game-title.webp)
 
-## ▶️ Try it yourself first
+2. Solve each room to open its lock. Read the clues, try an answer, and press the lock's button. Wrong answers cost nothing, so keep trying. When a lock opens, press **Go through the door**.
 
-1. On the website, press **Play the sample escape room**. Or download `play.html` and double-click it: it opens in your browser.
-2. Class links open in any up-to-date browser (Chrome, Edge, Firefox, Safari).
-3. If you see code instead, right-click the file → **Open with** → choose your browser.
+3. At the end you get a certificate with the **exit password**. Type it into your teacher's quiz.
 
-> Phones and iPads often show the code instead of running the game. Test on a laptop or desktop.
+   ![The certificate: "You Escaped!", "This certifies that Sam escaped the Old Schoolhouse", the time, and the exit password DEWEY1916 in a box. Beside it is a reflection card and buttons to "Print / save as PDF" and "Play again".](docs/images/game-certificate.webp)
 
-### How it plays
-The game is one night-time scene per room. Everything is an object you handle:
+It works on a phone too: the room becomes one column that you scroll.
 
-- **Papers** (clue cards, books, portraits, the story note): click one to read it up close. **Esc** or the close button puts it back.
-- **Describe this room:** a button under each room's title that lists everything in the room as plain text.
-- **Combination padlock:** take the clues in order; the codes they point to, in that order, open the lock. Turn each dial with its arrows, a drag, the scroll wheel or the arrow keys, or type the whole code in the box. Then press **Pull the shackle** (or **Enter**).
-- **Other locks:** press the handle on the door (its button is named **Check answers**, **Check order** or **Submit**). A small counter shows how many you got right.
-- **After a lock opens** the result stays on screen until the student presses **Go through the door**. Nothing moves on by itself.
-- **Sorting slips:** click a slip, then press a rubber stamp. Each slip also has its own boxes to stamp.
-- **Timeline cards:** move them with the round up and down buttons, or drag a card by its number.
-- **The mirror:** choose an answer, then press **Next question**.
-- **Key ring** (top left): one key per room. A key turns brass and gets a tick when you escape its room.
-- **Pocket watch** (top right): opens the notebook (so does **Esc**): sound, motion, high contrast, readable text, hide the clock, start over. There is no time limit; the clock only shows how long you have played.
-- **A tall room scrolls.** On a phone or a small window the room is one column. A "more below" mark shows when there is more to see.
+![The game on a phone: Room 2, the Portrait Gallery, in one narrow column, with the story note at the top and two portraits with numbered brass plates below.](docs/images/phone-room.webp)
 
-Everything also works from the keyboard (**Tab**, **Enter**, **Space**, arrow keys, **Esc**).
-
-### ♿ Accessibility
-The game follows your browser's text size and zoom, works with the keyboard alone and with screen readers, and supports Windows High Contrast. In the notebook you can switch on **High contrast** and **Readable text** (plain letters, larger, more space), switch off **Motion** and **Sound**, and **hide the clock**. What was tested, the measured contrast figures, and the known limits are in **[ACCESSIBILITY.md](ACCESSIBILITY.md)**.
+**Good to know:** there is no time limit. The clock only shows how long you have played. The pocket watch (**Notebook**) or the **Esc** key opens settings and lets you start over.
 
 ---
 
-## 🔑 The exit password (for auto-graded quizzes)
+## Saving your work
 
-When students escape, the certificate shows this exit password:
+**Your work is saved in this browser only**, on this computer. Another browser or computer won't have it, and clearing your browsing history removes it. So keep a copy:
 
-### `DEWEY1916`
+- Press **Download a backup**. You get one file that plays as the game in any browser and opens again in the maker. Keep it somewhere safe, such as your course folder.
+- **Your class link is a backup too.** It holds the whole escape room.
 
-**It's the same for every student**, so a one-question quiz can grade it automatically.
-(It refers to John Dewey's *Democracy and Education*, 1916.)
+**On a new computer** (or if your work is gone): open the maker and choose **Open one I saved before**. Then pick your backup file, or paste your class link.
 
----
-
-## 🔗 Share it as a class link (Moodle, Canvas, Google Classroom, email)
-
-The guided steps (step 8, **Share a class link**) make the link and show the steps. In short:
-
-- **Moodle:** **Add an activity or resource** → **URL** → paste the link into **External URL** → **Save and return to course**.
-- **Canvas:** **Modules** → **+** → **External URL** → paste it into **URL**, tick **Load in a new tab** → **Add Item**.
-- **Google Classroom or email:** paste the link into a post or a message.
-
-For the grade, add a one-question quiz with the exit password as the answer (below). Menus can differ by version.
+**Changed something after sharing?** A class link holds the escape room as it was when you made it. Press **Make a new class link** and share the new one; the old link keeps opening the old version.
 
 ---
 
-## 🎓 Put it in Canvas
+## Accessibility
 
-### Option A: Quiz with the exit password (easiest, auto-graded)
-1. **Files** → **Upload** → choose `play.html`.
-2. **Pages** → **+ Page**. Type *"Start the escape room,"* highlight it, and click **Link** → **Course Links** → **Files** → `play.html`. Click **Save & Publish**.
-3. **Quizzes** → **+ Quiz**. Add one **Fill in the Blank** question:
-   *"Enter the exit password from the escape room certificate."*
-   Correct answer: `DEWEY1916`. Add `dewey1916` as a second correct answer in case students type lowercase.
-4. Publish the quiz.
+Everyone should be able to play and to make an escape room. The goal is [WCAG 2.2](https://www.w3.org/TR/WCAG22/) level AA.
 
-### Option B: SCORM (auto-graded, may need your Canvas admin)
-1. **Settings** → **Navigation** → drag **SCORM** into the visible list → **Save**.
-   *If SCORM isn't there, ask your Canvas administrator to turn it on.*
-2. Click **SCORM** in the course menu → upload `EscapeRoom_SCORM.zip` → choose **Import as a graded assignment**.
-3. Publish the assignment. Students get 100% when they escape.
+- **A friendly first question.** The first time you open the site, it asks "Before you start: make it easier to use?" with big switches. Each switch works straight away. You can open it again any time with **Accessibility options**.
 
----
+  ![The window "Before you start: make it easier to use?" with switches for Readable text, High contrast, Motion, Sound, Listen buttons (read aloud) and Hide the clock, each with one line explaining it, and the buttons "Continue" and "Continue without changes".](docs/images/first-visit.webp)
 
-## 🎓 Put it in Moodle
+- **Listen buttons.** A small **Listen** button on each paper in the game reads it aloud, using a voice built into the device. Nothing is sent online.
+- **High contrast.** Solid backgrounds and strong black-and-white text, with no textures.
+- **Readable text.** Bigger, clearer letters with more space between lines and words.
+- **Keyboard and screen readers.** Everything works with the keyboard alone (Tab, Enter, Space, arrow keys, Esc) and with screen readers. **Describe this room** lists everything in a room as plain text. Your browser's text size and zoom are respected.
+- **Motion and sound are optional**, and every sound also comes with words on screen.
+- **No time limit.** The clock can be hidden.
 
-### Option A: SCORM (auto-graded)
-1. Turn on **Edit mode** → **Add an activity or resource** → **SCORM package**.
-2. Name it, then drag `EscapeRoom_SCORM.zip` into **Package file**.
-3. *Optional:* under **Appearance**, set **Display package** to *New window*.
-4. **Save and display**. Students get 100% in the gradebook when they escape.
+More:
 
-*If "SCORM package" isn't in the list, ask your Moodle administrator to enable it, or use Option B.*
-
-### Option B: File and quiz with the exit password
-1. **Add an activity or resource** → **File** → upload `play.html` → set **Display** to *Open* → **Save**.
-2. **Add an activity or resource** → **Quiz** → add a **Short answer** question with the correct answer `DEWEY1916`. Moodle short-answer questions ignore capitalization by default.
-
-**Check it as a student:** In either platform, use **Student View** (Canvas) or **Switch role to → Student** (Moodle) to play it the way students will.
+- [The full accessibility statement](ACCESSIBILITY.md): what was tested, measured contrast, and what still falls short ([as a web page](https://sbstndalton.github.io/escape-the-old-schoolhouse/accessibility.html)).
+- [Test it with a real screen reader: step-by-step script](SCREEN-READER-TESTS.md).
 
 ---
 
-## 🛠️ Improving the game with Claude Code (optional)
+## The sample escape room
 
-The repository is set up so **Claude Code** can open the game in a real browser, play it, and check its own changes.
+The sample is **"Escape the Old Schoolhouse"**, for an introductory **Foundations of Education** course: 5 rooms about philosophies and philosophers of education, ending with a reflection on your own philosophy. It takes about 15 to 25 minutes.
 
-**One-time setup** (needs [Node.js](https://nodejs.org)):
-```bash
-npm install
-```
-```bash
-npx playwright install chromium
-```
+1. **The Library:** match five philosophies to their descriptions (books on a shelf and a padlock).
+2. **The Portrait Gallery:** match clues to thinkers.
+3. **The History Hall:** put events in order on a timeline.
+4. **The Observation Room:** stamp classroom scenes as traditional or progressive.
+5. **The Mirror:** a short reflection survey with no wrong answers.
 
-**Useful commands:**
-| Command | What it does |
-|---|---|
-| `npm run serve` | Serves the site at http://localhost:8080 (front page; the game is `/play.html`, the maker `/editor.html`) |
-| `npm run build` | Rebuilds `index.html`, `play.html`, `editor.html`, `accessibility.html` and `EscapeRoom_SCORM.zip` from `src/`, `content/` and `ACCESSIBILITY.md` |
-| `npm test` | Builds, then plays the whole game, tests class links and the front page (`tests/links.js`), drives the editor and its guided steps automatically (`tests/editor.js`, `tests/wizard.js`), and runs the game's and the editor's accessibility tests (several minutes). Screenshots go to `tests/screenshots/` |
-| `npm run test:a11y` | Builds, then runs only the accessibility tests (`tests/a11y-game.js` and `tests/a11y-editor.js`) |
+> **The sample has not been checked yet.** It was written with AI help and may contain mistakes. Until the instructor checks every item in the maker, students see a **"Draft"** notice at the top of the game. Some facts also vary between sources (for example, *The Republic* is usually dated 380 to 370 BCE, and Freire wrote *Pedagogy of the Oppressed* around 1967 to 1968), so check them against your own textbook.
 
-**Browser control (MCP):** the `.mcp.json` file gives Claude Code the **Playwright** browser tools. The first time you open Claude Code in this folder, it asks whether to allow the `playwright` server. Say yes. After that you can ask things like *"Play the escape room on a phone-sized screen and tell me what's confusing,"* or *"Add a sixth room about Horace Mann and test it."* The `CLAUDE.md` file tells Claude the rules for this project.
+The exit password on the sample's certificate is **`DEWEY1916`** (John Dewey's *Democracy and Education*, 1916). It is the same for every student, so a quiz can grade it automatically.
 
-The tests also run automatically on GitHub every time the game or editor changes.
-
-**How the files fit together:** the game's code is in `src/game.html`, the editor's is in `src/editor.html`, the front page is `src/front.html`, the statement page's frame is `src/statement.html`, shared logic (including class links and the QR code maker) is in `src/shared.js`, and the sample escape room's content is in `content/foundations-of-education.json`. `npm run build` combines them into the files at the top of the repository. Don't edit `index.html`, `play.html`, `editor.html` or `accessibility.html` directly.
-
----
-
-## 🗝️ Answer key (instructors only)
+<details>
+<summary><b>Sample answer key (instructors only)</b></summary>
 
 | Room | Puzzle | Answer |
 |---|---|---|
-| 1 · Library | Match 5 philosophies to their descriptions | **LEARN** |
-| 2 · Portrait Gallery | Match clues to Dewey, Montessori, Freire, and Mann | **9154** |
-| 3 · History Hall | Put the events in order | Plato → Rousseau (1762) → Mann (1837) → Montessori (1907) → Dewey (1916) → Freire (1968) → Adler (1982) |
-| 4 · Observation Room | Label 8 classroom scenes | T, P, T, P, T, P, T, P (top to bottom) |
-| 5 · Mirror | Self-reflection survey | Any answers are accepted. Gives a personal philosophy profile. |
+| 1 · The Library | Match 5 philosophies to their descriptions | **LEARN** |
+| 2 · The Portrait Gallery | Match clues to Dewey, Montessori, Freire and Mann | **9154** |
+| 3 · The History Hall | Put the events in order | Plato → Rousseau (1762) → Mann (1837) → Montessori (1907) → Dewey (1916) → Freire (1968) → Adler (1982) |
+| 4 · The Observation Room | Label 8 classroom scenes | T, P, T, P, T, P, T, P (top to bottom; T = traditional, P = progressive) |
+| 5 · The Mirror | Reflection survey | Any answers. It gives a personal philosophy profile. |
 
-Hints are **off** in the sample. Each room has two ready-made hints that point students in the right direction without giving the answer; turn them on per room in the editor. By default, wrong guesses and hints don't lower the grade; you can change that under **Finish & grading**. The editor's answer key and **Answer sheet** always show the current answers, including for escape rooms you've changed.
+Hints are off in the sample. Rooms 1 to 4 each have two ready-made hints that nudge without giving the answer; you can switch them on per room. The maker's answer key always shows the current answers, also for escape rooms you have changed.
+
+</details>
 
 ---
 
-## ℹ️ Good to know
+## Other ways to share
 
-- **Privacy:** The game runs entirely in the student's browser. It doesn't send data anywhere, except that SCORM reports completion, score, and time to *your own* Moodle or Canvas gradebook. A class link carries the escape room inside the link itself; the part after `#` is never sent to a web server.
-- **Class links can be made by anyone.** The game treats what a link carries as untrusted: it is size-limited, cleaned, checked, and every text is shown as plain text, never as code.
-- **Answers are only lightly hidden.** Everything runs in the student's browser, so a tech-savvy student could dig the answers out of the game file. That's fine for practice and low-stakes quizzes, but don't rely on it for high-stakes tests.
-- **Editing:** use `editor.html` (see [Editing questions and answers](#️-editing-questions-and-answers-for-teachers)). Don't edit `index.html` or `play.html` by hand; they're generated.
-- **Facts vary by source:** some details differ between references. For example, *The Republic* is usually dated between 380 and 370 BCE, and Freire wrote *Pedagogy of the Oppressed* in Chile around 1967–68. Check them against your own textbook.
+<details>
+<summary><b>Moodle or Canvas grade file, or a plain file</b></summary>
+
+A class link works everywhere and is the easiest. If you would rather upload a file, choose **Moodle**, **Canvas**, **Another course system** or **I'll email or post a file** on **How students get it**. The maker then gives you the right file and numbered steps. In short:
+
+**A grade file (Moodle or Canvas).** This is a `.zip` package (called SCORM) that your course system opens and grades by itself: students get 100% when they escape. **Don't unzip it.**
+
+- **Moodle:** turn on **Edit mode**, **Add an activity or resource**, choose **SCORM package**, then **Add**. Drag the .zip file into **Package file**, then **Save and display**. If SCORM package isn't in the list, your administrator has switched it off: use the file and quiz instead.
+- **Canvas:** look for **SCORM** in your course menu (if it isn't there, try **Settings**, then **Navigation**). Click **SCORM**, **Upload** the .zip file, choose **Import as a graded assignment**, and publish it. If SCORM isn't available at all, ask your Canvas administrator, or use the file and quiz.
+
+**A file and the exit-password quiz.** Download the game file (`.html`) and put it in your course:
+
+- **Moodle:** **Add an activity or resource**, choose **File**, drag in the game file, and set **Display** to **Open**. Then add the one-question quiz.
+- **Canvas:** upload it in **Files**, link to it from a **Page**, then add the one-question quiz.
+- **Email or another system:** students download the file and double-click it. It opens in their browser and needs no internet. Phones and tablets sometimes show the file as code; ask students to use a computer.
+
+Menus can differ by version. To check it as a student, use **Student View** (Canvas) or **Switch role to…** then **Student** (Moodle).
+
+</details>
+
+---
+
+## Questions
+
+<details>
+<summary><b>Questions and troubleshooting</b></summary>
+
+**Do my students need an account?**
+No. They click the link and play.
+
+**Is anything stored online?**
+No. A class link carries the escape room inside the link itself; the part after `#` never reaches a web server. Your work stays in your browser. With a grade file, only the completion, score and time go to *your own* Moodle or Canvas.
+
+**My work is gone, or I'm on a new computer.**
+Open the maker and choose **Open one I saved before**. Pick your backup file, or paste your class link.
+
+**A student says the link doesn't open.**
+If it says "This class link is incomplete", part of it was cut off. Copy it again with **Copy link** and paste all of it. If it keeps happening, choose **I'll email or post a file** instead.
+
+**I want to change the exit password.**
+Press **Show all settings (Advanced mode)**, open **Finish & grading**, and change **Exit password**. Then make a new class link. In your quiz, keep the old password as a second correct answer.
+
+**Can I make more than one escape room?**
+Yes. Every escape room you make is kept in this browser, and none overwrites another. When you come back to the maker, its home page lists them under **Your escape rooms**, with **Make another escape room** and **Make a copy of this one**.
+
+**Can I use other puzzle types?**
+Yes. There are five kinds of rooms: **Quiz questions**, **Match clues to cards**, **Put in order (timeline)**, **Sort into groups** and **Reflection (no wrong answers)**. The guided steps fill in the first two; the others, plus hints, looks and grading options, are set up in **Show all settings (Advanced mode)**.
+
+**Can students cheat?**
+The answers are only lightly hidden inside the game. A tech-savvy student could dig them out. That's fine for practice and low-stakes quizzes; don't rely on it for high-stakes tests.
+
+**What does the "Draft" notice mean?**
+Some items haven't been ticked as checked yet. It disappears when every item is ticked on **Check your facts**.
+
+</details>
+
+---
+
+## For developers
+
+<details>
+<summary><b>How it's built, testing, and licences</b></summary>
+
+Everything is plain HTML, CSS and JavaScript. Each page is one self-contained file that works by double-clicking and inside Moodle or Canvas, with no outside requests.
+
+**Files**
+
+| Path | What it is |
+|---|---|
+| `src/game.html` | The student game engine (draws each room from the content; holds no course content). |
+| `src/editor.html` | The maker: the guided steps, and Advanced mode (`editor.html?mode=advanced`). |
+| `src/shared.js` | Logic shared by both and by Node: validation, class links, the QR code maker, the SCORM writer, accessibility helpers. |
+| `src/front.html`, `src/guide.html`, `src/statement.html` | The front page, the quick-start guide, and the frame of the accessibility statement page. |
+| `content/foundations-of-education.json` | The sample escape room's content. |
+| `scripts/build.js`, `scripts/serve.js` | The build and a zero-dependency local server. |
+| `scripts/readme-shots.js` | Takes the pictures in this README into `docs/images/`. |
+| `tests/` | Playwright tests: play-through, class links, editor, guided steps, guide, read aloud, and the accessibility suites. |
+
+**Generated files: never edit them by hand.** `npm run build` makes `index.html` (front page), `play.html` (game with the sample), `editor.html`, `accessibility.html` (from `ACCESSIBILITY.md`), `guide.html`, `EscapeRoom_SCORM.zip` and `imsmanifest.xml`. Commit them; CI fails if they're out of date.
+
+**Commands** (needs [Node.js](https://nodejs.org)):
+
+```bash
+npm install                      # once; then: npx playwright install chromium
+npm run build                    # rebuild the generated files
+npm run serve                    # the site at http://localhost:8080
+npm test                         # build, then every test (several minutes)
+npm run test:a11y                # only the accessibility tests
+node scripts/readme-shots.js     # retake the README pictures (after npm run build)
+```
+
+Run `node scripts/readme-shots.js --only maker` to retake only some pictures. Look at them after a visible change.
+
+**Claude Code.** [`CLAUDE.md`](CLAUDE.md) holds the project's rules (layout, accessibility, content accuracy, element ids the tests rely on). `.mcp.json` gives Claude Code the Playwright browser tools, so it can open the site, play it and check its own changes.
+
+**Class links** are `play.html#play=1.<data>`: the content as JSON, compressed (deflate-raw) and base64url-encoded. Link content is treated as untrusted: size-limited, cleaned, validated, and always shown as plain text.
+
+**Licences of what's bundled**
+
+- Fonts, embedded in the pages: Atkinson Hyperlegible, IM Fell English and IM Fell English SC (SIL Open Font License 1.1); Special Elite (Apache License 2.0). Their notices are in the pages' style blocks.
+- The QR code encoder in `src/shared.js` is adapted from Project Nayuki's QR Code generator (MIT License; notice inline).
+
+</details>
