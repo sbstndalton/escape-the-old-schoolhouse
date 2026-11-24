@@ -192,9 +192,9 @@ export function Wizard(){
 
 /* ---------- the welcome pictures (decoration: the words beside them say the same) ---------- */
 const STRIP = [
-  ["You write the puzzles", '<path d="M14 8h40l10 10v46H14zM54 8v10h10M22 28h30M22 36h34M22 44h26"/><path d="M48 62l4-14 22-22 6 6-22 22zM70 30l6 6"/>'],
-  ["Students play them in a browser", '<rect x="6" y="8" width="76" height="52" rx="2"/><path d="M6 18h76M12 13h2M18 13h2M24 13h2"/><rect x="34" y="34" width="20" height="16"/><path d="M38 34v-5a6 6 0 0 1 12 0v5M44 40v4"/>'],
-  ["Your course records the grade", '<path d="M10 10h60v52H10zM10 22h60M10 34h60M10 46h60M30 10v52"/><path d="M46 27l5 5 11-12" stroke-width="2.4"/>']];
+  ["You write the puzzles", '<path d="M64 32.500V18L54 8H14v56h29M54 8v10h10M64 51.500V64h-5"/><path d="M20 24h1.500M27 24h20M20 32h1.500M27 32h27M20 40h1.500M27 40h23M20 48h1.500M27 48h16M20 56h1.500M27 56h10"/><path d="M46 63l3.500-13.500L72 27l6.500 6.500L56 56zM49.500 49.500 56 56M68 31l6.500 6.500M72 27l2.800-2.800a2.500 2.500 0 0 1 3.500 0l3 3a2.500 2.500 0 0 1 0 3.500l-2.800 2.800M46 63l3.800-1.400-2.700-2.700M53 53l19-19"/>'],
+  ["Students play them in a browser", '<rect x="6" y="8" width="76" height="54" rx="3"/><path d="M6 20h76M12 14h.2M17 14h.2M22 14h.2"/><rect x="29" y="11.500" width="46" height="5" rx="2.500"/><rect x="33" y="39" width="22" height="17" rx="2"/><path d="M37.500 39v-5a6.500 6.500 0 0 1 13 0v5M44 48.500v3"/><circle cx="44" cy="46.500" r="2"/><path d="M13 31h12v17H13zM16 36h6M16 40h6M16 44h3M63 31h12v17H63zM66 36h6M66 40h6M66 44h3"/>'],
+  ["Your course records the grade", '<path d="M10 10h68v52H10zM10 22h68M10 34h68M10 46h68M34 10v52M56 10v52M15 16h13M41 16h8M63 16h8M15 28h14M15 40h11M15 52h13"/><path d="M40 28.500l3 3 6-7M40 40.500l3 3 6-7M40 52.500l3 3 6-7M62 28.500l3 3 6-7M62 40.500l3 3 6-7M64 53h6" stroke-width="2.200"/>']];
 const Strip = () => <ol className="strip">{STRIP.map(([t, d]) => <li key={t}><svg viewBox="0 0 88 70" aria-hidden="true" focusable="false" dangerouslySetInnerHTML={{ __html: d }} /><span>{t}</span></li>)}</ol>;
 
 /* ---------- 1 Welcome ---------- */
