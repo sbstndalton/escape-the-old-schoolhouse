@@ -70,8 +70,9 @@ svg{display:block}
     var(--wood) 0 100%/26rem 36% repeat-x,
     linear-gradient(180deg,#342213,#1d120a) 0 100%/100% 36% no-repeat,
     repeating-linear-gradient(90deg,rgba(0,0,0,.16) 0 .2rem,transparent .2rem 3.1rem,rgba(255,230,180,.025) 3.1rem 3.3rem,transparent 3.3rem 6.4rem),
+    var(--wsil,none),
     var(--wallp) 0 0/6rem 9rem,
-    linear-gradient(180deg,#1c2a22,#16211b 60%,#111a15)}
+    linear-gradient(180deg,var(--wa,#1c2a22),var(--wb,#16211b) 60%,var(--wc,#111a15))}
 .floor{left:-2%;right:-2%;bottom:0;height:5%;background:repeating-linear-gradient(90deg,transparent 0 13.800rem,rgba(0,0,0,.65) 13.800rem 13.950rem,rgba(255,220,170,.04) 13.950rem 14.050rem),var(--woodh) 0 0/30rem 100%,linear-gradient(#0e0805,#050302);box-shadow:0 -2px 0 rgba(0,0,0,.8),0 -3px 0 rgba(255,220,170,.06)}
 .win{display:none}
 .beam{left:0;top:0;width:66%;height:100%;transform-origin:0 0;transform:translate(calc(var(--px)*-12px),0) skewX(-28deg);
@@ -117,6 +118,15 @@ svg{display:block}
 .vol::before{left:0;right:0;bottom:100%;height:.360rem;transform:skewX(-45deg);transform-origin:0 100%;background:linear-gradient(180deg,rgba(255,235,200,.16),rgba(255,235,200,.3)),var(--c,#5a1d16);box-shadow:inset 0 0 0 1px rgba(0,0,0,.45)}
 .vol::after{left:100%;top:0;bottom:0;width:.360rem;transform:skewY(-45deg);transform-origin:0 100%;background:linear-gradient(180deg,rgba(0,0,0,.35) 0 .140rem,transparent .140rem calc(100% - .140rem),rgba(0,0,0,.45) calc(100% - .140rem)),linear-gradient(180deg,var(--c,#5a1d16) 0 .140rem,transparent .140rem calc(100% - .140rem),var(--c,#5a1d16) calc(100% - .140rem)),repeating-linear-gradient(180deg,#d8cba8 0 .050rem,#9c8e6c .050rem .090rem);box-shadow:inset 0 0 0 1px rgba(0,0,0,.45)}
 [data-contrast=more] .vol::before,[data-contrast=more] .vol::after{display:none}
+/* ---------- A wall of its own for each room: colour, what stands against it, how low the lantern hangs ---------- */
+[data-type=matching][data-look=books]{--wsil:repeating-linear-gradient(180deg,#2a1a0e 0 .450rem,rgba(0,0,0,.75) .450rem .700rem,transparent .700rem 7.500rem),repeating-linear-gradient(180deg,transparent 0 2.300rem,rgba(201,165,86,.1) 2.300rem 2.380rem,transparent 2.380rem 2.700rem,rgba(201,165,86,.07) 2.700rem 2.760rem,transparent 2.760rem 7.500rem),repeating-linear-gradient(90deg,#1c1410 0 1.150rem,#0a0705 1.150rem 1.250rem,#141c19 1.250rem 2.700rem,#0a0705 2.700rem 2.800rem,#241412 2.800rem 3.600rem,#0a0705 3.600rem 3.700rem,#16171f 3.700rem 5.200rem,#0a0705 5.200rem 5.300rem,#221b11 5.300rem 6.150rem,#0a0705 6.150rem 6.250rem,#121a1c 6.250rem 7.900rem,#0a0705 7.900rem 8rem)}
+[data-type=matching][data-look=portraits]{--wa:#2c1a1c;--wb:#231416;--wc:#190e10;--wsil:linear-gradient(180deg,transparent 0 5.200rem,rgba(0,0,0,.6) 5.200rem 5.350rem,#3f2a18 5.350rem 5.750rem,#24160b 5.750rem 6rem,rgba(0,0,0,.5) 6rem 6.350rem,transparent 6.350rem);--ldrop:-1.600rem}
+[data-type=matching][data-look=cards]{--wa:#2a2216;--wb:#211a10;--wc:#17120b}
+[data-type=quiz]{--wa:#2a2216;--wb:#211a10;--wc:#17120b;--ldrop:-.800rem}
+[data-type=ordering]{--wa:#1b2531;--wb:#151d27;--wc:#0f151d;--wsil:radial-gradient(ellipse 30% 20% at 30% 40%,rgba(230,230,220,.05),transparent 70%) 8% 30%/56% 42% no-repeat,radial-gradient(ellipse 22% 14% at 70% 62%,rgba(230,230,220,.035),transparent 70%) 8% 30%/56% 42% no-repeat,linear-gradient(180deg,#0e1412,#0b100e) 8% 30%/56% 42% no-repeat,linear-gradient(180deg,#3a2616,#24160b) 8.500% 55%/57% .900rem no-repeat,linear-gradient(180deg,#33210f,#1d120a) 7.300% 29.300%/57.400% 44.200% no-repeat;--ldrop:-.800rem}
+[data-type=sorting]{--wa:#1a2628;--wb:#141e20;--wc:#0e1618;--wsil:linear-gradient(90deg,transparent 49.500%,#1a120b 49.500% 50.500%,transparent 50.500%) 10% 30%/50% 40% no-repeat,linear-gradient(115deg,transparent 38%,rgba(160,190,210,.07) 44%,rgba(160,190,210,.02) 52%,transparent 56%) 10% 30%/50% 40% no-repeat,linear-gradient(180deg,#070b0f,#0b1117) 10% 30%/50% 40% no-repeat,linear-gradient(180deg,#33210f,#1d120a) 9.200% 29.200%/51.400% 42.200% no-repeat;--ldrop:-2.200rem}
+[data-type=reflection]{--wa:#141c1e;--wb:#0f1517;--wc:#0a0f10}
+[data-screen=room] .lantern{top:var(--ldrop,0)}
 .dust{inset:0}
 .dust i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ffe2b0;opacity:0}
 #grainfx{position:absolute;inset:0;z-index:6;pointer-events:none;background:var(--grain);opacity:.34;mix-blend-mode:overlay}
@@ -195,6 +205,9 @@ h2.bplate .rn{font-size:.82em;letter-spacing:.16em}
 .gallery{list-style:none;margin:0;padding:1rem .2rem .2rem;display:grid;grid-template-columns:repeat(var(--cols,4),minmax(0,8.6rem));gap:1.5rem .9rem;flex:0 1 auto;min-height:9rem;overflow:hidden auto;align-content:start}
 .gallery::-webkit-scrollbar{display:none}
 .portrait{display:flex}
+.portrait:nth-child(4n+2){margin-top:.900rem}.portrait:nth-child(4n+3){margin-top:.300rem}.portrait:nth-child(4n){margin-top:1.200rem}
+.portrait:nth-child(4n+2) .gilt::before{top:-1.950rem;height:1.950rem}.portrait:nth-child(4n+3) .gilt::before{top:-1.350rem;height:1.350rem}.portrait:nth-child(4n) .gilt::before{top:-2.250rem;height:2.250rem}
+.portrait:nth-child(3n+2) .sitter{border-radius:50% 50% 0 0/34% 34% 0 0}.portrait:nth-child(3n+2) .sitter .ico{left:50%;top:.450rem;transform:translateX(-50%)}
 .portrait>button{flex:1;display:flex;flex-direction:column;align-items:center;gap:.4rem;text-align:center;min-width:0}
 .gilt,.sitter,.sitter i,.mcard .small,.clip>span,.icard .p{display:block}
 .clip>span+span{margin-top:.4em}
@@ -395,7 +408,7 @@ fieldset{margin:0;border:0;min-width:0}
   box-shadow:inset 0 0 0 2px #3d2c0c,inset 0 0 0 .5rem rgba(60,40,8,.35),inset 0 0 0 .62rem rgba(255,240,190,.35),0 1.2rem 2rem rgba(0,0,0,.8)}
 .mirror::before{content:"";position:absolute;left:50%;top:-2.350rem;width:7rem;height:3rem;margin-left:-3.500rem;background:var(--crest) 50% 100%/100% 100% no-repeat;filter:drop-shadow(0 .15rem .2rem rgba(0,0,0,.6))}
 .glass{position:relative;height:100%;border-radius:50%;overflow:hidden;display:grid;place-items:center;padding:14% 13%;text-align:center;
-  background:linear-gradient(118deg,transparent 30%,rgba(214,232,244,.13) 38%,rgba(214,232,244,.03) 46%,transparent 47%,transparent 58%,rgba(214,232,244,.07) 62%,transparent 70%),radial-gradient(ellipse at 72% 26%,#2c3c48,#121b22 52%,#05080b);
+  background:radial-gradient(circle at 71% 33%,rgba(255,205,130,.55) 0 .220rem,rgba(255,170,80,.16) .300rem 1.300rem,transparent 2.200rem),linear-gradient(90deg,transparent 48.800%,rgba(8,13,17,.85) 48.800% 51.200%,transparent 51.200%) 26% 24%/24% 28% no-repeat,linear-gradient(180deg,transparent 47.500%,rgba(8,13,17,.85) 47.500% 52.500%,transparent 52.500%) 26% 24%/24% 28% no-repeat,linear-gradient(160deg,rgba(150,180,205,.2),rgba(90,120,150,.07)) 26% 24%/24% 28% no-repeat,radial-gradient(ellipse 12% 10% at 50% 60%,rgba(0,0,0,.5) 0 92%,transparent),radial-gradient(ellipse 30% 22% at 50% 92%,rgba(0,0,0,.5) 0 92%,transparent),linear-gradient(118deg,transparent 30%,rgba(214,232,244,.13) 38%,rgba(214,232,244,.03) 46%,transparent 47%,transparent 58%,rgba(214,232,244,.07) 62%,transparent 70%),radial-gradient(ellipse at 72% 26%,#2c3c48,#121b22 52%,#05080b);
   box-shadow:inset 0 0 0 2px #000,inset 0 0 2.5rem #000}
 .glass .fog{position:absolute;inset:0;border-radius:50%;opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 55%,rgba(226,236,240,.9),rgba(200,214,220,.6) 55%,rgba(200,214,220,.2))}
 .mirror.unlocked .glass{background:radial-gradient(ellipse at 50% 60%,#fff6dc,#ffd9a0 35%,#b9785a 70%,#3a2a30)}
@@ -627,7 +640,7 @@ h2.bplate .rn{font-size:.9em;letter-spacing:.12em}
 
 /* ---------- Matching: books lying in piles, spines out (titles read left to right) ---------- */
 .shelf{list-style:none;margin:0;padding:1.2rem 1.5rem 1rem;position:relative;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(15rem,100%),1fr));gap:0 1.8rem;align-items:end;flex:none;
-  background:linear-gradient(180deg,rgba(0,0,0,.72),rgba(0,0,0,.3) 60%,rgba(0,0,0,.55)),var(--wood) 0 0/22rem 100%,#2a1a0e;
+  background:linear-gradient(180deg,rgba(0,0,0,.78),rgba(0,0,0,.42) 60%,rgba(0,0,0,.6)),repeating-linear-gradient(180deg,transparent 0 1.100rem,rgba(201,165,86,.16) 1.100rem 1.180rem,transparent 1.180rem 3.400rem,rgba(201,165,86,.1) 3.400rem 3.460rem,transparent 3.460rem 9rem),repeating-linear-gradient(90deg,#3a2018 0 1.300rem,#0c0806 1.300rem 1.400rem,#24302a 1.400rem 2.500rem,#0c0806 2.500rem 2.600rem,#40201c 2.600rem 4.200rem,#0c0806 4.200rem 4.300rem,#262838 4.300rem 5.300rem,#0c0806 5.300rem 5.400rem,#3a2f1c 5.400rem 7rem,#0c0806 7rem 7.100rem,#1f2e30 7.100rem 8.300rem,#0c0806 8.300rem 8.400rem),var(--wood) 0 0/22rem 100%,#2a1a0e;
   box-shadow:inset 0 .9rem 1.2rem rgba(0,0,0,.8),inset .7rem 0 0 -1px #2e1d10,inset -.7rem 0 0 -1px #2e1d10,inset 0 .55rem 0 -1px #2e1d10,0 .5rem 1rem rgba(0,0,0,.6)}
 .shelf::after{content:"";position:absolute;left:0;right:0;bottom:0;height:.95rem;pointer-events:none;
   background:var(--woodh) 0 0/24rem 100%,linear-gradient(180deg,#70492a,#4b2f19 45%,#2a190c);box-shadow:inset 0 1px 0 rgba(255,222,170,.35),0 -.3rem .5rem rgba(0,0,0,.55)}
@@ -679,6 +692,11 @@ h2.bplate .rn{font-size:.9em;letter-spacing:.12em}
 #answer{min-height:2.2rem;border-bottom:2px dashed #2a1d14;font:700 1.15rem/1.3 var(--f-r);letter-spacing:.14em}
 .how,.msg,#hint-note{margin:0;max-width:21rem;text-align:center;font:400 1rem/1.5 var(--f-r);color:var(--parch);text-shadow:none}
 .how,.msg:not(:empty),#hint-note:not(:empty){padding:.4rem .75rem;background:rgba(12,8,5,.84);box-shadow:inset 0 0 0 1px rgba(176,138,62,.55)}
+.how{position:relative;margin-top:1.100rem;padding:.550rem .850rem .600rem;background:radial-gradient(ellipse 60% 50% at 30% 30%,rgba(255,255,255,.035),transparent 70%),#151b1f;border:.400rem solid #3a2616;border-image:linear-gradient(180deg,#5b3b21,#2a190c) 1;box-shadow:inset 0 0 0 1px #080b0d,0 .400rem .600rem rgba(0,0,0,.65)}
+.how::before{content:"";position:absolute;left:50%;bottom:calc(100% + .400rem);width:6rem;height:1.050rem;margin-left:-3rem;pointer-events:none;background:radial-gradient(circle at 50% .160rem,#c9a556 0 .130rem,rgba(0,0,0,.6) .140rem .200rem,transparent .220rem),linear-gradient(to top right,transparent calc(50% - .6px),#8a7550 calc(50% - .6px) calc(50% + .6px),transparent calc(50% + .6px)) 0 100%/50% calc(100% - .160rem) no-repeat,linear-gradient(to top left,transparent calc(50% - .6px),#8a7550 calc(50% - .6px) calc(50% + .6px),transparent calc(50% + .6px)) 100% 100%/50% calc(100% - .160rem) no-repeat}
+#mf .how{margin-top:.400rem}#mf .how::before{display:none}
+[data-contrast=more] .how{border:2px solid #fff;border-image:none}[data-contrast=more] .how::before{display:none}
+@media (forced-colors: active){.how{border-image:none}.how::before{display:none}}
 .msg{min-height:0;font-size:1.05rem}
 .msg:not(:empty)::before{display:none}
 .msg.bad{color:#fde6cf}.msg.good{color:#fff0c4;font-weight:700}
@@ -908,7 +926,7 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
 /* ---------- High contrast (the notebook switch, or a device that asks for more contrast) ----------
    Solid surfaces behind all text, no textures, no lamplight or grain over the page, black on cream and
    white on black, and a 2px border on every control. */
-[data-contrast=more]{--grain:none;--pgrain:none;--wood:none;--woodh:none;--cork:none;--stain:none;--plate:#f6dfa0;--brassy:#f6dfa0;
+[data-contrast=more]{--grain:none;--pgrain:none;--wood:none;--woodh:none;--cork:none;--stain:none;--wsil:none;--plate:#f6dfa0;--brassy:#f6dfa0;
   --parch:#fff;--parch2:#fff;--ink:#000;--paper:#fffaf0;--redink:#7a0f08;--fi:#fff;--fo:#000}
 [data-contrast=more] #light,[data-contrast=more] #grainfx,[data-contrast=more] .beam,[data-contrast=more] .dust,[data-contrast=more] .lantern{display:none}
 [data-contrast=more] *,[data-contrast=more] *::before,[data-contrast=more] *::after{text-shadow:none!important}
@@ -968,7 +986,7 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
    The system picks the colours. Drawn surfaces (gradients, shadows) disappear there, so every control, paper and
    state gets a real border or outline instead, and states use Highlight. Nothing is hidden. */
 @media (forced-colors: active){
-  :root{--grain:none;--pgrain:none;--wood:none;--woodh:none;--cork:none;--stain:none}
+  :root{--grain:none;--pgrain:none;--wood:none;--woodh:none;--cork:none;--stain:none;--wsil:none}
   #bg,#light,#grainfx,.doorway .leafs,.dknob,.dawn{display:none}
   *,*::before,*::after{text-shadow:none!important}
   #scene,#view,.how,.msg,#hint-note,.wl,#timer,.cap,h2.said,.qcard legend{background:Canvas;color:CanvasText}
@@ -2010,14 +2028,31 @@ const BIGKEY = svg("0 0 64 64", `<defs><linearGradient id="kg" x1="0" y1="0" x2=
   <rect x="5" y="27" width="54" height="10" rx="5" fill="url(#kg)" stroke="#11151a" stroke-width="1"/><path d="M16.500 29.300h6M42 29.300h6" stroke="#fff" stroke-opacity=".55" stroke-width=".9" stroke-linecap="round"/>
   <circle cx="8" cy="32" r="7.500" fill="url(#kb)" stroke="#11151a" stroke-width="1"/><circle cx="56" cy="32" r="7.500" fill="url(#kb)" stroke="#11151a" stroke-width="1"/><path d="M5.500 27.500v9M8 26.600v10.800M10.500 27.500v9M53.500 27.500v9M56 26.600v10.800M58.500 27.500v9" stroke="#11151a" stroke-opacity=".4" stroke-width=".7"/>
   <circle cx="32" cy="32" r="12.500" fill="url(#kb)" stroke="#11151a" stroke-width="1"/><circle cx="32" cy="32" r="9.400" fill="none" stroke="#11151a" stroke-opacity=".4" stroke-width=".7"/><path d="M23 27.500a10.500 10.500 0 0 1 6.500-6" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.200" stroke-linecap="round"/><circle cx="32" cy="32" r="5.500" fill="#b08a3e" stroke="#3b2a0c" stroke-width="1"/><path d="M29.500 32h5M32 29.500v5" stroke="#3b2a0c" stroke-width="1.300" stroke-linecap="round"/>`);
-function bust(seed){
-  const h = ER.hash(seed), v = h % 4, coat = ["#1b2430", "#2a1414", "#1d2a1c", "#2a2118"][(h >> 5) % 4];
-  const hair = ['<path d="M19 21c-1-12 5-18 11-18s13 5 11 17c-3-6-7-8-11-8s-8 3-11 9z"/>',
-    '<circle cx="30" cy="6" r="5"/><path d="M19 22c-2-11 5-16 11-16s13 5 11 16c-2-5-6-8-11-8s-9 3-11 8z"/>',
-    '<path d="M17 38c-3-18 3-33 13-33s16 15 13 33l-5-3c2-12-1-21-8-21s-10 9-8 21z"/>',
-    '<path d="M20.500 25c2 11 5 16 9.500 16s7.500-5 9.500-16c-3 4-6 5-9.500 5s-6.500-1-9.500-5z"/><path d="M21 17c1-7 5-10 9-10s8 3 9 10c-3-3-6-4-9-4s-6 1-9 4z" opacity=".5"/>'][v];
-  return svg("0 0 60 66", `<path fill="#9c7857" d="M25.500 31h9v10L30 46l-4.500-5z"/><path fill="rgba(10,5,2,.45)" d="M25.500 33.500c3 2.500 6 2.500 9 0v3.500c-3 2-6 2-9 0z"/><path fill="${coat}" d="M3 66c0-15 9-22 20-24l7 7 7-7c11 2 20 9 20 24z"/><path fill="rgba(255,255,255,.08)" d="M23 42l7 7-3.500 9.500L18.500 44z"/><path fill="rgba(0,0,0,.3)" d="M37 42l-7 7 3.500 9.500L41.500 44z"/><path fill="#d8cdb8" opacity=".85" d="M24.500 41.500 30 52l5.500-10.500L30 45z"/><path fill="#170f0a" opacity=".75" d="M28.700 46.200h2.600l.9 1.900L30 53.500l-2.200-5.400z"/><circle cx="30" cy="59" r=".8" fill="rgba(240,214,150,.5)"/><circle cx="30" cy="63.500" r=".8" fill="rgba(240,214,150,.5)"/><path d="M41 43.500c7 2 12.500 7 14.500 15" fill="none" stroke="rgba(255,235,190,.16)" stroke-width="1.200" stroke-linecap="round"/><ellipse cx="20.600" cy="24" rx="1.500" ry="2.600" fill="#7f5f43"/><ellipse cx="39.400" cy="24" rx="1.500" ry="2.600" fill="#b58f6a"/><ellipse cx="30" cy="23" rx="9.500" ry="12" fill="#b58f6a"/><path fill="rgba(10,5,2,.42)" d="M30 11c-6 0-9.500 5-9.500 12s4 12 9.500 12z"/><path d="M38.400 17c1.300 4 1.300 9-.4 13" fill="none" stroke="rgba(255,240,210,.35)" stroke-width=".9" stroke-linecap="round"/><g fill="#170f0a">${hair}</g>`,
-    `preserveAspectRatio="xMidYMax meet"${(h >> 3) & 1 ? ' style="transform:scaleX(-1)"' : ""}`);
+function bust(seed, i = 0){
+  /* A sitter is anonymous on purpose (the plate under the frame says who it is), so nothing here claims a likeness:
+     no beards, buns or spectacles. Portraits differ by pose, dress and what stands behind the sitter, chosen from
+     the portrait's place on the wall so that eight in a row are eight different pictures. */
+  const h = ER.hash(seed), pose = i % 4, dress = (i * 3 + 1) % 4, prop = (i + (i >> 2) + 1) % 4;
+  const coat = ["#1b2430", "#2a1414", "#1d2a1c", "#2a2118"][(i + (h >> 5)) % 4], skin = "#b58f6a", dark = "#170f0a";
+  const props = ["",
+    `<path d="M0 0h24c-2 11-10 18-24 20z" fill="rgba(120,30,25,.38)"/><path d="M4 0c0 7-1 11-4 14M12 0c-1 8-5 13-12 16M19 0c-2 9-8 15-19 18" fill="none" stroke="rgba(0,0,0,.3)" stroke-width=".8"/>`,
+    `<path d="M47 0h11v66H47z" fill="rgba(255,235,200,.07)"/><path d="M45 6h15M49.500 8v58M52.500 8v58M55.500 8v58" fill="none" stroke="rgba(0,0,0,.28)" stroke-width=".7"/><path d="M45 0h15v6H45z" fill="rgba(255,235,200,.1)"/>`,
+    `<path d="M0 8h13v40H0z" fill="rgba(0,0,0,.3)"/><path d="M1 10h3v16H1zM5 12h3.500v14H5zM9.500 10h2.500v16H9.500zM1 30h4v16H1zM6 32h3v14H6zM10 30h2v16h-2z" fill="rgba(255,225,170,.09)"/><path d="M0 27.500h13" stroke="rgba(255,225,170,.14)" stroke-width="1"/>`][prop];
+  const body = `<path fill="${coat}" d="M3 66c0-15 9-22 20-24l7 7 7-7c11 2 20 9 20 24z"/><path d="M41 43.500c7 2 12.500 7 14.500 15" fill="none" stroke="rgba(255,235,190,.16)" stroke-width="1.200" stroke-linecap="round"/>`;
+  const dresses = [
+    `<path fill="rgba(255,255,255,.08)" d="M23 42l7 7-3.500 9.500L18.500 44z"/><path fill="rgba(0,0,0,.3)" d="M37 42l-7 7 3.500 9.500L41.500 44z"/><path fill="#d8cdb8" opacity=".85" d="M24.500 41.500 30 52l5.500-10.500L30 45z"/><path fill="${dark}" opacity=".75" d="M28.700 46.200h2.600l.9 1.900L30 53.500l-2.200-5.400z"/>`,
+    `<path fill="#d8cdb8" opacity=".8" d="M23.500 41.300c4 3.400 9 3.400 13 0l1 3.200c-4.600 3.200-10.400 3.200-15 0z"/><circle cx="30" cy="52" r=".9" fill="rgba(240,214,150,.55)"/><circle cx="30" cy="57" r=".9" fill="rgba(240,214,150,.55)"/><circle cx="30" cy="62" r=".9" fill="rgba(240,214,150,.55)"/><path d="M30 47v19" stroke="rgba(0,0,0,.3)" stroke-width=".7"/>`,
+    `<path d="M6 54c10-9 21-12 32-11M12 64c8-11 19-16 32-17M22 66c5-8 12-12 22-13" fill="none" stroke="rgba(255,235,190,.15)" stroke-width="1.500" stroke-linecap="round"/><path fill="#d8cdb8" opacity=".7" d="M25 41.500 30 47l5-5.500L30 44z"/><circle cx="37.500" cy="44.500" r="1.500" fill="rgba(240,214,150,.6)"/>`,
+    `<path fill="rgba(255,255,255,.09)" d="M22.500 42.500 30 50 21 66h-9z"/><path fill="rgba(0,0,0,.32)" d="M37.500 42.500 30 50l9 16h9z"/><path fill="#d8cdb8" opacity=".9" d="M28.300 44.500h1.400v6h-1.400zM30.300 44.500h1.400v6h-1.400z"/><path fill="#d8cdb8" opacity=".6" d="M25.500 41.500c3 2.400 6 2.400 9 0l.6 2c-3.400 2.200-6.800 2.200-10.200 0z"/>`][dress];
+  const neck = `<path fill="#9c7857" d="M25.500 31h9v10L30 46l-4.500-5z"/><path fill="rgba(10,5,2,.45)" d="M25.500 33.500c3 2.500 6 2.500 9 0v3.500c-3 2-6 2-9 0z"/>`;
+  const heads = [
+    `<ellipse cx="20.600" cy="24" rx="1.500" ry="2.600" fill="#7f5f43"/><ellipse cx="39.400" cy="24" rx="1.500" ry="2.600" fill="${skin}"/><ellipse cx="30" cy="23" rx="9.500" ry="12" fill="${skin}"/><path fill="rgba(10,5,2,.42)" d="M30 11c-6 0-9.500 5-9.500 12s4 12 9.500 12z"/><path fill="${dark}" d="M20.300 22c-1-10 4-16 9.700-16s10.700 6 9.700 16c-2-5-5-8-9.700-8s-7.700 3-9.700 8z"/>`,
+    `<ellipse cx="21.400" cy="24.500" rx="1.600" ry="2.700" fill="#7f5f43"/><ellipse cx="31.500" cy="23" rx="9.200" ry="12" fill="${skin}"/><path fill="rgba(10,5,2,.42)" d="M28 11.300c-4 1.500-5.800 6-5.800 11.700s2 10.500 5.800 11.700c-1.600-7.500-1.600-16 0-23.400z"/><path fill="${skin}" d="M40.200 21.500l2.300 4-2.500 1z"/><path fill="${dark}" d="M21.800 23c-2-11 4-17 10-17s11 5 9.700 14c-3-5-6-7-9.700-7-4 0-8 3-10 10z"/>`,
+    `<path fill="${skin}" d="M24 12c4-5 13-5 16 1 1.500 3 1.500 5 1 7l3 5-2.600 1.200.3 3-1.500 1 .2 2.500c-1 2.500-4 3-7 2.500l-1 3h-8v-7c-4-6-4.500-14 .6-19.200z"/><ellipse cx="29.500" cy="23.500" rx="1.600" ry="2.600" fill="#8f6c4c"/><path fill="rgba(10,5,2,.35)" d="M24 12c-5 5-4.600 13-.6 19.200V36h5c-3-7-3.500-16-1-24.500z"/><path fill="${dark}" d="M23.300 13.500c4-7 13.500-7 17 0-5-2-9-1-11 2-1.500 4-1 8-3 12-3.500-4-5-9-3-14z"/>`,
+    `<g transform="translate(60 0) scale(-1 1)"><ellipse cx="21.400" cy="24.500" rx="1.600" ry="2.700" fill="${skin}"/><ellipse cx="31.500" cy="23" rx="9.200" ry="12" fill="${skin}"/><path fill="${skin}" d="M40.200 21.500l2.300 4-2.500 1z"/><path fill="rgba(10,5,2,.42)" d="M35 11.300c4 1.500 5.700 6 5.700 11.700s-1.900 10.500-5.700 11.700c1.600-7.500 1.600-16 0-23.400z"/><path fill="${dark}" d="M21.500 24c-2.500-12 4-19 10.500-19s11 6 9.700 15c-3-5-6-6.500-9.700-6.500-4.500 0-8.500 3.500-10.500 10.500z"/></g>`][pose];
+  const rim = pose === 2 ? "" : `<path d="M38.400 17c1.300 4 1.300 9-.4 13" fill="none" stroke="rgba(255,240,210,.3)" stroke-width=".9" stroke-linecap="round"/>`;
+  return svg("0 0 60 66", props + neck + body + dresses + heads + rim,
+    `preserveAspectRatio="xMidYMax slice"${i >= 4 ? ' style="transform:scaleX(-1)"' : ""}`);
 }
 
 /* ===================== Text helpers ===================== */
@@ -2587,6 +2622,7 @@ function intro(){
 function room(n){
   const r = ROOMS[n-1];
   root.dataset.screen = "room"; root.dataset.type = r.type;
+  if (r.type === "matching") root.dataset.look = ER.look(r); else delete root.dataset.look;
   const TYPES = { matching, quiz, ordering, sorting, reflection };
   (Object.prototype.hasOwnProperty.call(TYPES, r.type) ? TYPES[r.type] : unknown)(r, n);
   wireHints(r);
@@ -2614,7 +2650,7 @@ const LOOK = {
       <span class="title">${fmt(c.term)}${c.detail?` <small>${fmt(c.detail)}</small>`:""}</span>
       <span class="band" aria-hidden="true"></span></button></li>`; }).join("")}</ul>`,
   portraits: (m) => `<ul class="gallery" role="list" style="--cols:${m.display.length <= 8 ? Math.max(4, m.display.length) : Math.ceil(m.display.length/2)};--colst:${m.display.length <= 3 ? 3 : 4}">${m.display.map((c,i)=>`<li class="portrait"><button type="button" ${ex(objCard(c, m.code[c.k]), { label: plain(c.term) })}>
-      <span class="gilt" aria-hidden="true"><span class="sitter" style="--pc:${PAINT[ER.hash(plain(c.term)) % PAINT.length]}">${bust(plain(c.term))}${c.icon?`<span class="ico">${esc(c.icon)}</span>`:""}<i>${esc(ER.initials(c.term))}</i></span></span>
+      <span class="gilt" aria-hidden="true"><span class="sitter" style="--pc:${PAINT[ER.hash(plain(c.term)) % PAINT.length]}">${bust(plain(c.term), i)}${c.icon?`<span class="ico">${esc(c.icon)}</span>`:""}<i>${esc(ER.initials(c.term))}</i></span></span>
       <span class="pname"><strong>${fmt(c.term)}</strong>${c.detail?` <span class="yrs">${fmt(c.detail)}</span>`:""}
       <span class="plate"><span class="sr"> Code </span>${m.numbers?`<small aria-hidden="true">No.</small>`:""}<b>${esc(m.code[c.k])}</b></span></span></button></li>`).join("")}</ul>`
 };
