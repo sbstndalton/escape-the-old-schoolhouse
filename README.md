@@ -260,7 +260,7 @@ node scripts/readme-shots.js     # retake the README pictures (after npm run bui
 
 Run `node scripts/readme-shots.js --only maker` to retake only some pictures. Look at them after a visible change.
 
-**Claude Code.** [`CLAUDE.md`](CLAUDE.md) holds the project's rules (layout, accessibility, content accuracy, element ids the tests rely on). `.mcp.json` gives Claude Code the Playwright browser tools, so it can open the site, play it and check its own changes.
+**AI coding agents.** [`AGENTS.md`](AGENTS.md) holds the project's rules (layout, accessibility, content accuracy, element ids the tests rely on). `.mcp.json` gives an agent the Playwright browser tools, so it can open the site, play it and check its own changes.
 
 **Class links** are `play.html#play=1.<data>`: the content as JSON, compressed (deflate-raw) and base64url-encoded. Link content is treated as untrusted: size-limited, cleaned, validated, and always shown as plain text.
 
