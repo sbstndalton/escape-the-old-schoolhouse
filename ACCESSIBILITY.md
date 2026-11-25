@@ -94,7 +94,7 @@ The same checks were run on the game as it was before this work.
 | Text spacing override | 69 clipped pieces of text | 0 |
 | Pointer targets | 341 too small across all states (dial arrows 20px, studs 30px, close button 35px, question numbers 29px) | 0 |
 | Reading face | A distressed typewriter face for all body text, some at 9px to 11px | Atkinson Hyperlegible; 16px or more for stories, clues, questions, answers and hints; 13.6px or more for labels (the numbers on the keys are 12.8px bold) |
-| Book titles | Written sideways on the spines, shrunk to fit (down to 9px) | Left to right; books lie in piles with the spine facing out |
+| Book titles | Written sideways on the spines, shrunk to fit (down to 9px) | Never shrunk: 16.8px, running down the spine of a standing book (a long title takes a second line). The code letter on each book is upright, and pressing a book shows its card with the title set left to right. See Known limitations |
 | Light | Lamplight, vignette and film grain were laid over all text | They light the room from behind the objects; nothing is laid over text |
 | Focus ring | One colour; missing on notes with a clipped corner; none in Safari when the script moved focus | Two-tone ring on everything, in every browser |
 | Papers | A whole story or clue was the name of one button | The words are plain text; a short heading button ("Clue 1") opens the paper large |
@@ -221,6 +221,7 @@ The darkest pixel is very strict here: a line box often touches a pin, a ruled l
 9. **Reading level.** The sample content has not been checked for reading level (3.1.5, AAA).
 10. **Read aloud has not been heard with real voices in this project's tests.** The automated tests use a stand-in for the speech engine. Real voices, and how each browser handles them (Chrome, Edge, Safari and Firefox on Mac and Windows; Safari on iPhone; Chrome on Android), have to be checked by hand: which voices count as local, whether long passages keep going, and whether the sentence highlight keeps pace. Firefox before version 140 and older Safari do not mark the sentence (reading still works). On some devices there is no local voice at all, so the buttons do not appear.
 11. **The editor's preview with answers shown** puts the answers in a strip above the room, which pushes the room down; the teacher can hide it from the strip or the rail. Students never see it.
+12. **Book titles on the library shelf run down the spine**, as on a real book, so they are read sideways. They are full-size and measured for contrast, each book's code letter is upright, the book's button is named with its code and title for screen readers, and pressing a book opens its card with the title set normally. Teachers who want every title upright can choose the "Plain cards" look for the room.
 
 ### Second review (November 2026)
 
