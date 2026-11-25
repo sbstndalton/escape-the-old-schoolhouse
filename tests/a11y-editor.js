@@ -1034,7 +1034,7 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
       /- paragraph: 0 \/ 45 checked/,
       /- button "New…"/, /- button "Answer sheet"/, /- button "Preview as student"/, /- button "Export"/,
       /^- navigation "Cabinet of rooms":/m, /- button "Settings"/, /- heading "Rooms" \[level=2\]/,
-      /- button "1\. The Library 5 to check"/,
+      /- button "1\. The Library 10 to check"/,
       /- button "Move room 2 up"/, /button "Delete room 2: The Portrait Gallery"/, /- button "Add a room" \[expanded=false\]|- button "Add a room"/,
       /- button "Accessibility check \d+ notes?"/, /button "Help: saving"/, /- group "Display":/, /- switch "High contrast"/, /- switch "Readable text"/,
       /^- main:/m, /- heading "The Library" \[level=2\]/, /- button "45 of 45 items not checked yet\. why\?"/, /- group: Answer key|Answer key/,
