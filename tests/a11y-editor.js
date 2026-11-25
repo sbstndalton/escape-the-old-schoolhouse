@@ -561,8 +561,8 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     await tabTo(page, "#panel .entry .verify [role=checkbox]");
     assert.equal(await page.getByRole("checkbox", { name: "I checked this is correct (Question 1)" }).count(), 1);
     await K.press("Space");
-    assert.match(await page.textContent("#meter"), /1 \/ 41 checked/);
-    await said(page, /Question 1 marked as checked\. 1 of 41 checked\./);
+    assert.match(await page.textContent("#meter"), /1 \/ 46 checked/);
+    await said(page, /Question 1 marked as checked\. 1 of 46 checked\./);
     // the index tabs: back to the tablist, Right arrow to "Room text", then name the room
     await tabTo(page, "[role=tab]", 60, "Shift+Tab");
     assert.equal((await active(page)).id, "tab-items");
@@ -680,15 +680,15 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     assert.equal((await active(page)).id, "ask-ok");
     await page.keyboard.press("Escape");
     assert.equal(await box.count(), 0);
-    assert.equal(await page.locator(".entry").count(), 5, "Esc deletes nothing");
+    assert.equal(await page.locator(".entry").count(), 10, "Esc deletes nothing");
     assert.equal((await active(page)).label, "Delete Card 2", "focus returns to the button that asked");
     assert.equal(await inert(page, "main"), false);
     await page.keyboard.press("Enter"); await box.waitFor(); await page.keyboard.press("Enter");        // Enter on Cancel
-    assert.equal(await page.locator(".entry").count(), 5);
+    assert.equal(await page.locator(".entry").count(), 10);
     await page.keyboard.press("Enter"); await box.waitFor(); await page.keyboard.press("Tab"); await page.keyboard.press("Enter");
-    assert.equal(await page.locator(".entry").count(), 4);
+    assert.equal(await page.locator(".entry").count(), 9);
     assert.equal((await active(page)).label, "Delete Card 2", "after deleting, focus is on the entry that took its place");
-    await said(page, /Card 2 deleted\. 4 left\./);
+    await said(page, /Card 2 deleted\. 9 left\./);
     // a file that isn't an escape room: an alert slip with one button, not the browser's alert()
     await page.setInputFiles("#file", { name: "notes.json", mimeType: "application/json", buffer: Buffer.from("{\"hello\":1}") });
     await box.waitFor();
@@ -845,9 +845,9 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     // moving an entry keeps the keyboard with it and says where it went
     await page.focus("[aria-label='Move Card 2 down']"); await page.keyboard.press("Enter");
     assert.equal((await active(page)).label, "Move Card 3 down");
-    await said(page, /Card 2 moved down\. It is now card 3 of 5\./);
-    await page.keyboard.press("Enter"); await page.keyboard.press("Enter");
-    assert.equal((await active(page)).label, "Move Card 5 up", "at the end of the list focus moves to the button that still works");
+    await said(page, /Card 2 moved down\. It is now card 3 of 10\./);
+    for (let i = 0; i < 7; i++) await page.keyboard.press("Enter");       // down to the end of the ten cards
+    assert.equal((await active(page)).label, "Move Card 10 up", "at the end of the list focus moves to the button that still works");
     // the hints switch
     await page.click("#tab-hints");
     const sw = page.getByRole("switch", { name: "Hints in this room" });
