@@ -531,7 +531,7 @@ const NEED = { read: 7, label: 4.5, big: 4.5 };      // reading text is held to 
     await page.click("#describe");
     assert.equal(await page.getAttribute("#examine", "role"), "dialog"); assert.equal(await page.getAttribute("#examine", "aria-modal"), "true"); assert.equal(await page.getAttribute("#examine", "aria-label"), "Room description");
     const d = (await page.textContent("#examine")).replace(/\s+/g, " ");
-    for (const re of [/Room 1 of 5: The Library/, /5 books on the shelf/, /Code L: Essentialism/, /Clue 1: All students should master/, /combination padlock with 5 dials/, /Pull the shackle/]) assert.match(d, re);
+    for (const re of [/Room 1 of 5: The Library/, /10 books on the shelf/, /Code L: Essentialism/, /Clue 1: All students should master/, /combination padlock with 5 dials/, /Pull the shackle/]) assert.match(d, re);
     assert.equal(await page.evaluate(() => document.querySelector("#scene").inert), true, "the room behind a sheet is inert");
     await page.keyboard.press("Escape"); assert.equal(await page.evaluate(() => document.activeElement.id), "describe"); assert.equal(await page.evaluate(() => document.querySelector("#scene").inert), false);
     // notebook switches

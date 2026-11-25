@@ -233,7 +233,7 @@ On the front page, choose **Make an escape room**. (In a private window the firs
 **24. Check your facts**
 
 - [ ] **Do:** go to step 6: in the list of steps near the top ("All 10 steps"), choose **Check your facts**. Find the first checkbox and press Space.
-- **What you should hear:** a checkbox named "I checked this is correct (room 1, card 1)", then "Checked: room 1, card 1. 1 of 40 checked." The button **Next not checked** takes you to the next one.
+- **What you should hear:** a checkbox named "I checked this is correct (room 1, card 1)", then "Checked: room 1, card 1. 1 of 45 checked." The button **Next not checked** takes you to the next one.
 
 **25. The exit-password slip and Copy link**
 

@@ -28,7 +28,7 @@
       "look": "books",
       "codeStyle": "letters",
       "codeWord": "LEARN",
-      "story": "Five dusty books glow on the shelf, each with one letter painted on its spine. A librarian's card catalog lists five descriptions, but the titles have been torn off. The lock on the library door takes a **5-letter word**.",
+      "story": "Ten dusty books stand on the shelf, each with one letter painted on its spine. A librarian's card catalog describes only five of them, and the titles have been torn off the cards. The lock on the library door takes a **5-letter word**.",
       "cluesHeading": "Card Catalog",
       "lockLabel": "🔒 Library lock",
       "successMessage": "🔓 Click! The library door swings open.",
@@ -77,6 +77,56 @@
           "icon": "",
           "code": "",
           "clue": "Education should grow out of students’ interests and experiences. Learning happens through hands-on problem solving, cooperation, and life in a democratic classroom community. (John Dewey)",
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Idealism",
+          "detail": "",
+          "icon": "",
+          "code": "",
+          "clue": "",
+          "decoy": true,
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Realism",
+          "detail": "",
+          "icon": "",
+          "code": "",
+          "clue": "",
+          "decoy": true,
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Behaviorism",
+          "detail": "",
+          "icon": "",
+          "code": "",
+          "clue": "",
+          "decoy": true,
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Empiricism",
+          "detail": "",
+          "icon": "",
+          "code": "",
+          "clue": "",
+          "decoy": true,
+          "source": "",
+          "verified": false
+        },
+        {
+          "term": "Scholasticism",
+          "detail": "",
+          "icon": "",
+          "code": "",
+          "clue": "",
+          "decoy": true,
           "source": "",
           "verified": false
         }

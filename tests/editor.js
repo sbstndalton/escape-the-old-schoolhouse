@@ -77,9 +77,9 @@ async function makeQuizRoom(page) {
   browser.newPage = async (...a) => { const p = await plainPage(...a); await p.addInitScript(require("./skip-ask.js")); return p; };
   console.log("\nEscape room editor tests\n");
 
-  await test("opens with the sample content, all 40 items unchecked", async () => {
+  await test("opens with the sample content, all 45 items unchecked", async () => {
     const page = await openEditor(browser, base);
-    assert.match(await page.textContent("#meter"), /0 \/ 40 checked/);
+    assert.match(await page.textContent("#meter"), /0 \/ 45 checked/);
     assert.equal(await page.locator("#nav .item:has-text('to check')").count(), 5);
     await page.click("#nav .item:has-text('1.')");
     assert.match(await page.textContent("#answer-key"), /Lock combination: LEARN/);
@@ -93,9 +93,9 @@ async function makeQuizRoom(page) {
     await page.click("#nav .item:has-text('1.')");
     const first = page.locator(".entry").first();
     await first.locator("text=I checked this is correct").click();
-    assert.match(await page.textContent("#meter"), /1 \/ 40/);
+    assert.match(await page.textContent("#meter"), /1 \/ 45/);
     await first.locator("textarea").first().fill("Changed clue text");
-    assert.match(await page.textContent("#meter"), /0 \/ 40/);
+    assert.match(await page.textContent("#meter"), /0 \/ 45/);
     assert.equal(await first.locator(".verify input[type=checkbox]").isChecked(), false);
     await page.close();
   });
@@ -223,14 +223,14 @@ async function makeQuizRoom(page) {
     const file = await download(page, "#export-html");
     await page.keyboard.press("Escape");
     await page.click("#btn-new"); await page.click("#new-sample");
-    assert.match(await page.textContent("#meter"), /\/ 40/);
+    assert.match(await page.textContent("#meter"), /\/ 45/);
     await page.setInputFiles("#file", file);
     // opening replaces what is on the bench, so a slip asks first; Esc backs out and nothing changes
     await page.locator(".modal[role=alertdialog]").waitFor();
     assert.match(await page.textContent(".modal h2"), /Open “Chapter 3 Review”\?/);
     await page.keyboard.press("Escape");
     assert.equal(await page.locator(".modal").count(), 0);
-    assert.match(await page.textContent("#meter"), /\/ 40/);
+    assert.match(await page.textContent("#meter"), /\/ 45/);
     await page.setInputFiles("#file", file);
     await page.click("#ask-ok");
     await page.waitForFunction(() => /2 \/ 2/.test(document.querySelector("#meter").textContent));
@@ -457,7 +457,7 @@ async function makeQuizRoom(page) {
     await page.click("#preview-room");
     let f = page.frameLocator(".preview iframe");
     await f.locator("#stage h2:has-text('Room 1')").waitFor();
-    assert.equal(await f.locator(".shelf .vol").count(), 5);
+    assert.equal(await f.locator(".shelf .vol").count(), 10);
     await page.click("#preview-exit");
     await page.click("#look-row label:has(input[value=portraits])");
     assert.match(await page.textContent("#look-help"), /framed portrait/);
@@ -466,16 +466,16 @@ async function makeQuizRoom(page) {
     await page.click("#preview-room");
     f = page.frameLocator(".preview iframe");
     await f.locator(".gallery .portrait").first().waitFor();
-    assert.equal(await f.locator(".gallery .portrait").count(), 5);
+    assert.equal(await f.locator(".gallery .portrait").count(), 10);
     assert.equal(await f.locator(".shelf").count(), 0);
-    assert.deepEqual((await f.locator(".plate b").allTextContents()).sort(), ["A", "E", "L", "N", "R"]);
+    assert.deepEqual((await f.locator(".plate b").allTextContents()).sort(), ["A", "B", "C", "D", "E", "F", "G", "L", "N", "R"]);
     await page.screenshot({ path: path.join(SHOTS, "editor-preview-look.png") });
     await page.click("#preview-exit");
     await page.click("#look-row label:has(input[value=cards])");
     await page.click("#preview-room");
     f = page.frameLocator(".preview iframe");
     await f.locator(".mcard").first().waitFor();
-    assert.equal(await f.locator(".mcard").count(), 5);
+    assert.equal(await f.locator(".mcard").count(), 10);
     await page.click("#preview-exit");
     // A new matching room starts with plain cards, and the choice survives export and reopening.
     await page.click("#look-row label:has(input[value=books])");
@@ -541,7 +541,7 @@ async function makeQuizRoom(page) {
 
   await test("the not-checked warning is one line on a pinned note that unfolds", async () => {
     const page = await openEditor(browser, base);
-    assert.match(await page.textContent("#draft-line"), /40 of 40 items not checked yet/);
+    assert.match(await page.textContent("#draft-line"), /45 of 45 items not checked yet/);
     assert.equal(await page.isVisible("#draft-note-more"), false, "the long explanation starts folded");
     assert.equal(await page.getAttribute("#draft-note", "aria-expanded"), "false");
     assert.ok((await page.locator(".note").boundingBox()).height < 90, "the folded note is small");
@@ -553,7 +553,7 @@ async function makeQuizRoom(page) {
     assert.equal(await page.isVisible("#draft-note-more"), false);
     await page.click("#nav .item:has-text('1.')");                        // the count follows the seals
     await page.locator(".entry .verify label.chk").first().click();
-    await page.waitForFunction(() => /39 of 40/.test(document.querySelector("#draft-line").textContent));
+    await page.waitForFunction(() => /44 of 45/.test(document.querySelector("#draft-line").textContent));
     await makeQuizRoom(page);                                             // everything checked: no note at all
     await page.locator(".note").waitFor({ state: "detached" });
     await page.close();
@@ -681,7 +681,7 @@ async function makeQuizRoom(page) {
     assert.match(await sheet.locator("#a11y").textContent(), new RegExp(`${count + 3} notes on what is written`));
     assert.match(await sheet.locator("#a11y").textContent(), /“the red book”/);
     assert.equal(await sheet.locator("html").getAttribute("lang"), "en");
-    assert.equal(await sheet.locator("[role=img][aria-label='Not yet checked']").count(), 40);
+    assert.equal(await sheet.locator("[role=img][aria-label='Not yet checked']").count(), 45);
     await page.keyboard.press("Escape");
     // advice never blocks: preview still opens, and the export folder only mentions the notes
     await page.click("#btn-export");

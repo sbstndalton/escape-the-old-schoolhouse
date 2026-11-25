@@ -837,7 +837,7 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     assert.equal(await seal.count(), 1); assert.equal(await seal.isChecked(), false);
     await seal.focus(); await page.keyboard.press("Space");
     assert.equal(await seal.isChecked(), true);
-    await said(page, /Card 3 marked as checked\. 1 of 40 checked\./);
+    await said(page, /Card 3 marked as checked\. 1 of 45 checked\./);
     assert.equal(await page.getByRole("group", { name: "Card 3", exact: true }).count(), 1, "each entry is a named group");
     await page.getByRole("group", { name: "Card 3", exact: true }).getByLabel("Name on card").fill("Perennialism!");
     assert.equal(await seal.isChecked(), false);
@@ -1031,13 +1031,13 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     const want = [
       /^- link "Skip to the editing area"/m,
       /^- banner:/m, /- heading "The Curator’s Workshop \(escape room editor\)" \[level=1\]/,
-      /- paragraph: 0 \/ 40 checked/,
+      /- paragraph: 0 \/ 45 checked/,
       /- button "New…"/, /- button "Answer sheet"/, /- button "Preview as student"/, /- button "Export"/,
       /^- navigation "Cabinet of rooms":/m, /- button "Settings"/, /- heading "Rooms" \[level=2\]/,
       /- button "1\. The Library 5 to check"/,
       /- button "Move room 2 up"/, /button "Delete room 2: The Portrait Gallery"/, /- button "Add a room" \[expanded=false\]|- button "Add a room"/,
       /- button "Accessibility check \d+ notes?"/, /button "Help: saving"/, /- group "Display":/, /- switch "High contrast"/, /- switch "Readable text"/,
-      /^- main:/m, /- heading "The Library" \[level=2\]/, /- button "40 of 40 items not checked yet\. why\?"/, /- group: Answer key|Answer key/,
+      /^- main:/m, /- heading "The Library" \[level=2\]/, /- button "45 of 45 items not checked yet\. why\?"/, /- group: Answer key|Answer key/,
       /- button "Preview this room"/,
       /- tablist "The Library":/, /- tab "Cards & clues" \[selected\]/, /- tab "Hints"/, /- tabpanel "Cards & clues":/,
       /- group "Card 1":/, /- button "Move Card 1 up" \[disabled\]/, /- button "Delete Card 1"/,

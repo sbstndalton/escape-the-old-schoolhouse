@@ -100,7 +100,7 @@ async function playThrough(page, shotPrefix) {
     assert.match(text, /You Escaped!/);
     assert.match(text, /DEWEY1916/);
     assert.match(text, /Your reflection: Progressivism/);
-    assert.match(await page.textContent("#draft-more"), /40 of 40 items haven't been checked/);
+    assert.match(await page.textContent("#draft-more"), /45 of 45 items haven't been checked/);
     assert.deepEqual(page.errors, [], "page had JavaScript errors");
     await page.close();
   });
@@ -158,8 +158,8 @@ async function playThrough(page, shotPrefix) {
     const clean = t => t.replace(/\s+/g, " ").trim();
     // Room 1 is drawn as books on a shelf
     await page.locator(".shelf").waitFor();
-    assert.equal(await page.locator(".shelf .vol").count(), 5);
-    assert.deepEqual((await page.locator(".vol .letter b").allTextContents()).sort(), ["A", "E", "L", "N", "R"]);
+    assert.equal(await page.locator(".shelf .vol").count(), 10);                 // five that the clues describe and five decoys
+    assert.deepEqual((await page.locator(".vol .letter b").allTextContents()).sort(), ["A", "B", "C", "D", "E", "F", "G", "L", "N", "R"]);
     const books = (await page.locator(".shelf > li").allTextContents()).map(clean);
     assert.ok(books.includes("Code L: Essentialism"), `screen-reader text for a book, got: ${books.join(" | ")}`);
     assert.equal(await page.locator("ol.clues .icard").count(), 5, "clues are index cards");
@@ -181,7 +181,7 @@ async function playThrough(page, shotPrefix) {
     await page.locator(".portrait", { hasText: "John Dewey" }).locator(".sitter i", { hasText: /^JD$/ }).waitFor();
     await page.evaluate(() => { ROOMS[0].look = "something-else"; go(1); });
     await page.locator(".mcard").first().waitFor();
-    assert.equal(await page.locator(".mcard").count(), 5);
+    assert.equal(await page.locator(".mcard").count(), 10);
     assert.equal(await page.locator("ol.clues li").count(), 5);
     await page.evaluate(() => { ROOMS[0].look = "books"; ROOMS[0].cards[0].term = "A very long name that could never fit on the spine of a book"; go(1); });
     await page.locator(".mcard").first().waitFor();
