@@ -561,8 +561,8 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     await tabTo(page, "#panel .entry .verify [role=checkbox]");
     assert.equal(await page.getByRole("checkbox", { name: "I checked this is correct (Question 1)" }).count(), 1);
     await K.press("Space");
-    assert.match(await page.textContent("#meter"), /1 \/ 41 checked/);
-    await said(page, /Question 1 marked as checked\. 1 of 41 checked\./);
+    assert.match(await page.textContent("#meter"), /1 \/ 46 checked/);
+    await said(page, /Question 1 marked as checked\. 1 of 46 checked\./);
     // the index tabs: back to the tablist, Right arrow to "Room text", then name the room
     await tabTo(page, "[role=tab]", 60, "Shift+Tab");
     assert.equal((await active(page)).id, "tab-items");
@@ -680,15 +680,15 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     assert.equal((await active(page)).id, "ask-ok");
     await page.keyboard.press("Escape");
     assert.equal(await box.count(), 0);
-    assert.equal(await page.locator(".entry").count(), 5, "Esc deletes nothing");
+    assert.equal(await page.locator(".entry").count(), 10, "Esc deletes nothing");
     assert.equal((await active(page)).label, "Delete Card 2", "focus returns to the button that asked");
     assert.equal(await inert(page, "main"), false);
     await page.keyboard.press("Enter"); await box.waitFor(); await page.keyboard.press("Enter");        // Enter on Cancel
-    assert.equal(await page.locator(".entry").count(), 5);
+    assert.equal(await page.locator(".entry").count(), 10);
     await page.keyboard.press("Enter"); await box.waitFor(); await page.keyboard.press("Tab"); await page.keyboard.press("Enter");
-    assert.equal(await page.locator(".entry").count(), 4);
+    assert.equal(await page.locator(".entry").count(), 9);
     assert.equal((await active(page)).label, "Delete Card 2", "after deleting, focus is on the entry that took its place");
-    await said(page, /Card 2 deleted\. 4 left\./);
+    await said(page, /Card 2 deleted\. 9 left\./);
     // a file that isn't an escape room: an alert slip with one button, not the browser's alert()
     await page.setInputFiles("#file", { name: "notes.json", mimeType: "application/json", buffer: Buffer.from("{\"hello\":1}") });
     await box.waitFor();
@@ -837,7 +837,7 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     assert.equal(await seal.count(), 1); assert.equal(await seal.isChecked(), false);
     await seal.focus(); await page.keyboard.press("Space");
     assert.equal(await seal.isChecked(), true);
-    await said(page, /Card 3 marked as checked\. 1 of 40 checked\./);
+    await said(page, /Card 3 marked as checked\. 1 of 45 checked\./);
     assert.equal(await page.getByRole("group", { name: "Card 3", exact: true }).count(), 1, "each entry is a named group");
     await page.getByRole("group", { name: "Card 3", exact: true }).getByLabel("Name on card").fill("Perennialism!");
     assert.equal(await seal.isChecked(), false);
@@ -845,9 +845,9 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     // moving an entry keeps the keyboard with it and says where it went
     await page.focus("[aria-label='Move Card 2 down']"); await page.keyboard.press("Enter");
     assert.equal((await active(page)).label, "Move Card 3 down");
-    await said(page, /Card 2 moved down\. It is now card 3 of 5\./);
-    await page.keyboard.press("Enter"); await page.keyboard.press("Enter");
-    assert.equal((await active(page)).label, "Move Card 5 up", "at the end of the list focus moves to the button that still works");
+    await said(page, /Card 2 moved down\. It is now card 3 of 10\./);
+    for (let i = 0; i < 7; i++) await page.keyboard.press("Enter");       // down to the end of the ten cards
+    assert.equal((await active(page)).label, "Move Card 10 up", "at the end of the list focus moves to the button that still works");
     // the hints switch
     await page.click("#tab-hints");
     const sw = page.getByRole("switch", { name: "Hints in this room" });
@@ -1031,13 +1031,13 @@ const SPACING = "*{line-height:1.5!important;letter-spacing:.12em!important;word
     const want = [
       /^- link "Skip to the editing area"/m,
       /^- banner:/m, /- heading "The Curator’s Workshop \(escape room editor\)" \[level=1\]/,
-      /- paragraph: 0 \/ 40 checked/,
+      /- paragraph: 0 \/ 45 checked/,
       /- button "New…"/, /- button "Answer sheet"/, /- button "Preview as student"/, /- button "Export"/,
       /^- navigation "Cabinet of rooms":/m, /- button "Settings"/, /- heading "Rooms" \[level=2\]/,
-      /- button "1\. The Library 5 to check"/,
+      /- button "1\. The Library 10 to check"/,
       /- button "Move room 2 up"/, /button "Delete room 2: The Portrait Gallery"/, /- button "Add a room" \[expanded=false\]|- button "Add a room"/,
       /- button "Accessibility check \d+ notes?"/, /button "Help: saving"/, /- group "Display":/, /- switch "High contrast"/, /- switch "Readable text"/,
-      /^- main:/m, /- heading "The Library" \[level=2\]/, /- button "40 of 40 items not checked yet\. why\?"/, /- group: Answer key|Answer key/,
+      /^- main:/m, /- heading "The Library" \[level=2\]/, /- button "45 of 45 items not checked yet\. why\?"/, /- group: Answer key|Answer key/,
       /- button "Preview this room"/,
       /- tablist "The Library":/, /- tab "Cards & clues" \[selected\]/, /- tab "Hints"/, /- tabpanel "Cards & clues":/,
       /- group "Card 1":/, /- button "Move Card 1 up" \[disabled\]/, /- button "Delete Card 1"/,

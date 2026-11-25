@@ -2,7 +2,7 @@
 
 **Escape rooms for your class, in the browser.** Students solve short puzzles; you get the grade through a one-question quiz.
 
-![A room in the game: the Library at night. Five books on a shelf each show a letter on the spine, clue cards are pinned below, and a brass combination padlock with five dials hangs on the locked door.](docs/images/game-library.webp)
+![A room in the game: the Library at night. Ten books stand on a shelf, each with a letter on its spine, clue cards are pinned below, and a brass combination padlock with five dials hangs on the locked door.](docs/images/game-library.webp)
 
 ## Start here
 
@@ -42,7 +42,7 @@ The maker works on a tablet or phone too: the list of steps folds away under **A
 
 On **Check your facts**, compare each item with your textbook. Type **Where you checked it** and tick **I checked this is correct**. Nothing is ever ticked for you. Until every item is ticked, students see a "Draft" notice.
 
-![The step "Check your facts", showing "1 of 40 checked". The first card, Essentialism, has its clue, a "Where you checked it" line filled in with "Course textbook, ch. 3, p. 45", and a ticked box "I checked this is correct".](docs/images/maker-facts.webp)
+![The step "Check your facts", showing "1 of 45 checked". The first card, Essentialism, has its clue, a "Where you checked it" line filled in with "Course textbook, ch. 3, p. 45", and a ticked box "I checked this is correct".](docs/images/maker-facts.webp)
 
 Then, on **Try it as a student**, press **Start the student view** and play it yourself. **Show answers** lets you skip ahead. Press **Esc** or **Exit preview** to come back.
 

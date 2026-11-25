@@ -155,16 +155,16 @@ async function startWith(page, how) {
     await page.fill("#room-title", "The Strongbox"); await page.fill("#room-story", "Answer every slip to open the box.");
     await go(page, "Check your facts");
     // check your facts: nothing checked for you; Next not checked; one tick
-    assert.match(await page.textContent("#wiz-facts-count"), /0 of 42 checked/);
+    assert.match(await page.textContent("#wiz-facts-count"), /0 of 47 checked/);
     assert.match(await page.textContent("#wiz-ai-note"), /written with AI help/);
     await page.click("#wiz-next-unchecked"); assert.equal(await active(page), "f1-cards-1-ok");
     await page.fill("#f6-questions-1-src", "Course text, ch. 3");
     await page.check("#f6-questions-1-ok");
-    assert.match(await page.textContent("#wiz-facts-count"), /1 of 42 checked/);
+    assert.match(await page.textContent("#wiz-facts-count"), /1 of 47 checked/);
     assert.equal(await page.evaluate(() => cfg.rooms[5].questions[0].verified), true);
     await page.click("#wiz-continue"); await page.locator("#wiz-warn").waitFor();
     assert.equal(await active(page), "wiz-warn", "an inline note, not a dialog");
-    assert.match(await page.textContent("#wiz-warn"), /41 items aren't checked yet/);
+    assert.match(await page.textContent("#wiz-warn"), /46 items aren't checked yet/);
     await page.click("#wiz-continue-anyway"); await heading(page, "Try it as a student");
     // try it: the same preview as Advanced mode; Esc comes back here
     await page.click("#wiz-try");
@@ -211,7 +211,7 @@ async function startWith(page, how) {
     assert.equal(ER.configFromHtml(fs.readFileSync(html, "utf8")).finish.exitPassword, "CHAPTER3");
     await page.screenshot({ path: path.join(SHOTS, "wizard-walkthrough.png"), fullPage: true });
     await go(page, "Your escape room is ready");
-    assert.match(await page.textContent("#wiz-summary"), /Chapter 3: Philosophies.*6 rooms.*1 of 42 checked.*Canvas, file and exit-password quiz.*CHAPTER3/s);
+    assert.match(await page.textContent("#wiz-summary"), /Chapter 3: Philosophies.*6 rooms.*1 of 47 checked.*Canvas, file and exit-password quiz.*CHAPTER3/s);
     assert.match(await page.textContent("#wiz-done-backup-note"), /also your backup/, "the game file just downloaded is the backup");
     await go(page, "Your escape room");
     assert.deepEqual(page.errors, []);
