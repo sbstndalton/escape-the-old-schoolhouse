@@ -60,7 +60,9 @@ function hostile() {
       { type: "constructor", title: t(), story: t() },
       { type: "reflection", title: t(), story: t(), buttonLabel: t(), resultHeading: t(), resultNote: t(),
         profiles: [{ key: '"><img src=x onerror="window.__pwned=55">', name: t(), desc: t(), who: t(), next: t() }, { key: "b", name: t(), desc: t() }],
-        questions: [{ prompt: t(), options: [{ text: t(), profile: '"><img src=x onerror="window.__pwned=55">' }, { text: t(), profile: "b" }] }] }
+        questions: [{ prompt: t(), options: [{ text: t(), profile: '"><img src=x onerror="window.__pwned=55">' }, { text: t(), profile: "b" }] }] },
+      { type: "cipher", title: t(), story: t(), reference: t(), lockLabel: t(), successMessage: t(), failMessage: t(), shift: '<img src=x onerror="window.__pwned=44">', hintsEnabled: true, hints: [t()],
+        messages: [{ text: t(), answers: "a|" + t() }, { text: "plain " + t(), answers: t() }] }
     ]
   };
 }
@@ -120,6 +122,38 @@ const unsafe = page => page.evaluate(() => {
     await close(page);
   });
 
+  await test("a cipher room from a link: the wheel decodes the messages by buttons, keys and dragging, and the right answers open the lock", async () => {
+    const cfg = JSON.parse(JSON.stringify(SAMPLE));
+    cfg.rooms = [{ type: "cipher", title: "The Telegraph Office", story: "A telegram is in code.", shift: 5, lockLabel: "Telegraph lock", successMessage: "The lock clicks open.",
+      messages: [{ text: "This thinker said children learn by doing.", answers: "Dewey|John Dewey" }, { text: "She opened the first Casa dei Bambini.", answers: "Montessori" }] }];
+    const page = await open(await ER.toLink(cfg, base + "/play.html"));
+    await page.locator("#begin").click(); await page.locator("#wheel").waitFor();
+    const reads = () => page.$$eval(".dt", els => els.map(e => e.textContent));
+    assert.equal((await reads())[0], ER.caesar("This thinker said children learn by doing.", 5), "at first the messages read in code");
+    assert.equal(await page.getAttribute("#wheel", "role"), "spinbutton");
+    for (let i = 0; i < 3; i++) await page.getByRole("button", { name: "Turn forward" }).click();
+    assert.equal(await page.getAttribute("#wheel", "aria-valuenow"), "3");
+    await page.waitForFunction(() => /Turned 3 places\. Message 1 reads:/.test(document.querySelector("#live").textContent));
+    await page.getByRole("button", { name: "Turn back" }).click(); await page.focus("#wheel");
+    await page.keyboard.press("ArrowUp"); await page.keyboard.press("ArrowUp"); await page.keyboard.press("ArrowUp");
+    assert.deepEqual(await reads(), ["This thinker said children learn by doing.", "She opened the first Casa dei Bambini."], "at the right setting they read again");
+    assert.match(await page.getAttribute("#wheel", "aria-valuetext"), /^5 places\. Message 1 reads: This thinker said children learn by doing\.$/);
+    await page.keyboard.press("Home"); assert.equal(await page.getAttribute("#wheel", "aria-valuenow"), "0");
+    // dragging round the wheel turns it too (the buttons are the single-press way)
+    const box = await page.locator("#wheel").boundingBox(), cx = box.x + box.width / 2, cy = box.y + box.height / 2, r = box.width / 2.5;
+    await page.mouse.move(cx, cy - r); await page.mouse.down();
+    for (let a = 0; a <= 90; a += 6) { const rad = (a - 90) * Math.PI / 180; await page.mouse.move(cx + r * Math.cos(rad), cy + r * Math.sin(rad)); }
+    await page.mouse.up();
+    assert.notEqual(await page.getAttribute("#wheel", "aria-valuenow"), "0", "a drag turns the wheel");
+    await page.click("#try"); assert.match(await page.textContent("#msg"), /Type an answer for every message first/);
+    await page.fill("input[name=c0]", "john dewey"); await page.fill("input[name=c1]", "Froebel"); await page.click("#try");
+    assert.match(await page.textContent("#msg"), /1 of 2 answers are correct/);
+    await page.fill("input[name=c1]", "Montessori"); await page.click("#try");
+    assert.match(await page.textContent("#msg"), /The lock clicks open/);
+    await page.locator("#onward").waitFor();
+    await close(page);
+  });
+
   await test("broken links get a plain message, focus on it, and a way back to the front page", async () => {
     const link = await ER.toLink(SAMPLE, base + "/play.html");
     for (const [url, heading] of [[link.slice(0, 900), "This class link is incomplete"], [base + "/play.html#play=", "This class link is incomplete"],
@@ -169,14 +203,18 @@ const unsafe = page => page.evaluate(() => {
     assert.match(await page.textContent(".rules"), /Wrong answers cost nothing/, "a penalty that isn't a number counts as none");
     await page.click("#draft"); await papers("title");
     await page.click("#begin");
-    for (let n = 1; n <= 7; n++) {
+    for (let n = 1; n <= 8; n++) {
       await page.locator("#stage h2").first().waitFor();
       if (n === 1) { await page.fill("#answer", "zz"); await page.click("#try"); await page.click("#hint-btn"); await page.click("#hint-btn"); }   // wrong try: messages and both hints
       await papers("room " + n);
       await page.evaluate(n => go(n + 1), n); await page.waitForTimeout(200);
     }
-    await page.evaluate(() => { const r = ROOMS[6]; S.reflection = { room: r, first: r.profiles[0], second: r.profiles[1] }; go(8); });
+    await page.evaluate(() => { const r = ROOMS[6]; S.reflection = { room: r, first: r.profiles[0], second: r.profiles[1] }; go(9); });
     await page.locator("#exit-password").waitFor(); await papers("certificate");
+    // the cipher room: turning the wheel rewrites the decoded lines as text, never as markup
+    await page.evaluate(() => go(8)); await page.locator("#wheel").waitFor();
+    for (let i = 0; i < 3; i++) await page.click(".turn[data-d='1']");
+    await page.focus("#wheel"); await page.keyboard.press("End"); await check("cipher room, wheel turned");
     // the reflection room's option values (profile keys) stay attribute text
     await page.evaluate(() => go(7)); await page.locator("#mf input").first().check(); await page.click("#try"); await check("reflection solved");
     // __preview from a link is ignored: no answers on request, no jumping between rooms

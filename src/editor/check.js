@@ -102,6 +102,13 @@ export function a11yCheck(c){
         }
       }
     });
+    if (room.type === "cipher") (room.messages || []).forEach((m, i) => {
+      const W = `${R} · Message ${i + 1}`;
+      wording(m.text, r, "items", W); long(m.text, L.prompt, r, "items", W, "message"); total += count(m.text);
+      const accepted = str(m.answers).split("|").map(x => x.trim()).filter(Boolean);
+      if (!accepted.length) note("answer-list", r, "items", W, "No accepted answer is written yet, so nothing a student types can be right.");
+      else if (accepted.length === 1 && /\s/.test(accepted[0])) note("answer-list", r, "items", W, "Only one way of typing the answer is accepted, and it is more than one word. Add the other ways students might fairly type it, separated by | (a surname alone, without “the”).");
+    });
     if (room.type === "ordering") {
       const items = room.items || [];
       if (items.length > L.orderItems) note("many-items", r, "items", `${R} · Items`, `There are ${items.length} items to put in order. Each move takes a key press, and a wrong try gives little to go on. ${L.orderItems} or fewer is kinder.`);

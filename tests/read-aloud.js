@@ -106,6 +106,12 @@ const visibleListens = page => page.locator(".listen:visible").count();
     await page.locator(".slip .listen").first().waitFor();
     await say(".slip >> nth=0 >> .listen", /^Question 1\. \| Who wrote Emile\? \| Type your answer\.$/, "Listen to question 1");
     await say(".slip >> nth=1 >> .listen", /^Question 2\. \| Which one\? \| Choices: \| Essentialism \| Progressivism$/);
+    // a cipher room's message reads what it says at the wheel's setting, not the code
+    await page.evaluate(() => { ROOMS[2] = { type: "cipher", title: "C", shift: 2, messages: [{ text: "Children learn by doing.", answers: "Dewey" }] }; go(3); });
+    await page.locator(".cmsg .listen").waitFor();
+    await say(".cmsg .listen", /^Message 1 reads now: \| Ejknftgp ngctp da fqkpi\.$/, "Listen to message 1");
+    await page.click(".turn[data-d='1']"); await page.click(".turn[data-d='1']");
+    await say(".cmsg .listen", /^Message 1 reads now: \| Children learn by doing\.$/);
     // the mirror's question
     await page.evaluate(() => go(5)); await page.locator(".qcard:not([hidden]) .listen").waitFor();
     await say(".qcard:not([hidden]) .listen", /^Question 1 of 6 \| The main purpose of school is to… \| Choices: \| pass on the essential knowledge/, "Listen to question 1");

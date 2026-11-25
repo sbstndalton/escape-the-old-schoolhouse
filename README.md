@@ -213,7 +213,7 @@ Press **Show all settings (Advanced mode)**, open **Finish & grading**, and chan
 Yes. Every escape room you make is kept in this browser, and none overwrites another. When you come back to the maker, its home page lists them under **Your escape rooms**, with **Make another escape room** and **Make a copy of this one**.
 
 **Can I use other puzzle types?**
-Yes. There are five kinds of rooms: **Quiz questions**, **Match clues to cards**, **Put in order (timeline)**, **Sort into groups** and **Reflection (no wrong answers)**. The guided steps fill in the first two; the others, plus hints, looks and grading options, are set up in **Show all settings (Advanced mode)**.
+Yes. There are six kinds of rooms: **Quiz questions**, **Match clues to cards**, **Secret message (cipher wheel)**, **Put in order (timeline)**, **Sort into groups** and **Reflection (no wrong answers)**. The guided steps fill in the first three; the others, plus hints, looks and grading options, are set up in **Show all settings (Advanced mode)**.
 
 **Can students cheat?**
 The answers are only lightly hidden inside the game. A tech-savvy student could dig them out. That's fine for practice and low-stakes quizzes; don't rely on it for high-stakes tests.

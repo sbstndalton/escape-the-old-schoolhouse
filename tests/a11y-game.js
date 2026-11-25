@@ -32,6 +32,9 @@ const DESKTOP = { width: 1440, height: 900 }, PHONE = { width: 390, height: 844 
 const QUIZ = { type: "quiz", title: "The Strongbox", story: "Two questions guard the strongbox.", lockLabel: "Strongbox", hintsEnabled: false, questions: [
   { kind: "short", prompt: "Who wrote *Democracy and Education*?", answers: "Dewey|John Dewey" },
   { kind: "choice", prompt: "Which philosophy stresses a common core of knowledge?", choices: ["Essentialism", "Existentialism", "Progressivism"], correct: 0 }] };
+const CIPHER = { type: "cipher", title: "The Telegraph Office", story: "A telegram is in code. Turn the wheel until it reads.", lockLabel: "Telegraph lock", shift: 4, hintsEnabled: false, messages: [
+  { text: "This thinker said schools should be small democracies where children learn by doing.", answers: "Dewey|John Dewey" },
+  { text: "She opened the first Casa dei Bambini in Rome.", answers: "Montessori|Maria Montessori" }] };
 const TIMELINE = ["Plato", "Rousseau", "Horace", "Montessori", "Dewey", "Freire", "Adler"];
 const SORT = [0, 1, 0, 1, 0, 1, 0, 1];
 
@@ -97,6 +100,10 @@ async function tour(page, visit) {
   await page.evaluate(q => { window.__keep = ROOMS[2]; ROOMS[2] = q; }, QUIZ); await room(page, 3); await visit("quiz room");
   if (!page.old) { await page.locator(".slip .listen").nth(1).click(); await visit("quiz room, reading a question aloud"); await page.locator(".slip .listen").nth(1).click(); }
   await page.fill("input[name=q0]", "nobody"); await page.check("input[name=q1][value='1']"); await page.click("#try"); await visit("quiz room, wrong try");
+  await page.evaluate(c => { ROOMS[2] = c; }, CIPHER); await room(page, 3); await visit("cipher room");
+  for (let i = 0; i < 4; i++) await page.click(".turn[data-d='1']");
+  await page.fill("input[name=c0]", "Dewey"); await page.fill("input[name=c1]", "nobody"); await page.click("#try"); await visit("cipher room, decoded, wrong try");
+  if (!page.old) { await page.click("#describe"); await visit("cipher room, description open"); await esc(); }
   await page.evaluate(() => { ROOMS[2] = window.__keep; }); await room(page, 3); await visit("room 3, timeline");
   await solveTimeline(page); await page.click("#try"); await visit("room 3, solved");
   await room(page, 4); await visit("room 4, slips and stamps");
@@ -283,6 +290,9 @@ const TEXTS = {
   "room 2, portraits": [["Portrait name plate", ".pname strong", "read"], ["Portrait dates", ".pname .yrs", "read"], ["Portrait code", ".plate", "label"], ["Key ring: a solved key's number", ".door.open b", "label"]],
   "quiz room, wrong try": [["Question", ".slip legend", "read"], ["Question number", ".slip .qn", "label"], ["Choice", ".lever .lt", "read"], ["Typed answer", ".typer input", "read"],
     ["Handle tag", ".klabel", "read"], ["Counter digits", ".counter span", "big"], ["Counter words", ".counter em", "label"]],
+  "cipher room": [["Message in code", ".cmsg legend .code", "read"], ["What the message reads now", ".slip .dec", "read"], ["Wheel readout", ".cwheel .set", "label"],
+    ["Turn buttons", ".turn span", "label"], ["Message number", ".cmsg .qn", "label"], ["How to work the lock", "#how", "read"]],
+  "cipher room, decoded, wrong try": [["Decoded message", ".slip .dec", "read"], ["Typed answer", ".typer input", "read"], ["Counter digits", ".counter span", "big"], ["Result", "#msg", "read"]],
   "room 3, solved": [["Timeline card", "#order .t", "read"], ["Position number", "#order .grip", "label"], ["Stamped date", ".when", "label"]],
   "room 4, some slips stamped": [["Slip text", ".ev .txt", "read"], ["Slip number", ".ev .pick", "label"], ["Empty stamp box", ".seg button:not(.on)", "label"], ["Stamped box", ".seg button.on", "label"], ["Rubber stamp label", ".stamp .base", "label"]],
   "room 5, second question": [["Mirror question", ".qcard:not([hidden]) legend", "read"], ["Option", ".qcard:not([hidden]) .lt", "read"], ["Question number button", ".qnav .n:not(.done)", "label"], ["Answered number button", ".qnav .n.done", "label"], ["Next plate", "#try", "big"]],

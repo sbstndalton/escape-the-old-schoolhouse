@@ -276,6 +276,17 @@ const ER = (() => {
     return { cards, display, answerCards, numbers, code, answer: answerCards.map(c => code[c.k]).join("") };
   }
 
+  // ---------- cipher rooms: a Caesar cipher (every letter moved the same number of places along the alphabet) ----------
+  // The teacher writes each secret message in plain words; the game shows it in code (moved `shift` places) and
+  // the student turns a cipher wheel until it reads again. Only A-Z and a-z move; accented letters, digits and
+  // punctuation stay as they are, so a message always decodes back to exactly what the teacher wrote.
+  const cipherShift = room => { const n = Math.round(Number(room && room.shift)); return n >= 1 && n <= 25 ? n : 3; };
+  function caesar(text, by) {
+    const k = ((Math.round(Number(by) || 0) % 26) + 26) % 26;
+    return String(text ?? "").replace(/[A-Za-z]/g, ch => { const base = ch <= "Z" ? 65 : 97; return String.fromCharCode(base + (ch.charCodeAt(0) - base + k) % 26); });
+  }
+  const hasLetters = s => /[A-Za-z]/.test(String(s ?? ""));
+
   // ---------- matching rooms: how the cards are drawn (presentation only, never graded) ----------
   // "cards" is the default and the fallback for anything unknown. Books need short names to fit on a
   // spine, so a room with a very long name falls back to plain cards instead of clipping text.
@@ -308,11 +319,13 @@ const ER = (() => {
     if (t === "ordering") return (room.items || []).map((it, i) => `${i + 1}. ${it.text}${it.label ? ` (**${it.label}**)` : ""}`);
     if (t === "sorting") return (room.items || []).map(it => `${it.text}  →  **${(room.categories || [])[it.category] ?? "?"}**`);
     if (t === "reflection") return ["No wrong answers: any choices open the door. The most-chosen result is shown on the certificate."];
+    if (t === "cipher") return [`Cipher wheel: turn it **${cipherShift(room)}** places to read the messages.`,
+      ...(room.messages || []).map((m, i) => `${i + 1}. ${m.text}  →  **${String(m.answers || "").split("|").map(a => a.trim()).filter(Boolean).join(" / ")}**`)];
     return [];
   }
 
   // ---------- hints ----------
-  const HINT_ROOMS = ["matching", "quiz", "ordering", "sorting"];        // rooms where a student can get it wrong
+  const HINT_ROOMS = ["matching", "quiz", "ordering", "sorting", "cipher"];        // rooms where a student can get it wrong
   const hintRules = cfg => ({ first: Math.max(0, +(cfg.hintRules?.first ?? 1)), second: Math.max(0, +(cfg.hintRules?.second ?? 3)) });
   // Hints that would hand over the answer instead of leading toward it.
   function hintWarnings(room) {
@@ -331,6 +344,10 @@ const ER = (() => {
       if (room.type === "quiz") {
         const given = (room.questions || []).filter(q => q.kind === "choice" ? has(h, (q.choices || [])[q.correct]) : accepted(q.answers).some(a => a.length >= 4 && has(h, a))).length;
         if (given) why.push(`it contains the answer to ${given} question${given > 1 ? "s" : ""}`);
+      }
+      if (room.type === "cipher") {
+        const given = (room.messages || []).filter(m => accepted(m.answers).some(a => a.length >= 4 && has(h, a))).length;
+        if (given) why.push(`it contains the answer to ${given} message${given > 1 ? "s" : ""}`);
       }
       if (room.type === "sorting") {
         const listed = (room.items || []).filter(it => norm(it.text).length > 12 && norm(h).includes(norm(it.text).slice(0, 25))).length;
@@ -356,6 +373,7 @@ const ER = (() => {
       if (room.type === "ordering") add(room.items, "items");
       if (room.type === "sorting") add(room.items, "items");
       if (room.type === "reflection") { add(room.profiles, "profiles"); add(room.questions, "questions"); }
+      if (room.type === "cipher") add(room.messages, "messages");
     });
     return out;
   }
@@ -386,6 +404,17 @@ const ER = (() => {
             if (!(q.correct >= 0 && q.correct < (q.choices || []).length && String(q.choices[q.correct]).trim())) errs.push(`${where}, question ${i + 1}: mark which choice is correct.`);
           } else if (!accepted(q.answers).length) errs.push(`${where}, question ${i + 1}: needs at least one accepted answer.`);
         });
+      }
+      if (room.type === "cipher") {
+        if (!(room.messages || []).length) errs.push(`${where}: add at least one secret message.`);
+        (room.messages || []).forEach((m, i) => {
+          if (!String(m.text || "").trim()) errs.push(`${where}, message ${i + 1}: the message is empty.`);
+          else if (!hasLetters(m.text)) errs.push(`${where}, message ${i + 1}: the message needs some letters (A to Z) to put in code.`);
+          if (!accepted(m.answers).length) errs.push(`${where}, message ${i + 1}: needs at least one accepted answer.`);
+        });
+        const sh = room.shift;
+        if (sh !== undefined && sh !== null && String(sh).trim() !== "" && !(Number.isInteger(Number(sh)) && Number(sh) >= 1 && Number(sh) <= 25))
+          errs.push(`${where}: the wheel setting must be a whole number from 1 to 25.`);
       }
       if (room.hintsEnabled && HINT_ROOMS.includes(room.type) && !(room.hints || []).slice(0, 2).some(x => String(x || "").trim()))
         errs.push(`${where}: hints are turned on, but no hint has been written.`);
@@ -479,7 +508,7 @@ const ER = (() => {
   const scorm = (gameHtml, title, date) => zip([{ name: "imsmanifest.xml", data: manifest(title) }, { name: "index.html", data: gameHtml }], date);
   const fileSlug = s => String(s || "escape-room").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "") || "escape-room";
 
-  return { esc, fmt, paras, norm, accepted, hash, scramble, matching, LOOKS, look, initials, answerKey, HINT_ROOMS, hintRules, hintWarnings, reviewItems, reviewStatus, validate,
+  return { esc, fmt, paras, norm, accepted, hash, scramble, matching, cipherShift, caesar, LOOKS, look, initials, answerKey, HINT_ROOMS, hintRules, hintWarnings, reviewItems, reviewStatus, validate,
     encodeConfig, decodeConfig, buildGame, configFromHtml, zip, crc32, manifest, scorm, fileSlug };
 })();
 /* ---------- accessibility helpers (ER.a11y…) ----------
@@ -501,6 +530,7 @@ ER.a11yHow = room => {
   if (t === "quiz") return "Answer every question, then press “Check answers” (the handle) to try the lock.";
   if (t === "ordering") return "Put the cards in order with each card's Move up and Move down buttons, then press “Check order” (the handle) to try the lock.";
   if (t === "sorting") return "Stamp every slip: press one of the boxes on the slip, or pick the slip up and press a rubber stamp. Then press “Submit” (the handle) to try the lock.";
+  if (t === "cipher") return "The messages are in code. Turn the cipher wheel with its “Turn back” and “Turn forward” buttons, or the arrow keys, until the messages read as plain words; the line under each message shows what it says now. Type the answer each message points to, then press “Check answers” (the handle) to try the lock.";
   if (t === "reflection") {
     let last = String((room && room.buttonLabel) || "");
     try { last = last.replace(new RegExp("[\\p{Extended_Pictographic}\\uFE0F\\u200D]", "gu"), ""); } catch (e) {}
@@ -532,6 +562,13 @@ ER.a11yDescribe = (room, state = {}) => {
     out.push({ h: `${cats.length} stamps`, list: cats });
     out.push({ h: `${(room.items || []).length} slips to stamp`, ordered: true, list: (room.items || []).map((it, i) => s(it.text) + (picks[i] != null ? ` (stamped **${cats[picks[i]]}**)` : " (not stamped yet)")) });
     out.push({ h: "The lock", text: ["A handle with a counter. After each try, it shows how many slips were stamped correctly.", ER.a11yHow(room)] });
+  } else if (t === "cipher") {
+    const msgs = room.messages || [], shift = ER.cipherShift(room), turn = state.turn;
+    out.push({ h: `${msgs.length} secret message${msgs.length === 1 ? "" : "s"}, in code`, ordered: true, list: msgs.map(m => ER.caesar(s(m.text), shift)) });
+    out.push({ h: "The cipher wheel", text: ["A wheel with two rings of letters, A to Z. Turning it moves every letter of the messages along the alphabet. At the right setting the messages read as plain words."]
+      .concat(turn != null ? [`It is turned ${turn} place${turn === 1 ? "" : "s"} now, and the messages read:`] : []),
+      list: turn != null ? msgs.map(m => ER.caesar(ER.caesar(s(m.text), shift), -turn)) : undefined, ordered: turn != null });
+    out.push({ h: "The lock", text: [`A strongbox with a handle and ${msgs.length === 1 ? "an answer line" : "an answer line for each message"}. After each try, a counter shows how many answers were right.`, ER.a11yHow(room)] });
   } else if (t === "reflection") {
     out.push({ h: `${(room.questions || []).length} questions, one at a time`, ordered: true, list: (room.questions || []).map(q => s(q.prompt) + " Options: " + (q.options || []).map(o => s(o.text)).join("; ") + ".") });
     out.push({ h: "How it works", text: [ER.a11yHow(room), "Your most-chosen view is shown on the certificate."] });
@@ -556,6 +593,9 @@ ER.a11yCheck = cfg => {
     if (room.type === "quiz") (room.questions || []).forEach((q, i) => { texts.push(q.prompt);
       if (q.kind !== "choice" && ER.accepted(q.answers).length < 2) add(r, `Question ${i + 1} accepts only one typed answer. Add other spellings or forms (separated by |) so a small typing difference isn't marked wrong.`); });
     if (room.type === "ordering" || room.type === "sorting") (room.items || []).forEach(it => texts.push(it.text));
+    if (room.type === "cipher") (room.messages || []).forEach((m, i) => { texts.push(m.text);
+      if (ER.accepted(m.answers).length < 2) add(r, `Message ${i + 1} accepts only one typed answer. Add other spellings or forms (separated by |) so a small typing difference isn't marked wrong.`);
+      if (s(m.text).length > 200) add(r, `Message ${i + 1} is long (${s(m.text).length} characters). Coded text is hard work to read; one short sentence is kinder.`); });
     if (room.type === "ordering" && (room.items || []).length > 9) add(r, `There are ${(room.items || []).length} cards to put in order. More than 9 takes many moves without a mouse.`);
     texts.push(room.story, ...(room.hints || []));
     const hit = texts.map(s).map(x => (x.match(SENSE) || [])[0]).filter(Boolean)[0];
@@ -671,10 +711,10 @@ ER.a11yCheck = cfg => {
      numbers; every other value must be plain text, a number, true/false or null (anything else is dropped). Keys
      that start with "__" (such as the editor's __preview), "constructor" and "prototype" are dropped. Sizes are
      capped, and nothing is nested deeper than the format goes. A valid escape room comes out unchanged. */
-  const LISTS = new Set(["rooms", "cards", "questions", "items", "profiles", "options"]);
+  const LISTS = new Set(["rooms", "cards", "questions", "items", "profiles", "options", "messages"]);
   const TEXTS = new Set(["hints", "categories", "choices"]);
   const GROUPS = new Set(["meta", "intro", "scoring", "finish", "hintRules"]);
-  const NUMBERS = new Set(["correct", "category", "hintPenalty", "wrongPenalty", "minScore", "first", "second", "schema"]);
+  const NUMBERS = new Set(["correct", "category", "hintPenalty", "wrongPenalty", "minScore", "first", "second", "schema", "shift"]);
   const MAX_TEXT = 50000, MAX_LIST = 500;
   function cleanConfig(input){
     if (!input || typeof input !== "object" || Array.isArray(input)) throw fail("invalid", ["This isn't an escape room."]);

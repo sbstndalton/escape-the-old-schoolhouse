@@ -113,6 +113,34 @@ async function startWith(page, how) {
     await page.context().close();
   });
 
+  await test("a secret-message room in two short pages: the messages with their answers and the code shown, then what students read", async () => {
+    const page = await fresh();
+    await startWith(page, "sample"); await heading(page, "What is this escape room called?");
+    await page.goto(base + "/editor.html#step=add"); await heading(page, "What kind of puzzle");
+    assert.match(squash(await page.textContent("label[for=kind-cipher]")), /Secret message \(cipher wheel\).*turn a cipher wheel/);
+    await page.click("label[for=kind-cipher]"); await go(page, "Room 6: Write the secret messages");
+    assert.match(await page.title(), /^Step 5 of 10: Room 6: Write the secret messages/);
+    await page.click("#wiz-continue"); await page.locator("#wiz-errors").waitFor();
+    assert.deepEqual(await page.$$eval("#wiz-errors a", a => a.map(x => x.textContent)), ["Write message 1", "Message 1 needs a correct answer"]);
+    await page.click("#wiz-errors a >> nth=0"); assert.equal(await active(page), "m1-text");
+    await page.fill("#m1-text", "Children learn by doing.");
+    const shift = await page.evaluate(() => cfg.rooms[5].shift);
+    assert.equal(await page.textContent("#m1-code"), "In code, students see: " + ER.caesar("Children learn by doing.", shift), "the code is shown as the teacher types");
+    assert.match(await page.textContent("#wiz-wheel-line"), new RegExp(`The wheel is set to ${shift}`));
+    await page.fill("#m1-a0", "John Dewey"); await page.click("#m1-add-a"); assert.equal(await active(page), "m1-a1"); await page.fill("#m1-a1", "Dewey");
+    await page.click("#wiz-add-m"); assert.equal(await active(page), "m2-text");
+    await page.click("#m2-remove"); await page.locator(".modal #ask-ok").waitFor(); await page.click("#ask-ok");
+    assert.equal(await page.evaluate(() => cfg.rooms[5].messages.length), 1);
+    await go(page, "Room 6: What do students read when they walk in?");
+    await page.fill("#room-title", "The Telegraph Office"); await page.fill("#room-story", "The telegram is in code. Turn the cipher wheel until it reads.");
+    await go(page, "Check your facts");
+    assert.match(squash(await page.$$eval(".wfacts", e => e.map(x => x.textContent).join(" "))), /Message: Children learn by doing\. ?Answer: John Dewey \/ Dewey/);
+    assert.deepEqual(await page.evaluate(() => ER.validate(cfg)), []);
+    assert.deepEqual(await page.evaluate(() => cfg.rooms[5].messages.map(m => m.verified)), [false], "nothing in the guided steps marks a fact as checked");
+    assert.deepEqual(page.errors, []);
+    await page.context().close();
+  });
+
   await test("the full journey: sample, change a question, check facts, try it, Moodle grade file, then the Canvas password route", async () => {
     const page = await fresh();
     await startWith(page, "sample");

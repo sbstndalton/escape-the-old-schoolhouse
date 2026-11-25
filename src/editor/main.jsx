@@ -8,7 +8,7 @@ import { Layers, Toasts, ask, tell } from "./layers.jsx";
 import { Workshop, pageTitle, skipText, closeCabinet } from "./workshop.jsx";
 import { Wizard, WIZ, renderWizard, routeTo, readHash, homeRoute, wizardTitle, wizGo, hashFor } from "./wizard.jsx";
 import { a11yCheck } from "./check.js";
-import { TYPES, blankQuestion, blankCard } from "./rooms.jsx";
+import { TYPES, blankQuestion, blankCard, blankMessage } from "./rooms.jsx";
 import { makeClassLink } from "./actions.jsx";
 
 function App(){
@@ -46,7 +46,7 @@ if (matchMedia("(prefers-reduced-motion: no-preference)").matches && matchMedia(
 
 /* ---------- for the tests and the browser console ----------
    The tests read and change the content and call a few functions by name, as they did when the editor was one script. */
-const expose = { ER, SAMPLE, changed, saveNow, saveMeta, unbacked, a11yCheck, TYPES, blankQuestion, blankCard, ask, tell, makeClassLink, WIZ, renderWizard,
+const expose = { ER, SAMPLE, changed, saveNow, saveMeta, unbacked, a11yCheck, TYPES, blankQuestion, blankCard, blankMessage, ask, tell, makeClassLink, WIZ, renderWizard,
   routeTo, wizGo, hashFor, lsSet, keyOf, newId, writeLib, render: () => rerender() };
 Object.assign(window, expose);
 for (const k of ["cfg", "meta", "lib", "sel", "stored"]) Object.defineProperty(window, k, { get: () => S[k], set: v => { S[k] = v; }, configurable: true });
