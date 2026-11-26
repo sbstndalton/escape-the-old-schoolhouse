@@ -2,7 +2,7 @@
 import { S } from "./store.js";
 
 export const QUIZ_Q = "Type the exit password from the certificate at the end of the escape room.";
-export const ROOM_KIND = { quiz: "Quiz questions", matching: "Match clues to cards", ordering: "Put in order (timeline)", sorting: "Sort into groups", reflection: "Reflection (no wrong answers)" };
+export const ROOM_KIND = { quiz: "Quiz questions", matching: "Match clues to cards", ordering: "Put in order (timeline)", sorting: "Sort into groups", reflection: "Reflection (no wrong answers)", cipher: "Secret message (cipher wheel)" };
 export const LMS = { moodle: "Moodle", canvas: "Canvas" };
 export function deliveryWords(){
   const d = S.meta.delivery || {};

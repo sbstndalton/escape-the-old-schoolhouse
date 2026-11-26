@@ -12,6 +12,7 @@ export function blankQuestion(kind = "short"){ return { prompt: "", kind, answer
 export function blankCard(){ return { term: "", detail: "", icon: "", clue: "", code: "", source: "", verified: false }; }
 function blankOrder(){ return { text: "", label: "", source: "", verified: false }; }
 function blankSort(){ return { text: "", category: 0, source: "", verified: false }; }
+export function blankMessage(){ return { text: "", answers: "", source: "", verified: false }; }
 function blankProfile(k){ return { key: k || ("P" + Date.now().toString(36)), name: "", who: "", desc: "", next: "", source: "", verified: false }; }
 export const TYPES = {
   quiz:       { icon: "key", name: "Question lock", desc: "Short-answer or multiple-choice questions. All must be right to open the lock. Works like a chapter quiz.",
@@ -22,6 +23,8 @@ export const TYPES = {
                 blank: () => ({ type: "ordering", title: "New timeline room", story: "", reference: "", lockLabel: "Order lock", successMessage: "Everything is in order. The lock opens!", hints: [], items: [blankOrder(), blankOrder()] }) },
   sorting:    { icon: "trays", name: "Sort into groups", desc: "Students put each item into the right category.",
                 blank: () => ({ type: "sorting", title: "New sorting room", story: "", reference: "", categories: ["Group A", "Group B"], lockLabel: "Sorting lock", successMessage: "All sorted. The lock opens!", hints: [], items: [blankSort()] }) },
+  cipher:     { icon: "wheel", name: "Secret message", desc: "A message in code. Students turn a cipher wheel until it reads, then type the answer it points to.",
+                blank: () => ({ type: "cipher", title: "New cipher room", story: "", reference: "", shift: 3 + Math.floor(Math.random() * 20), lockLabel: "Cipher lock", successMessage: "Every answer is right. The lock opens!", failMessage: "", hints: [], messages: [blankMessage()] }) },
   reflection: { icon: "mirror", name: "Reflection survey", desc: "No wrong answers. Each choice counts toward a result profile, shown on the certificate.",
                 blank: () => ({ type: "reflection", title: "New reflection room", story: "", reference: "", buttonLabel: "Continue", successMessage: "Done!", resultHeading: "Your result", resultNote: "", hints: [], profiles: [blankProfile("A"), blankProfile("B")], questions: [] }) }
 };
@@ -181,6 +184,24 @@ function quizTabs(room){
     roomTextTab(room), hintsTab(room) ];
 }
 
+function cipherTabs(room){
+  room.messages = room.messages || [];
+  const first = (room.messages.find(m => String(m.text || "").trim()) || {}).text, shift = ER.cipherShift(room);
+  return [
+    { id: "items", label: "Messages", help: "Write each message in plain words, as a clue: the game puts it in code. Students turn the cipher wheel until it reads, then type the answer it points to. Every answer must be right to open the lock.",
+      body: <ListEditor list={room.messages} noun="Message" blank={blankMessage} item={m => <>
+        <Field label="Secret message (in plain words)" obj={m} k="text" type="textarea" rows={2} item={m} placeholder="e.g. This thinker said children learn by doing." />
+        <Field label="Accepted answers" obj={m} k="answers" item={m} help="The answer the message points to. Separate different acceptable answers with |  for example  John Dewey | Dewey. Capitals, accents and punctuation are ignored." />
+      </>} /> },
+    { id: "wheel", label: "Wheel", help: "The wheel setting is how many places along the alphabet every letter is moved. Students don't need to know it: they turn the wheel until the messages read.",
+      body: <>
+        <div className="row"><Field label="Wheel setting" obj={room} k="shift" narrow help="Any whole number from 1 to 25. Only the letters A to Z move; accented letters, numbers and punctuation stay as they are." /></div>
+        <p className="typed" id="cipher-sample">{first ? <>{`With the wheel set to ${shift}, students see the first message as: `}<b>{ER.caesar(first, shift)}</b></> : "Write a message, and you will see here how it looks in code."}</p>
+        <div className="row"><Field label="Message for a wrong answer" obj={room} k="failMessage" placeholder="e.g. Not yet. Read the messages again." /></div>
+      </> },
+    roomTextTab(room), hintsTab(room) ];
+}
+
 function orderingTabs(room){
   return [
     { id: "items", label: "Items in order", help: "List these in the right order (first at the top). Students see them shuffled. The label (like a year) is revealed after they solve it.",
@@ -278,7 +299,7 @@ function pageFinish(){
 }
 function pageRoom(r){
   const room = S.cfg.rooms[r]; const t = TYPES[room.type];
-  const make = { matching: matchingTabs, quiz: quizTabs, ordering: orderingTabs, sorting: sortingTabs, reflection: reflectionTabs }[room.type];
+  const make = { matching: matchingTabs, quiz: quizTabs, ordering: orderingTabs, sorting: sortingTabs, reflection: reflectionTabs, cipher: cipherTabs }[room.type];
   return { key: room, room, r, icon: t ? t.icon : "door", kicker: `Room ${r+1} · ${t ? t.name : room.type}`, title: room.title || "Untitled", help: t ? t.desc : "",
     tabs: make ? make(room).filter(Boolean) : [{ id: "none", label: "Room", body: <p className="typed">This room type can't be edited here.</p> }] };
 }

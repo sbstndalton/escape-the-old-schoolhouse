@@ -87,9 +87,12 @@ async function eachState(page, visit, only) {
     q.questions = [{ prompt: "Who wrote Democracy and Education?", kind: "short", answers: "John Dewey | Dewey", choices: ["", "", "", ""], correct: 0, source: "", verified: false },
       { prompt: "Which philosophy is built around the Great Books?", kind: "choice", answers: "", choices: ["Essentialism", "Perennialism", "Existentialism"], correct: 1, source: "", verified: false }];
     cfg.rooms.push(q); changed(); render(); });
+  // and a secret-message (cipher) room, the 7th drawer
+  await page.evaluate(() => { if (cfg.rooms.some(r => r.type === "cipher")) return; const c = TYPES.cipher.blank(); c.title = "The Telegraph Office"; c.story = "The telegram is in code. Turn the wheel until it reads."; c.shift = 4;
+    c.messages = [{ text: "This thinker said children learn by doing.", answers: "John Dewey | Dewey", source: "", verified: false }]; cfg.rooms.push(c); changed(); render(); });
   await drawer(page, "Settings"); await tabs("settings");
   await drawer(page, "Story & intro"); await tabs("intro");
-  for (let r = 1; r <= 6; r++) { await drawer(page, r + "."); await tabs("room " + r); }
+  for (let r = 1; r <= 7; r++) { await drawer(page, r + "."); await tabs("room " + r); }
   await drawer(page, "6."); await page.click("#tab-items");
   await go("room 6 / questions as text", () => page.click("text=Edit all questions as text"), () => page.click("text=Back to form view"));
   await go("room 6 / typed answer turned into choices", async () => { await page.locator(".entry").first().locator("text=Multiple choice").click(); },
@@ -168,6 +171,9 @@ async function wizardStates(page, go, phone){
   await go("wizard / 5 quiz questions", () => to("#step=room&room=6&part=questions"), stay);
   await go("wizard / 5 quiz questions, one empty: error", async () => { await to("#step=room&room=6&part=questions&e=1", "cfg.rooms[5].questions.push(blankQuestion())"); await err(); },
     async () => { await page.evaluate(() => { cfg.rooms[5].questions.pop(); changed(); }); });
+  await go("wizard / 5 secret messages", () => to("#step=room&room=7&part=messages"), stay);
+  await go("wizard / 5 secret messages, one empty: error", async () => { await to("#step=room&room=7&part=messages&e=1", "cfg.rooms[6].messages.push(blankMessage())"); await err(); },
+    async () => { await page.evaluate(() => { cfg.rooms[6].messages.pop(); changed(); }); });
   await go("wizard / 6 check your facts", () => to("#step=facts"), stay);
   await go("wizard / 6 check your facts, not all checked: note", async () => { await to("#step=facts&e=1"); await err(); }, stay);
   await go("wizard / 7 try it", () => to("#step=try"), stay);

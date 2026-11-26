@@ -19,6 +19,27 @@ t("hint check flags the lock code as a whole word only", () => {
   room.hints = ["learning by doing"]; assert.equal(ER.hintWarnings(room).length, 0);
   room.hints = ["The code is LEARN."]; assert.equal(ER.hintWarnings(room).length, 1);
 });
+t("cipher rooms: letters move round the alphabet and back, everything else stays, and the checks know the room", () => {
+  assert.equal(ER.caesar("Abc, xyz! Émile 1916", 3), "Def, abc! Éploh 1916", "only A-Z and a-z move; case, accents, digits and punctuation stay");
+  for (const k of [1, 3, 13, 25]) assert.equal(ER.caesar(ER.caesar("Learning by doing.", k), -k), "Learning by doing.");
+  assert.equal(ER.cipherShift({ shift: "7" }), 7); assert.equal(ER.cipherShift({}), 3); assert.equal(ER.cipherShift({ shift: 40 }), 3);
+  const room = { type: "cipher", title: "c", shift: 4, messages: [{ text: "Children learn by doing.", answers: "Dewey|John Dewey" }] };
+  assert.deepEqual(ER.validate({ meta: { title: "x" }, rooms: [room] }), []);
+  const bad = ER.validate({ meta: { title: "x" }, rooms: [{ type: "cipher", title: "c", shift: 26, messages: [{ text: "1916", answers: "" }] }] }).join(" ");
+  assert.match(bad, /needs some letters/); assert.match(bad, /needs at least one accepted answer/); assert.match(bad, /whole number from 1 to 25/);
+  assert.match(ER.validate({ meta: { title: "x" }, rooms: [{ type: "cipher", title: "c", messages: [] }] }).join(" "), /at least one secret message/);
+  assert.deepEqual(ER.reviewItems({ rooms: [room] }).map(x => x.list), ["messages"]);
+  assert.match(ER.answerKey(room).join("\n"), /turn it \*\*4\*\* places[\s\S]*John Dewey/);
+  assert.ok(ER.HINT_ROOMS.includes("cipher"));
+  assert.equal(ER.hintWarnings({ ...room, hints: ["The answer is Dewey."] }).length, 1, "a hint that gives the answer away is flagged");
+  const d = ER.a11yDescribe(room, { turn: 4 });
+  assert.equal(d[0].list[0], "Glmphvir pievr fc hsmrk.", "the description lists the message in code");
+  assert.equal(d[1].list[0], "Children learn by doing.", "and what it reads at the wheel's setting");
+  assert.match(ER.a11yHow(room), /“Turn back” and “Turn forward”[\s\S]*“Check answers”/);
+  const clean = ER.cleanConfig({ rooms: [{ type: "cipher", shift: "9", messages: [{ text: "a", answers: "b", __x: 1 }] }, { type: "cipher", shift: "<b>" }] });
+  assert.equal(clean.rooms[0].shift, 9, "the wheel setting stays a number in a class link"); assert.equal(clean.rooms[1].shift, undefined, "and a setting that isn't a number is dropped");
+  assert.deepEqual(clean.rooms[0].messages, [{ text: "a", answers: "b" }]);
+});
 t("validate catches a sorting item with no category and a blank correct choice", () => {
   const base = { meta: { title: "x" } };
   assert.ok(ER.validate({ ...base, rooms: [{ type: "sorting", title: "s", categories: ["A", "B"], items: [{ text: "i", category: -1 }] }] }).some(e => /pick its correct category/.test(e)));

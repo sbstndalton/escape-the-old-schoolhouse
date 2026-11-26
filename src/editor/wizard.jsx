@@ -12,7 +12,7 @@ import { S, ER, SAMPLE, clone, changed, rerender, say, saveNow, saveMeta, unback
   switchTo, sampleUnchecked, isHttp } from "./store.js";
 import { Icon } from "./controls.jsx";
 import { ask, toast } from "./layers.jsx";
-import { TYPES, PAGES, roomStatus, blankQuestion, blankCard } from "./rooms.jsx";
+import { TYPES, PAGES, roomStatus, blankQuestion, blankCard, blankMessage } from "./rooms.jsx";
 import { closeCabinet, benchMq, SaveStatus } from "./workshop.jsx";
 import { backup, blankConfig, parseSaved, startEscapeRoom, openPreview, openAnswerSheet, openTeacherCard, readyToDownload, needsPassword, suggestPassword,
   makeClassLink, linkFresh, linkWords, LinkNotes, copyText, askA11y } from "./actions.jsx";
@@ -377,7 +377,7 @@ function Library(){
 }
 
 /* ---------- 4 Your rooms, and adding one ---------- */
-export const PARTS = { quiz: ["questions", "story"], matching: ["cards", "clues", "story"] };
+export const PARTS = { quiz: ["questions", "story"], matching: ["cards", "clues", "story"], cipher: ["messages", "story"] };
 const roomSeq = () => S.cfg.rooms.flatMap((room, r) => (PARTS[room.type] || ["advanced"]).map(p => [r, p]));
 const roomHash = (r, part) => hashFor("room", { room: r + 1, part });
 function afterRooms(){ const s = roomSeq()[0]; return s ? roomHash(s[0], s[1]) : hashFor("facts"); }
@@ -419,6 +419,7 @@ WSTEPS.rooms = {
 const KIND_OPTS = [
   { value: "quiz", title: "Quiz questions", pic: "key", desc: "Students answer questions to open the lock, like a chapter quiz.", eg: "For example: “Who wrote Democracy and Education (1916)?” Answer: John Dewey." },
   { value: "matching", title: "Match clues to cards", pic: "lock", desc: "Students match each clue to a person or idea. The codes on the matched cards open a padlock.", eg: "For example: the clue “learning by doing” matches the card “Progressivism”." },
+  { value: "cipher", title: "Secret message (cipher wheel)", pic: "wheel", desc: "Students turn a cipher wheel to decode a message you write, then type the answer it points to.", eg: "For example: the message “This thinker said children learn by doing” decodes, and the answer is Dewey." },
   { value: "ordering", title: "Put in order (timeline)", pic: "glass", desc: "Students put events or steps in the right order. You set this kind up in Advanced mode.", eg: "For example: put five education laws in order, oldest first." },
   { value: "sorting", title: "Sort into groups", pic: "trays", desc: "Students sort each item into a group. You set this kind up in Advanced mode.", eg: "For example: is each classroom scene traditional or progressive?" },
   { value: "reflection", title: "Reflection (no wrong answers)", pic: "mirror", desc: "Students answer questions about their own views and get a result. You set this kind up in Advanced mode.", eg: "For example: “Your philosophy of education is closest to…”" }];
@@ -427,7 +428,7 @@ WSTEPS.add = {
   back: () => hashFor("rooms"),
   body: () => <>
     <WRadios name="kind" legend="What kind of puzzle should the next room be?" asH1 hint="Not sure? Start with quiz questions." value={WIZ.kind} options={KIND_OPTS} set={v => { WIZ.kind = v; rerender(); }} />
-    <WHelp><p>Quiz questions and Match clues to cards are set up right here, step by step. The other kinds are set up in Advanced mode, where every setting is on one page.</p>
+    <WHelp><p>Quiz questions, Match clues to cards and Secret message are set up right here, step by step. The other kinds are set up in Advanced mode, where every setting is on one page.</p>
       <p>You can add more rooms later, and change their order on the “Your rooms” page.</p></WHelp>
   </>,
   check: () => WIZ.kind ? [] : [{ key: "kind", target: "kind-quiz", text: "Choose what kind of puzzle the room should be" }],
@@ -447,6 +448,7 @@ const ROOM_PART = {
   questions: { title: r => `Room ${r + 1}: Write your questions`, body: r => quizBody(S.cfg.rooms[r], r), check: r => quizCheck(S.cfg.rooms[r]) },
   cards: { title: r => `Room ${r + 1}: Who or what is on each card?`, body: r => cardsBody(S.cfg.rooms[r], r), check: r => cardsCheck(S.cfg.rooms[r]) },
   clues: { title: r => `Room ${r + 1}: Write the clue for each card`, body: r => cluesBody(S.cfg.rooms[r], r), check: r => cluesCheck(S.cfg.rooms[r]) },
+  messages: { title: r => `Room ${r + 1}: Write the secret messages`, body: r => cipherBody(S.cfg.rooms[r], r), check: r => cipherCheck(S.cfg.rooms[r]) },
   story: { title: r => `Room ${r + 1}: What do students read when they walk in?`, body: r => storyBody(S.cfg.rooms[r], r), check: r => storyCheck(S.cfg.rooms[r]) },
   advanced: { title: r => `Room ${r + 1}: ${ROOM_KIND[S.cfg.rooms[r].type] || "A room"}`, check: () => [],
     body: r => <>
@@ -546,6 +548,58 @@ function quizCheck(room){
   });
   return out;
 }
+/* Secret messages (a cipher room): each is a clue in plain words, which the game puts in code, and its answer */
+function cipherBody(room, r){
+  const ms = room.messages = room.messages || [];
+  const err = wErr("messages"), shift = ER.cipherShift(room);
+  const add = () => { ms.push(blankMessage()); changed(); renderWizard(); document.getElementById(`m${ms.length}-text`).focus(); say(`Message ${ms.length} added.`); };
+  return <>
+    <H1>{`Room ${r + 1}: Write the secret messages`}</H1>
+    <p className="whint">Write each message in plain words, as a clue: the game puts it in code. Students turn a cipher wheel until it reads, then type the answer it points to. One or two messages are plenty.</p>
+    <WHelp><p>A worked example:</p>
+      <ul><li>Message: This thinker said schools should be small democracies where children learn by doing.</li><li>Correct answer: John Dewey</li><li>Another accepted answer: Dewey</li></ul>
+      <p>Keep each message to one short sentence: text in code is slow to read, even once it is decoded. Students' typing is forgiving: capitals, accents and punctuation don't matter.</p></WHelp>
+    {err ? <Err id="wiz-m-err" text={err.text} /> : null}
+    {ms.length ? ms.map((m, i) => <MessageBox key={i} room={room} m={m} i={i} />) : <p id="wiz-m-empty">No messages yet. Add your first message.</p>}
+    <div className="wacts" style={{ marginTop: "1rem" }}><Btn className="stamp" id="wiz-add-m" onClick={add}><Icon name="plus" />{ms.length ? "Add another message" : "Add a message"}</Btn></div>
+    <p className="wnote" id="wiz-wheel-line">{`The wheel is set to ${shift}: students turn it ${shift} places to read your messages. You can change this in Advanced mode.`}</p>
+    <HintsLater r={r} />
+  </>;
+}
+function MessageBox({ room, m, i }){
+  const N = i + 1, ms = room.messages, shift = ER.cipherShift(room);
+  const parts = () => String(m.answers || "").split("|").map(x => x.trim());
+  const setPart = (j, v) => { const p = parts(); p[j] = v; m.answers = p.join(" | "); };
+  const remove = async () => {
+    if (!(await ask(`Remove message ${N}?`, [m.text ? `“${String(m.text).slice(0, 90)}”` : null, "This can't be undone."], { ok: "Remove message", danger: true }))) return;
+    ms.splice(i, 1); changed(); renderWizard(); (document.getElementById(`m${Math.min(N, ms.length)}-text`) || document.getElementById("wiz-add-m")).focus(); say(`Message ${N} removed.`);
+  };
+  const p = parts();
+  return <fieldset className="wq-item" id={`m${N}`}><legend>{`Message ${N}`}</legend>
+    <WField id={`m${N}-text`} label="Secret message, in plain words" area rows={2} value={m.text} item={m} set={v => { m.text = v; }} />
+    {String(m.text || "").trim() ? <p className="whint" id={`m${N}-code`}>In code, students see: <b>{ER.caesar(m.text, shift)}</b></p> : null}
+    <WField id={`m${N}-a0`} label="Correct answer" value={p[0]} item={m} set={v => setPart(0, v)} hint="What the message points to. Capitals, accents and punctuation don't matter." />
+    {p.slice(1).map((a, k) => <div className="wline" key={k}>
+      <WField id={`m${N}-a${k + 1}`} label="Another accepted answer" value={a} item={m} set={v => setPart(k + 1, v)} />
+      <Btn className="inkline red" onClick={() => { const all = parts(); all.splice(k + 1, 1); m.answers = all.join(" | "); wUnverify(m); changed(); renderWizard(); document.getElementById(`m${N}-add-a`).focus(); }}>
+        <Icon name="x" />Remove<span className="sr">{` accepted answer ${k + 2}`}</span></Btn>
+    </div>)}
+    <Btn className="inkline" id={`m${N}-add-a`} onClick={() => { m.answers = [...parts(), ""].join(" | "); changed(); renderWizard(); document.getElementById(`m${N}-a${parts().length - 1}`).focus(); }}>
+      <Icon name="plus" />Add another accepted answer</Btn>
+    <div className="tools" style={{ marginTop: ".6rem" }}><Btn className="inkline red" id={`m${N}-remove`} onClick={remove}><Icon name="x" />{`Remove message ${N}`}</Btn></div>
+  </fieldset>;
+}
+function cipherCheck(room){
+  const out = [], ms = room.messages || [];
+  if (!ms.length) out.push({ key: "messages", target: "wiz-add-m", text: "Add at least one secret message" });
+  ms.forEach((m, i) => {
+    const N = i + 1;
+    if (!String(m.text || "").trim()) out.push({ key: `m${N}-text`, target: `m${N}-text`, text: `Write message ${N}` });
+    else if (!/[A-Za-z]/.test(m.text)) out.push({ key: `m${N}-text`, target: `m${N}-text`, text: `Message ${N} needs some letters (A to Z) to put in code` });
+    if (!ER.accepted(m.answers).length) out.push({ key: `m${N}-a0`, target: `m${N}-a0`, text: `Message ${N} needs a correct answer` });
+  });
+  return out;
+}
 /* Cards and clues */
 function cardsBody(room, r){
   const cards = room.cards = room.cards || [];
@@ -615,7 +669,8 @@ function storyBody(room, r){
     <H1>{`Room ${r + 1}: What do students read when they walk in?`}</H1>
     <WField id="room-title" label="Name of the room" value={room.title} set={v => { room.title = v; }} hint="For example: The Library." />
     <WField id="room-story" label="What students read" area rows={4} value={room.story} set={v => { room.story = v; }}
-      hint={room.type === "matching" ? "Say what the room is about and what to do. For example: “The librarian left a clue for each book. Match each clue to a book, then use the books' letters to open the padlock.”"
+      hint={room.type === "cipher" ? "Say what the room is about and what to do. For example: “The telegram on the desk is in code. Turn the cipher wheel until it reads, then type your answer.”"
+        : room.type === "matching" ? "Say what the room is about and what to do. For example: “The librarian left a clue for each book. Match each clue to a book, then use the books' letters to open the padlock.”"
         : "Say what the room is about and what to do. For example: “The strongbox opens when every answer is right. You can try as often as you need.”"} />
     <WHelp><p>Students read this first, before the puzzle. Keep it to two or three short sentences, and say plainly what to do: not everyone can work it out from the picture.</p>
       <p>To make words bold, put two stars on each side: **like this**. One star on each side makes them italic.</p></WHelp>
@@ -633,12 +688,13 @@ const plainText = s => String(s ?? "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/
 function factWords(room, list, it){
   if (list === "cards") return [`Card: ${plainText(it.term) || "(no name)"}${it.detail ? ` (${plainText(it.detail)})` : ""}`, String(it.clue || "").trim() ? `Clue: ${plainText(it.clue)}` : "An extra card, with no clue"];
   if (room.type === "quiz") return [`Question: ${plainText(it.prompt) || "(not written yet)"}`, `Answer: ${it.kind === "choice" ? plainText((it.choices || [])[it.correct]) || "(none marked)" : ER.accepted(it.answers).length ? String(it.answers).split("|").map(x => x.trim()).filter(Boolean).join(" / ") : "(none yet)"}`];
+  if (room.type === "cipher") return [`Message: ${plainText(it.text) || "(not written yet)"}`, `Answer: ${ER.accepted(it.answers).length ? String(it.answers).split("|").map(x => x.trim()).filter(Boolean).join(" / ") : "(none yet)"}`];
   if (room.type === "ordering") { const i = room.items.indexOf(it); return [`Number ${i + 1} in the order: ${plainText(it.text)}`, it.label ? `Shown after solving: ${plainText(it.label)}` : ""]; }
   if (room.type === "sorting") return [`Item: ${plainText(it.text)}`, `Group: ${plainText((room.categories || [])[it.category]) || "(none chosen)"}`];
   if (list === "profiles") return [`Result: ${plainText(it.name)}`, plainText(it.desc)];
   return [`Question: ${plainText(it.prompt)}`, (it.options || []).map(o => `${plainText(o.text)} → ${plainText((room.profiles.find(p => p.key === o.profile) || {}).name || "?")}`).join("; ")];
 }
-const NOUN = { cards: "card", questions: "question", items: "item", profiles: "result" };
+const NOUN = { cards: "card", questions: "question", items: "item", profiles: "result", messages: "message" };
 const isOn = b => b.getAttribute("aria-checked") === "true";
 function nextUnchecked(){
   const boxes = [...document.querySelectorAll(".wfacts [role=checkbox]")], open = boxes.filter(b => !isOn(b));

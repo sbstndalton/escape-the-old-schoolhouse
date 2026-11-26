@@ -568,11 +568,33 @@ async function makeQuizRoom(page) {
     assert.match(await page.textContent("#answer-key .keycard"), /Lock combination: 9154/);
     await page.screenshot({ path: path.join(SHOTS, "editor-answer-key.png") });
     await page.click("#add-room");
-    assert.equal(await page.locator("#add-menu button").count(), 5);
+    assert.equal(await page.locator("#add-menu button").count(), 6);
     await page.click("#add-menu button[data-type=ordering]");
     assert.equal(await page.locator("#nav .item:has-text('6.')").count(), 1);
     assert.match(await page.textContent("main h2"), /New timeline room/);
     assert.equal(await page.evaluate(() => cfg.rooms[5].type), "ordering");
+    assert.deepEqual(page.errors, []);
+    await page.close();
+  });
+
+  await test("a cipher room: messages and the wheel are edited in Advanced mode, with the code shown, the answer key and the answer sheet", async () => {
+    const page = await openEditor(browser, base);
+    await page.click("#add-room"); await page.click("#add-menu button[data-type=cipher]");
+    assert.match(await page.textContent("main h2"), /New cipher room/);
+    assert.deepEqual(await page.locator("[role=tab]").allTextContents(), ["Messages", "Wheel", "Room text", "Hints"]);
+    await page.getByRole("textbox", { name: "Secret message (in plain words)" }).fill("Children learn by doing.");
+    await page.getByRole("textbox", { name: "Accepted answers" }).fill("Dewey | John Dewey");
+    await page.locator("[role=tab]", { hasText: "Wheel" }).click();
+    await page.getByRole("textbox", { name: "Wheel setting" }).fill("2");
+    assert.match(await page.textContent("#cipher-sample"), /set to 2, students see the first message as: Ejknftgp ngctp da fqkpi\./);
+    await page.focus("#answer-key summary"); await page.keyboard.press("Enter");
+    assert.match(await page.textContent("#answer-key .keycard"), /turn it 2 places[\s\S]*Children learn by doing\.[\s\S]*Dewey \/ John Dewey/);
+    const r = await page.evaluate(() => cfg.rooms.length - 1);
+    assert.deepEqual(await page.evaluate(() => ER.validate(cfg)), [], "the room is ready to play");
+    assert.equal(await page.evaluate(r => cfg.rooms[r].messages[0].verified, r), false, "nothing is marked checked");
+    await page.click("#btn-review");
+    const sheet = (await page.frameLocator(".overlay iframe").locator("body").textContent()).replace(/\s+/g, " ");
+    assert.match(sheet, /Cipher wheel: students turn it 2 places.*Children learn by doing\..*In code: Ejknftgp ngctp da fqkpi\..*Answer: Dewey \| John Dewey/);
     assert.deepEqual(page.errors, []);
     await page.close();
   });

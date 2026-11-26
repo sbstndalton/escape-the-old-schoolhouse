@@ -126,6 +126,7 @@ svg{display:block}
 [data-type=quiz]{--wa:#2a2216;--wb:#211a10;--wc:#17120b;--ldrop:-.800rem}
 [data-type=ordering]{--wa:#1b2531;--wb:#151d27;--wc:#0f151d;--wsil:radial-gradient(ellipse 30% 20% at 30% 40%,rgba(230,230,220,.05),transparent 70%) 8% 30%/56% 42% no-repeat,radial-gradient(ellipse 22% 14% at 70% 62%,rgba(230,230,220,.035),transparent 70%) 8% 30%/56% 42% no-repeat,linear-gradient(180deg,#0e1412,#0b100e) 8% 30%/56% 42% no-repeat,linear-gradient(180deg,#3a2616,#24160b) 8.500% 55%/57% .900rem no-repeat,linear-gradient(180deg,#33210f,#1d120a) 7.300% 29.300%/57.400% 44.200% no-repeat;--ldrop:-.800rem}
 [data-type=sorting]{--wa:#1a2628;--wb:#141e20;--wc:#0e1618;--wsil:linear-gradient(90deg,transparent 49.500%,#1a120b 49.500% 50.500%,transparent 50.500%) 10% 30%/50% 40% no-repeat,linear-gradient(115deg,transparent 38%,rgba(160,190,210,.07) 44%,rgba(160,190,210,.02) 52%,transparent 56%) 10% 30%/50% 40% no-repeat,linear-gradient(180deg,#070b0f,#0b1117) 10% 30%/50% 40% no-repeat,linear-gradient(180deg,#33210f,#1d120a) 9.200% 29.200%/51.400% 42.200% no-repeat;--ldrop:-2.200rem}
+[data-type=cipher]{--wa:#20261e;--wb:#191e17;--wc:#121610;--wsil:linear-gradient(90deg,transparent 49.6%,rgba(0,0,0,.35) 49.6% 50.4%,transparent 50.4%) 62% 18%/34% 34% no-repeat,repeating-linear-gradient(0deg,transparent 0 1.1rem,rgba(210,190,140,.05) 1.1rem 1.18rem) 62% 18%/34% 34% no-repeat,repeating-linear-gradient(90deg,transparent 0 1.1rem,rgba(210,190,140,.05) 1.1rem 1.18rem) 62% 18%/34% 34% no-repeat,linear-gradient(180deg,#2c2a1e,#221f16) 62% 18%/34% 34% no-repeat,linear-gradient(180deg,#3a2616,#24160b) 61.4% 17.2%/35.2% 35.8% no-repeat;--ldrop:-1.200rem}
 [data-type=reflection]{--wa:#141c1e;--wb:#0f1517;--wc:#0a0f10}
 [data-screen=room] .lantern{top:var(--ldrop,0)}
 .dust{inset:0}
@@ -345,6 +346,34 @@ fieldset{margin:0;border:0;min-width:0}
 .lever input:focus-visible+.lev{outline:2px solid #2a1d14;outline-offset:2px}
 .qcard .lever input:focus-visible+.lev{outline-color:#ffe7ae}
 .lever input:checked~.lt{text-shadow:.03em 0 0 currentColor}
+/* ---------- Cipher: a wheel of two alphabets and messages in code ---------- */
+.cwheel{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:.8rem 1.4rem;flex-wrap:wrap;padding:.1rem 0 .5rem}
+.cwheel .wheel{flex:none;width:13.5rem;max-width:100%;aspect-ratio:1;border-radius:50%;cursor:grab;touch-action:none;filter:drop-shadow(0 .5rem .6rem rgba(0,0,0,.7))}
+.cwheel .wheel:active{cursor:grabbing}
+.cwheel .wheel svg{width:100%;height:100%;overflow:visible}
+.cw .rim{fill:url(#cwb);stroke:#3b2a0c;stroke-width:1.2}
+.cw .rim2{fill:none;stroke:#5a4317;stroke-width:.8}
+.cw .disc{fill:#efe3c8;stroke:#5a4317;stroke-width:1.2}
+.cw .tick{stroke:#5a4317;stroke-width:.7}
+.cw .lo{fill:#24160a;font:700 12px var(--f-r)}
+.cw .li{fill:#7d170e;font:700 11.5px var(--f-r)}
+.cw .hub{fill:url(#cwb);stroke:#3b2a0c;stroke-width:1}
+.cw .pin{fill:#3b2a0c}
+.cw .mark{fill:#7d170e;stroke:#3b2a0c;stroke-width:.6}
+.cw .inner{transform-box:view-box;transform-origin:50% 50%;transition:transform .22s cubic-bezier(.3,1.5,.5,1)}
+.cwheel .turns{display:flex;flex-direction:column;align-items:stretch;gap:.6rem;min-width:0}
+.cwheel .set{margin:0;text-align:center;font:400 1rem/1.4 var(--f-r);color:var(--parch)}
+.cwheel .set b{font-weight:700}
+.turn svg{width:1rem;height:1rem;flex:none}
+.slip .dec{clear:both;margin:.1rem 0 .6rem;padding:.35rem .55rem .35rem .6rem;font:400 1rem/1.5 var(--f-r);background:rgba(255,255,255,.4);box-shadow:inset 3px 0 0 var(--redink);overflow-wrap:anywhere}
+.slip .dec b{font-weight:700}
+.cmsg legend .code{letter-spacing:.04em}
+[data-contrast=more] .cw .rim,[data-contrast=more] .cw .hub{fill:#f6dfa0;stroke:#000}
+[data-contrast=more] .cw .disc{fill:#fff;stroke:#000}
+[data-contrast=more] .cw .lo,[data-contrast=more] .cw .li,[data-contrast=more] .cw .pin{fill:#000}
+[data-contrast=more] .cw .tick,[data-contrast=more] .cw .rim2{stroke:#000}
+[data-contrast=more] .slip .dec{background:#fff;box-shadow:inset 3px 0 0 #000}
+[data-contrast=more] .cwheel .set{color:#fff}
 .sbox{position:relative;padding:1.3rem 1.4rem 1.1rem;display:flex;flex-direction:column;align-items:center;
   background:linear-gradient(180deg,rgba(255,255,255,.07),transparent 30%,rgba(0,0,0,.45)),var(--grain),#2b3440;border-radius:.3rem;
   box-shadow:inset 0 0 0 1px #0b0e12,inset 0 0 0 .35rem #333e4b,inset 0 0 0 .42rem #11161c,0 1rem 1.4rem rgba(0,0,0,.7)}
@@ -1014,6 +1043,8 @@ html[data-readable=on]{font-size:112.5%;--f-d:var(--f-r);--f-ty:var(--f-r)}
   ::highlight(er-read){color:HighlightText;background-color:Highlight}
   svg{forced-color-adjust:auto}
   #watch svg,.key svg,.shackle svg,.sitter svg{forced-color-adjust:none}
+  .cw .rim,.cw .hub,.cw .disc{fill:Canvas;stroke:CanvasText}.cw .lo,.cw .li,.cw .pin,.cw .mark{fill:CanvasText}.cw .tick,.cw .rim2{stroke:CanvasText}
+  .cwheel .wheel{border:1px solid CanvasText}.slip .dec{background:Canvas;color:CanvasText;box-shadow:none;border-left:3px solid CanvasText}.cwheel .set{color:CanvasText}
 }
 
 /* ---------- Focus: one ring for everything ----------
@@ -1894,7 +1925,7 @@ function room(n){
   const r = ROOMS[n-1];
   root.dataset.screen = "room"; root.dataset.type = r.type;
   if (r.type === "matching") root.dataset.look = ER.look(r); else delete root.dataset.look;
-  const TYPES = { matching, quiz, ordering, sorting, reflection };
+  const TYPES = { matching, quiz, ordering, sorting, reflection, cipher };
   (Object.prototype.hasOwnProperty.call(TYPES, r.type) ? TYPES[r.type] : unknown)(r, n);
   wireHints(r);
   const desc = $("#describe"); if (desc) desc.onclick = () => examine(describeHtml(r, n), { from: desc, label: "Room description", cls: "about" });
@@ -1974,6 +2005,84 @@ function wireInputs(form){
     const t = e.target.closest(".typer"); if (t && !calm() && t.animate) t.animate([{ transform: "translateX(-2px)" }, { transform: "none" }], { duration: 70 }); });
   form.addEventListener("change", e => { if (e.target.type === "radio") SND.play("clack"); });
   stage.querySelectorAll(".klabel").forEach(k => { k.style.pointerEvents = "auto"; k.style.cursor = "pointer"; k.onclick = () => $("#try").click(); });
+}
+
+/* ---- Cipher: a wheel of two alphabets; messages in code that read again at the right setting ----
+   The teacher writes each message in plain words and the answer it points to. The game shows the message moved
+   `shift` places along the alphabet (ER.caesar) and the player turns the wheel until it reads; the line under each
+   message always shows what it says at the wheel's setting. The wheel is a spinbutton (arrow keys, Home, End,
+   Page Up and Down, drag) with two real buttons beside it, so nothing depends on dragging or on a screen reader
+   handling spinbuttons. The answers are typed, as in a quiz. */
+const ABC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const cipherWheel = () => {
+  const ring = (r, cls) => [...ABC].map((ch, i) => `<text class="${cls}" x="100" y="${100 - r}" transform="rotate(${(i * 360 / 26).toFixed(3)} 100 100)" text-anchor="middle" dominant-baseline="central">${ch}</text>`).join("");
+  const ticks = (r1, r2) => [...ABC].map((_, i) => `<path class="tick" d="M100 ${100 - r1}V${100 - r2}" transform="rotate(${((i + .5) * 360 / 26).toFixed(3)} 100 100)"/>`).join("");
+  return svg("0 0 200 200", `<defs><linearGradient id="cwb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4dc9c"/><stop offset=".45" stop-color="#c9a556"/><stop offset=".75" stop-color="#a9853a"/><stop offset="1" stop-color="#6d5220"/></linearGradient></defs>
+    <circle class="rim" cx="100" cy="100" r="98"/><circle class="rim2" cx="100" cy="100" r="94"/>${ticks(96, 74)}${ring(85, "lo")}
+    <g class="inner"><circle class="disc" cx="100" cy="100" r="73"/>${ticks(73, 48)}${ring(61, "li")}<circle class="rim2" cx="100" cy="100" r="47"/>
+      <path class="tick" d="M100 54V146M54 100H146"/><circle class="hub" cx="100" cy="100" r="15"/><circle class="pin" cx="100" cy="100" r="3"/></g>
+    <path class="mark" d="M94.5 1.5h11L100 10z"/>`, 'class="cw"');
+};
+function cipher(r, n){
+  const ms = r.messages || [], shift = ER.cipherShift(r), coded = ms.map(m => ER.caesar(m.text, shift));
+  let turn = 0;
+  const reads = i => ER.caesar(coded[i], -turn);
+  stage.innerHTML = roomHead(r,n) + `<div class="obj"><form id="qf" class="cipher" novalidate>
+    <div class="cwheel"><div class="wheel" id="wheel" role="spinbutton" tabindex="0" aria-label="Cipher wheel" aria-valuemin="0" aria-valuemax="25" aria-valuenow="0">${cipherWheel()}</div>
+      <div class="turns"><button type="button" class="pushplate small turn" data-d="-1">${ICON.left}<span>Turn back</span></button>
+        <p class="set" aria-hidden="true">Turned <b id="turned">0</b> places</p>
+        <button type="button" class="pushplate small turn" data-d="1"><span>Turn forward</span>${ICON.right}</button></div></div>
+    ${ms.map((m,i)=>`<fieldset class="slip paper cmsg" style="--r:${(rot(i)*.4).toFixed(2)}deg"><span class="qn" aria-hidden="true">${i+1}</span><legend><span class="sr">Message ${i+1}, in code: </span><span class="code">${esc(coded[i])}</span></legend>
+      <p class="dec"><b>Reads now:</b> <span class="dt">${esc(coded[i])}</span></p>
+      <span class="typer"><input type="text" name="c${i}" aria-label="Answer to message ${i+1}" autocomplete="off" spellcheck="false"></span>${
+      listen("m-" + (i+1), "message " + (i+1), b => [`Message ${i+1} reads now:`, b.closest("fieldset").querySelector(".dt")])}</fieldset>`).join("")}</form></div>`
+    + mech(`<div class="sbox"><span class="rivets" aria-hidden="true"><i></i><i></i><i></i><i></i></span>${keyLock(lockText(r.lockLabel) || "Strongbox", "Check answers", { form: "qf", total: ms.length })}</div>`, r);
+  const wheel = $("#wheel"), inner = wheel.querySelector(".inner"), dts = [...stage.querySelectorAll(".dt")];
+  const firstWords = t => { const w = String(t).split(/\s+/).filter(Boolean); return w.slice(0, 8).join(" ") + (w.length > 8 ? "…" : ""); };
+  const paint = () => {
+    inner.style.transform = `rotate(${(-turn * 360 / 26).toFixed(3)}deg)`;
+    $("#turned").textContent = turn;
+    dts.forEach((d, i) => { d.textContent = reads(i); });
+    wheel.setAttribute("aria-valuenow", turn);
+    wheel.setAttribute("aria-valuetext", `${turn} place${turn === 1 ? "" : "s"}` + (ms.length ? `. Message 1 reads: ${firstWords(reads(0))}` : ""));
+  };
+  const set = (v, from) => { const nv = ((Math.round(v) % 26) + 26) % 26; if (nv === turn) return; turn = nv; paint(); SND.play("tick");
+    if (from === "button") say(`Turned ${turn} place${turn === 1 ? "" : "s"}.` + (ms.length ? ` Message 1 reads: ${firstWords(reads(0))}` : "")); };
+  stage.querySelectorAll(".turn").forEach(b => b.onclick = () => set(turn + +b.dataset.d, "button"));
+  wheel.addEventListener("keydown", e => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return; let used = true;
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") set(turn + 1);
+    else if (e.key === "ArrowDown" || e.key === "ArrowLeft") set(turn - 1);
+    else if (e.key === "PageUp") set(turn + 5); else if (e.key === "PageDown") set(turn - 5);
+    else if (e.key === "Home") set(0); else if (e.key === "End") set(25);
+    else if (e.key === "Enter") $("#try").click();
+    else used = false;
+    if (used) e.preventDefault();
+  });
+  /* Dragging the wheel round turns it a letter at a time; the two buttons do the same with single presses. */
+  wheel.addEventListener("pointerdown", e => {
+    if (e.button != null && e.button > 0) return;
+    wheel.focus(); e.preventDefault();
+    const box = wheel.getBoundingClientRect(), cx = box.left + box.width / 2, cy = box.top + box.height / 2;
+    const ang = ev => Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
+    let last = ang(e), acc = 0;
+    const mv = ev => { const a = ang(ev); let d = a - last; if (d > 180) d -= 360; if (d < -180) d += 360; last = a; acc += d;
+      while (Math.abs(acc) >= 360 / 26) { const st = acc > 0 ? -1 : 1; set(turn + st); acc += st * 360 / 26; } };
+    const end = () => { wheel.removeEventListener("pointermove", mv); wheel.removeEventListener("pointerup", end); wheel.removeEventListener("pointercancel", end); };
+    try { wheel.setPointerCapture(e.pointerId); } catch(err){}
+    wheel.addEventListener("pointermove", mv); wheel.addEventListener("pointerup", end); wheel.addEventListener("pointercancel", end);
+  });
+  paint();
+  roomState = () => ({ turn });
+  wireInputs($("#qf"));
+  $("#qf").onsubmit = e => {
+    e.preventDefault();
+    if (ms.some((m,i) => !ER.norm(document.querySelector(`input[name=c${i}]`).value))) return notYet(ms.length > 1 ? "Type an answer for every message first." : "Type your answer first.");
+    let right = 0;
+    ms.forEach((m,i) => { const v = ER.norm(document.querySelector(`input[name=c${i}]`).value); if (v && ER.accepted(m.answers).includes(v)) right++; });
+    if (right === ms.length) pass(r.successMessage || "Every answer is right. The lock opens!", right);
+    else fail(r.failMessage ? `${r.failMessage} (${right} of ${ms.length} right.)` : `${right} of ${ms.length} answers are correct.`, right);
+  };
 }
 
 /* ---- Ordering: cards pinned along a string; move them with the studs or by dragging the number ---- */
